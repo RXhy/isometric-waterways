@@ -2,14 +2,16 @@ extends Node2D
 ## Jalan raya otomatis + jembatan.
 ## - Setiap bangunan baru disambungkan dengan jalan ke bangunan/jalan terdekat.
 ## - Jalan tidak bisa digali. Pemain memasang Jembatan di petak jalan supaya
-##   kanal bisa lewat di bawahnya. Papan jembatan digambar di sini (placeholder).
+##   kanal bisa lewat di bawahnya. Tampilan jembatan ada di scenes/bridge.tscn.
 
 @export var bridges_start: int = 2    ## stok jembatan di awal
 @export var bridges_per_day: int = 1  ## tambahan stok tiap hari baru
+@export var bridge_scene: PackedScene ## scenes/bridge.tscn
 
 var world  # world.gd
 var bridges: Dictionary = {}  # petak jembatan -> arah (0: kiri-atas/kanan-bawah, 1: kanan-atas/kiri-bawah)
 var bridge_stock: int = 0
+var bridge_nodes: Dictionary = {}  # petak -> node jembatan
 
 func setup(w) -> void:
 	world = w
@@ -25,7 +27,7 @@ func is_road(cell: Vector2i) -> bool:
 # --- Generasi jalan ---
 
 func _passable(cell: Vector2i) -> bool:
-	if not world.is_in_active_area(cell) or world.buildings.has_building(cell):
+	if not world.is_in_active_area(cell) or world.buildings.has_building(cell) or world.facilities.has_facility(cell):
 		return false
 	if is_road(cell):
 		return true
@@ -90,32 +92,19 @@ func build_bridge(cell: Vector2i) -> bool:
 	bridges[cell] = 0 if (is_road(tl) or is_road(br)) else 1
 	world.dug[cell] = true
 	world.change_tile_state(cell, world.TileState.CANAL)
-	queue_redraw()
+	var node: Node2D = bridge_scene.instantiate()
+	node.position = to_local(world.cell_to_global(cell))
+	# gambar asli searah kiri-atas -> kanan-bawah; dibalik untuk arah satunya
+	node.get_node("Sprite").flip_h = bridges[cell] == 1
+	add_child(node)
+	bridge_nodes[cell] = node
 	return true
 
 ## Timbun jembatan: kembali jadi jalan biasa, stok dikembalikan.
 func remove_bridge(cell: Vector2i) -> void:
 	bridges.erase(cell)
+	bridge_nodes[cell].queue_free()
+	bridge_nodes.erase(cell)
 	world.dug.erase(cell)
 	world.change_tile_state(cell, world.TileState.ROAD)
 	bridge_stock += 1
-	queue_redraw()
-
-func _draw() -> void:
-	for cell in bridges:
-		var p: Vector2 = to_local(world.cell_to_global(cell)) + Vector2(0, -3)
-		var a := Vector2(8.0, 4.0)     # setengah panjang searah jalan (sampai tepi petak)
-		var b := Vector2(8.0, -4.0)    # setengah lebar melintang
-		if bridges[cell] == 1:
-			var t := a
-			a = b
-			b = t
-		var w := 0.5
-		var deck := PackedVector2Array([p - a - b * w, p + a - b * w, p + a + b * w, p - a + b * w])
-		draw_colored_polygon(deck, Color(0.58, 0.38, 0.21))
-		for i in range(-3, 4):
-			var c := p + a * (i / 3.5)
-			draw_line(c - b * w, c + b * w, Color(0.36, 0.22, 0.11), 1.0)
-		var outline := deck.duplicate()
-		outline.append(deck[0])
-		draw_polyline(outline, Color(0.22, 0.13, 0.07), 1.0)

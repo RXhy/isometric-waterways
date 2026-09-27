@@ -6,6 +6,8 @@ signal building_destroyed(building)
 
 const Building = preload("res://building.gd")
 
+@export var building_scene: PackedScene  ## scenes/building.tscn
+
 @export var buildings_first_day: int = 2          ## jumlah bangunan yang muncul di awal hari 1
 @export var extra_buildings_per_day: float = 0.5  ## tambahan per hari (0.5 = +1 tiap 2 hari)
 @export var min_building_spacing: int = 3       ## jarak minimal antar bangunan (tile)
@@ -53,7 +55,8 @@ func _process(delta: float) -> void:
 
 	for cell in buildings:
 		var b = buildings[cell]
-		if b.tick(delta, world.is_cell_supplied(cell)):
+		var supplied: bool = world.is_cell_supplied(cell) or world.weather.current == world.weather.Weather.HUJAN
+		if b.tick(delta, supplied, world.weather.is_flooded(cell)):
 			destroyed_count += 1
 			building_destroyed.emit(b)
 			if not running:
@@ -87,7 +90,7 @@ func _too_close_to_building(cell: Vector2i) -> bool:
 	return false
 
 func _spawn(cell: Vector2i, type: int) -> void:
-	var b = Building.new()
+	var b = building_scene.instantiate()
 	b.setup(cell, type)
 	b.position = to_local(world.cell_to_global(cell))
 	add_child(b)

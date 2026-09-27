@@ -4,6 +4,11 @@ extends Node2D
 @onready var camera: Camera2D = $Camera2D
 @onready var buildings = $Buildings
 @onready var roads = $Roads
+@onready var facilities = $Facilities
+@onready var weather = $Weather
+@onready var fx_kemarau: CanvasItem = $WeatherFX/Kemarau
+@onready var fx_hujan: CanvasItem = $WeatherFX/Hujan
+@onready var weather_label: Label = $HUD/Cuaca
 @onready var stats_label: Label = $HUD/Stats
 @onready var overlay: ColorRect = $HUD/Overlay
 @onready var message_label: Label = $HUD/Overlay/Message
@@ -12,6 +17,9 @@ extends Node2D
 @onready var btn_ratakan: Button = $HUD/Tools/Ratakan
 @onready var btn_timbun: Button = $HUD/Tools/Timbun
 @onready var btn_jembatan: Button = $HUD/Tools/Jembatan
+@onready var btn_bor: Button = $HUD/Tools/Bor
+@onready var btn_bendungan: Button = $HUD/Tools/Bendungan
+@onready var btn_spillway: Button = $HUD/Tools/Spillway
 
 enum TileState {
 	DIRT = 0,
@@ -67,6 +75,11 @@ func _ready() -> void:
 	btn_ratakan.pressed.connect(set_tool.bind(Tool.RATAKAN))
 	btn_timbun.pressed.connect(set_tool.bind(Tool.TIMBUN))
 	btn_jembatan.pressed.connect(set_tool.bind(Tool.JEMBATAN))
+	btn_bor.pressed.connect(set_tool.bind(Tool.BOR))
+	btn_bendungan.pressed.connect(set_tool.bind(Tool.BENDUNGAN))
+	btn_spillway.pressed.connect(set_tool.bind(Tool.SPILLWAY))
+	facilities.setup(self)
+	weather.setup(self)
 	set_tool(Tool.GALI)
 	buildings.building_destroyed.connect(_on_building_destroyed)
 	buildings.building_spawned.connect(func(b): roads.connect_building(b.cell))
@@ -95,6 +108,7 @@ func _check_new_day() -> void:
 	if d != last_day:
 		last_day = d
 		roads.on_new_day(d)
+		weather.start_day(d)
 		buildings.start_day(d)
 
 func _on_building_destroyed(_b) -> void:
@@ -121,6 +135,11 @@ func update_hud() -> void:
 	var sisa := int(ceil(day_length - fmod(elapsed, day_length)))
 	stats_label.text = "Hari %d / %d  (%ds)    Bangunan: %d  (terancam %d)    Hancur: %d / %d    Jembatan: %d" % [
 		day, target_days, sisa, total - hancur, terancam, hancur, damage_quota, roads.bridge_stock]
+	var besok: String = weather.NAMES[weather.weather_for(current_day() + 1)] if current_day() < target_days else "-"
+	weather_label.text = "Cuaca: %s\nBesok: %s" % [weather.NAMES[weather.current], besok]
+	btn_bor.text = "5 Bor (%d)" % facilities.stock[facilities.Kind.BOR]
+	btn_bendungan.text = "6 Bendungan (%d)" % facilities.stock[facilities.Kind.BENDUNGAN]
+	btn_spillway.text = "7 Spillway (%d)" % facilities.stock[facilities.Kind.SPILLWAY]
 	update_info()
 
 const TILE_NAMES := ["Tanah", "Kanal kering", "Rumput", "Air", "Jalan"]
@@ -130,7 +149,10 @@ func update_info() -> void:
 	match current_tool:
 		Tool.GALI: hint = "Klik kiri: gali kanal"
 		Tool.RATAKAN: hint = "Klik kiri: turunkan  |  Klik kanan: naikkan"
-		Tool.TIMBUN: hint = "Klik kiri: tutup kanal / lepas jembatan"
+		Tool.TIMBUN: hint = "Klik kiri: tutup kanal / bongkar jembatan & fasilitas"
+		Tool.BOR: hint = "Klik kiri di tanah: sumber air tanah (tahan kemarau)"
+		Tool.BENDUNGAN: hint = "Klik kiri di tanah: lindungi radius %d dari banjir" % weather.dam_radius
+		Tool.SPILLWAY: hint = "Klik kiri di tepi sumber air: sumber itu tidak meluap"
 		Tool.JEMBATAN: hint = "Klik kiri pada jalan: pasang jembatan (sisa %d)" % roads.bridge_stock
 	var cell := pick_cell(get_global_mouse_position())
 	var tile := ""
@@ -141,6 +163,12 @@ func update_info() -> void:
 			tname = "Kanal berair" if dug.has(cell) else "Sumber air"
 		if roads.bridges.has(cell):
 			tname = "Jembatan (berair)" if t == TileState.WATER else "Jembatan (kering)"
+		if weather.is_flooded(cell):
+			tname = "Banjir"
+		if weather.is_dried(cell):
+			tname = "Sumber air (kering)"
+		if facilities.has_facility(cell):
+			tname = facilities.KIND_NAMES[facilities.kind_at(cell)]
 		if buildings.has_building(cell):
 			tname = "Bangunan"
 		tile = "%s, %s (%d)" % [tname, ELEV_NAMES[get_elev(cell)], get_elev(cell)]
@@ -154,7 +182,12 @@ func cell_to_global(cell: Vector2i) -> Vector2:
 ## Bisa dibangun: di dalam area aktif dan tanahnya DIRT/GRASS.
 func is_buildable(cell: Vector2i) -> bool:
 	var t: int = grid_data.get(cell, -1)
-	return is_in_active_area(cell) and (t == TileState.DIRT or t == TileState.GRASS)
+	return is_in_active_area(cell) and (t == TileState.DIRT or t == TileState.GRASS) \
+		and not facilities.has_facility(cell)
+
+## Air alami: sumber air, sumur bor, atau genangan banjir (bukan kanal galian).
+func is_natural_water(cell: Vector2i) -> bool:
+	return grid_data.get(cell, -1) == TileState.WATER and not dug.has(cell)
 
 ## Bangunan teraliri kalau salah satu dari 8 tetangganya WATER yang
 ## sama tinggi atau lebih tinggi (air tidak bisa naik).
@@ -290,13 +323,13 @@ func pick_cell(global_pos: Vector2) -> Vector2i:
 
 # --- Bulldoze: Gali / Ratakan / Timbun ---
 
-enum Tool { GALI, RATAKAN, TIMBUN, JEMBATAN }
-const TOOL_NAMES := ["Gali", "Ratakan", "Timbun", "Jembatan"]
+enum Tool { GALI, RATAKAN, TIMBUN, JEMBATAN, BOR, BENDUNGAN, SPILLWAY }
+const TOOL_NAMES := ["Gali", "Ratakan", "Timbun", "Jembatan", "Mesin Bor", "Bendungan", "Spillway"]
 var current_tool: int = Tool.GALI
 
 func set_tool(t: int) -> void:
 	current_tool = t
-	var btns := [btn_gali, btn_ratakan, btn_timbun, btn_jembatan]
+	var btns := [btn_gali, btn_ratakan, btn_timbun, btn_jembatan, btn_bor, btn_bendungan, btn_spillway]
 	for i in btns.size():
 		btns[i].set_pressed_no_signal(i == t)
 	update_hud()
@@ -313,6 +346,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_2: set_tool(Tool.RATAKAN)
 			KEY_3: set_tool(Tool.TIMBUN)
 			KEY_4: set_tool(Tool.JEMBATAN)
+			KEY_5: set_tool(Tool.BOR)
+			KEY_6: set_tool(Tool.BENDUNGAN)
+			KEY_7: set_tool(Tool.SPILLWAY)
 		return
 
 	if event is InputEventMouseButton and event.is_pressed() \
@@ -332,10 +368,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				if not right and roads.build_bridge(cell):
 					update_water()
 					update_hud()
+			Tool.BOR, Tool.BENDUNGAN, Tool.SPILLWAY:
+				var kind: int = current_tool - Tool.BOR  # urutan sama dengan FacilityManager.Kind
+				if not right and facilities.place(kind, cell):
+					update_water()
+					update_hud()
 
 ## Gali: tanah (DIRT/GRASS) -> kanal.
 func perform_digging(cell_pos: Vector2i) -> void:
-	if buildings.has_building(cell_pos):
+	if buildings.has_building(cell_pos) or facilities.has_facility(cell_pos):
 		return
 	var current_state = grid_data[cell_pos]
 	if current_state == TileState.DIRT or current_state == TileState.GRASS:
@@ -346,9 +387,9 @@ func perform_digging(cell_pos: Vector2i) -> void:
 ## Ratakan: turunkan (klik kiri) / naikkan (klik kanan) satu tingkat.
 ## Berlaku untuk tanah dan kanal galian, tidak untuk sumber air alami atau bangunan.
 func perform_leveling(cell_pos: Vector2i, delta_h: int) -> void:
-	if buildings.has_building(cell_pos) or roads.is_road(cell_pos):
+	if buildings.has_building(cell_pos) or roads.is_road(cell_pos) or facilities.has_facility(cell_pos):
 		return
-	if grid_data[cell_pos] == TileState.WATER and not dug.has(cell_pos):
+	if is_natural_water(cell_pos) or weather.is_dried(cell_pos):
 		return
 	var h := clampi(get_elev(cell_pos) + delta_h, 0, MAX_ELEV)
 	if h == get_elev(cell_pos):
@@ -358,6 +399,11 @@ func perform_leveling(cell_pos: Vector2i, delta_h: int) -> void:
 
 ## Timbun: tutup kanal galian (kering atau berair) jadi tanah lagi.
 func perform_filling(cell_pos: Vector2i) -> void:
+	if facilities.has_facility(cell_pos):
+		facilities.remove(cell_pos)
+		update_water()
+		update_hud()
+		return
 	if roads.bridges.has(cell_pos):
 		roads.remove_bridge(cell_pos)
 		update_water()
