@@ -1,10 +1,12 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://building.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/placeholder/rumah.png" id="2_rumah"]
 [ext_resource type="Texture2D" path="res://assets/placeholder/ladang.png" id="3_ladang"]
 [ext_resource type="Texture2D" path="res://assets/placeholder/reruntuhan.png" id="4_ruin"]
 [ext_resource type="Texture2D" path="res://assets/placeholder/peringatan.png" id="5_warn"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/ring_under.png" id="6_ring_u"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/ring_progress.png" id="7_ring_p"]
 
 [node name="Building" type="Node2D"]
 script = ExtResource("1_script")
@@ -23,34 +25,21 @@ visible = false
 texture = ExtResource("4_ruin")
 offset = Vector2(0, -1)
 
-[node name="Bar" type="Node2D" parent="."]
-position = Vector2(0, -30)
-
-[node name="Bg" type="ColorRect" parent="Bar"]
-offset_left = -12.0
-offset_right = 12.0
-offset_bottom = 4.0
+[node name="Ring" type="TextureProgressBar" parent="."]
+offset_left = -9.0
+offset_top = -44.0
+offset_right = 9.0
+offset_bottom = -26.0
 mouse_filter = 2
-color = Color(0, 0, 0, 0.75)
-
-[node name="Fill" type="ColorRect" parent="Bar"]
-offset_left = -11.0
-offset_top = 1.0
-offset_right = 11.0
-offset_bottom = 3.0
-mouse_filter = 2
-color = Color(0.3, 0.65, 1, 1)
-
-[node name="FillLow" type="ColorRect" parent="Bar"]
-visible = false
-offset_left = -11.0
-offset_top = 1.0
-offset_right = 11.0
-offset_bottom = 3.0
-mouse_filter = 2
-color = Color(1, 0.55, 0.15, 1)
+max_value = 1.0
+step = 0.001
+value = 1.0
+fill_mode = 4
+texture_under = ExtResource("6_ring_u")
+texture_progress = ExtResource("7_ring_p")
+tint_progress = Color(0.3, 0.65, 1, 1)
 
 [node name="Peringatan" type="Sprite2D" parent="."]
 visible = false
-position = Vector2(0, -38)
+position = Vector2(0, -35)
 texture = ExtResource("5_warn")

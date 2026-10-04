@@ -17,10 +17,13 @@ const REFILL_RATE := 4.0    # isi ulang 4x lebih cepat daripada berkurangnya
 @onready var rumah: Sprite2D = $Rumah
 @onready var ladang: Sprite2D = $Ladang
 @onready var ruin: Sprite2D = $Reruntuhan
-@onready var bar: Node2D = $Bar
-@onready var fill: ColorRect = $Bar/Fill
-@onready var fill_low: ColorRect = $Bar/FillLow
+@onready var ring: TextureProgressBar = $Ring
 @onready var warning: Sprite2D = $Peringatan
+
+## Warna cincin timer air: aman / terancam / hampir habis (bisa diubah di Inspector)
+@export var ring_ok: Color = Color(0.3, 0.65, 1.0)
+@export var ring_warn: Color = Color(1.0, 0.62, 0.15)
+@export var ring_danger: Color = Color(0.9, 0.2, 0.2)
 
 var cell: Vector2i
 var type: int = Type.RUMAH
@@ -29,7 +32,6 @@ var water: float = 40.0
 var flood_time: float = 0.0
 var state: int = State.HIDUP
 var _time := 0.0
-var _bar_width := 22.0
 
 func setup(c: Vector2i, t: int) -> void:
 	cell = c
@@ -38,7 +40,6 @@ func setup(c: Vector2i, t: int) -> void:
 	water = max_water
 
 func _ready() -> void:
-	_bar_width = fill.size.x
 	_refresh()
 
 ## Dipanggil tiap frame oleh BuildingManager. Mengembalikan true kalau baru saja hancur.
@@ -66,10 +67,12 @@ func _refresh() -> void:
 	rumah.visible = alive and type == Type.RUMAH
 	ladang.visible = alive and type == Type.LADANG
 	ruin.visible = not alive
-	bar.visible = alive
+	ring.visible = alive
 	var ratio := water / max_water
-	fill.size.x = _bar_width * ratio
-	fill_low.size.x = _bar_width * ratio
-	fill.visible = state == State.HIDUP
-	fill_low.visible = state == State.TERANCAM
+	ring.value = ratio
+	if state == State.HIDUP:
+		ring.tint_progress = ring_ok
+	else:
+		ring.tint_progress = ring_danger if ratio < 0.2 or flood_time > 0.0 else ring_warn
+	# tanda seru berkedip di tengah cincin saat terancam (kekeringan atau banjir)
 	warning.visible = state == State.TERANCAM and int(_time * 4.0) % 2 == 0

@@ -1,0 +1,46 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/menu_item.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/menu_marker.png" id="2_marker"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBox_flat"]
+content_margin_left = 30.0
+
+[node name="MenuItem" type="Button"]
+custom_minimum_size = Vector2(170, 28)
+focus_mode = 2
+theme_override_colors/font_color = Color(0.24, 0.22, 0.2, 1)
+theme_override_colors/font_hover_color = Color(0.16, 0.45, 0.76, 1)
+theme_override_colors/font_focus_color = Color(0.16, 0.45, 0.76, 1)
+theme_override_colors/font_pressed_color = Color(0.1, 0.33, 0.6, 1)
+theme_override_colors/font_disabled_color = Color(0.62, 0.6, 0.56, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBox_flat")
+theme_override_styles/hover = SubResource("StyleBox_flat")
+theme_override_styles/pressed = SubResource("StyleBox_flat")
+theme_override_styles/focus = SubResource("StyleBox_flat")
+theme_override_styles/disabled = SubResource("StyleBox_flat")
+alignment = 0
+text = "Menu"
+script = ExtResource("1_script")
+
+[node name="Marker" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 11.0
+offset_right = 26.0
+offset_bottom = 17.0
+mouse_filter = 2
+texture = ExtResource("2_marker")
+stretch_mode = 1
+
+[node name="Caption" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 30.0
+offset_top = 22.0
+offset_right = 200.0
+offset_bottom = 33.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.55, 0.52, 0.48, 1)
+theme_override_font_sizes/font_size = 8

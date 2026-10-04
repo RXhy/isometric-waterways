@@ -56,7 +56,7 @@ func _process(delta: float) -> void:
 	for cell in buildings:
 		var b = buildings[cell]
 		var supplied: bool = world.is_cell_supplied(cell) or world.weather.current == world.weather.Weather.HUJAN
-		if b.tick(delta, supplied, world.weather.is_flooded(cell)):
+		if b.tick(delta, supplied, world.water.is_flooded(cell)):
 			destroyed_count += 1
 			building_destroyed.emit(b)
 			if not running:

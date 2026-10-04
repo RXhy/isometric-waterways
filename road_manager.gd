@@ -78,7 +78,7 @@ func connect_building(origin: Vector2i) -> void:
 	var c: Vector2i = goal
 	while c != origin:
 		if not is_road(c):
-			world.change_tile_state(c, world.TileState.ROAD)
+			world.set_base(c, world.TileState.ROAD)
 		c = prev[c]
 
 # --- Jembatan ---
@@ -91,7 +91,7 @@ func build_bridge(cell: Vector2i) -> bool:
 	var br: Vector2i = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE)
 	bridges[cell] = 0 if (is_road(tl) or is_road(br)) else 1
 	world.dug[cell] = true
-	world.change_tile_state(cell, world.TileState.CANAL)
+	world.set_base(cell, world.TileState.CANAL)
 	var node: Node2D = bridge_scene.instantiate()
 	node.position = to_local(world.cell_to_global(cell))
 	# gambar asli searah kiri-atas -> kanan-bawah; dibalik untuk arah satunya
@@ -106,5 +106,5 @@ func remove_bridge(cell: Vector2i) -> void:
 	bridge_nodes[cell].queue_free()
 	bridge_nodes.erase(cell)
 	world.dug.erase(cell)
-	world.change_tile_state(cell, world.TileState.ROAD)
+	world.set_base(cell, world.TileState.ROAD)
 	bridge_stock += 1

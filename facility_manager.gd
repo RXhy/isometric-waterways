@@ -9,7 +9,7 @@ const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway"]
 @export var bendungan_scene: PackedScene
 @export var spillway_scene: PackedScene
 @export var start_stock: Array[int] = [1, 0, 0]  ## stok awal [Bor, Bendungan, Spillway]
-@export var stock_per_forecast: int = 1          ## tambahan stok saat prakiraan cuaca buruk
+@export var stock_per_forecast: Array[int] = [1, 3, 1]  ## tambahan stok [Bor, Bendungan, Spillway] saat prakiraan cuaca buruk
 
 var world
 var stock: Array[int] = [0, 0, 0]
@@ -28,23 +28,49 @@ func kind_at(cell: Vector2i) -> int:
 ## Dipanggil saat prakiraan cuaca besok diumumkan.
 func on_forecast(weather: int) -> void:
 	if weather == world.weather.Weather.KEMARAU:
-		stock[Kind.BOR] += stock_per_forecast
+		stock[Kind.BOR] += stock_per_forecast[Kind.BOR]
 	elif weather == world.weather.Weather.HUJAN:
-		stock[Kind.BENDUNGAN] += stock_per_forecast
-		stock[Kind.SPILLWAY] += stock_per_forecast
+		stock[Kind.BENDUNGAN] += stock_per_forecast[Kind.BENDUNGAN]
+		stock[Kind.SPILLWAY] += stock_per_forecast[Kind.SPILLWAY]
 
-func _touches_natural_water(cell: Vector2i) -> bool:
-	for n in world.world.get_surrounding_cells(cell):
-		if world.is_natural_water(n):
-			return true
-	return false
+## Alasan fasilitas tidak bisa dipasang di petak ini ("" kalau bisa). Dipakai tooltip HUD.
+func why_not(kind: int, cell: Vector2i) -> String:
+	if stock[kind] <= 0:
+		return "Stok %s habis" % KIND_NAMES[kind]
+	if facilities.has(cell) or world.buildings.has_building(cell):
+		return "Petak sudah terisi"
+	if world.roads.is_road(cell):
+		return "Tidak bisa di jalan"
+	var t: int = world.grid_data.get(cell, -1)
+	var land: bool = t == world.TileState.DIRT or t == world.TileState.GRASS
+	match kind:
+		Kind.BENDUNGAN:
+			if not (land or world.dug.has(cell)):
+				return "Hanya di tanah atau melintang kanal"
+		Kind.SPILLWAY:
+			if not land:
+				return "Hanya di tanah"
+			if world.water.bodies_touching(cell).is_empty():
+				return "Harus di tepi sumber air"
+		_:
+			if not land:
+				return "Hanya di tanah"
+	return ""
 
 func can_place(kind: int, cell: Vector2i) -> bool:
-	if stock[kind] <= 0 or not world.is_buildable(cell) or world.buildings.has_building(cell):
+	if stock[kind] <= 0 or facilities.has(cell) or world.buildings.has_building(cell):
 		return false
-	if kind == Kind.SPILLWAY and not _touches_natural_water(cell):
+	if not world.is_in_active_area(cell) or world.roads.is_road(cell):
 		return false
-	return true
+	var t: int = world.grid_data.get(cell, -1)
+	var land: bool = t == world.TileState.DIRT or t == world.TileState.GRASS
+	match kind:
+		Kind.BENDUNGAN:
+			# tanggul/bendungan boleh di tanah atau melintang di kanal galian
+			return land or world.dug.has(cell)
+		Kind.SPILLWAY:
+			return land and not world.water.bodies_touching(cell).is_empty()
+	return land
 
 func place(kind: int, cell: Vector2i) -> bool:
 	if not can_place(kind, cell):
@@ -55,9 +81,18 @@ func place(kind: int, cell: Vector2i) -> bool:
 	node.position = to_local(world.cell_to_global(cell))
 	add_child(node)
 	facilities[cell] = {"kind": kind, "node": node, "prev": world.grid_data[cell]}
-	if kind == Kind.BOR:
-		# Sumur bor = sumber air tanah permanen di petak ini
-		world.change_tile_state(cell, world.TileState.WATER)
+	match kind:
+		Kind.BOR:
+			# sumur bor: jadi sumber air tanah permanen
+			world.set_base(cell, world.TileState.WATER)
+			world.water.add_well(cell)
+		Kind.BENDUNGAN:
+			world.water.set_wall(cell, true)
+		Kind.SPILLWAY:
+			# saluran buang di tepi badan air: badan air itu tidak meluap saat hujan
+			world.set_base(cell, world.TileState.CANAL)
+			world.water.set_drain(cell, true)
+			world.weather.apply_targets()
 	return true
 
 ## Timbun fasilitas: dibongkar, stok dikembalikan.
@@ -66,21 +101,17 @@ func remove(cell: Vector2i) -> void:
 	f["node"].queue_free()
 	facilities.erase(cell)
 	stock[f["kind"]] += 1
-	if f["kind"] == Kind.BOR:
-		world.change_tile_state(cell, f["prev"])
+	match f["kind"]:
+		Kind.BOR:
+			world.water.remove_well(cell)
+			world.set_base(cell, f["prev"])
+		Kind.BENDUNGAN:
+			world.water.set_wall(cell, false)
+		Kind.SPILLWAY:
+			world.water.set_drain(cell, false)
+			world.set_base(cell, f["prev"])
+			world.water.clear_water(cell)
+			world.weather.apply_targets()
 
 func is_well(cell: Vector2i) -> bool:
 	return kind_at(cell) == Kind.BOR
-
-func dam_protects(cell: Vector2i, radius: int) -> bool:
-	for c in facilities:
-		if facilities[c]["kind"] == Kind.BENDUNGAN and world.iso_distance(c, cell) <= radius:
-			return true
-	return false
-
-func spillway_cells() -> Array:
-	var out := []
-	for c in facilities:
-		if facilities[c]["kind"] == Kind.SPILLWAY:
-			out.append(c)
-	return out

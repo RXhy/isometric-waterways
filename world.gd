@@ -6,20 +6,21 @@ extends Node2D
 @onready var roads = $Roads
 @onready var facilities = $Facilities
 @onready var weather = $Weather
+@onready var water = $Water
 @onready var fx_kemarau: CanvasItem = $WeatherFX/Kemarau
 @onready var fx_hujan: CanvasItem = $WeatherFX/Hujan
-@onready var weather_label: Label = $HUD/Cuaca
-@onready var stats_label: Label = $HUD/Stats
-@onready var overlay: ColorRect = $HUD/Overlay
-@onready var message_label: Label = $HUD/Overlay/Message
-@onready var info_label: Label = $HUD/Info
-@onready var btn_gali: Button = $HUD/Tools/Gali
-@onready var btn_ratakan: Button = $HUD/Tools/Ratakan
-@onready var btn_timbun: Button = $HUD/Tools/Timbun
-@onready var btn_jembatan: Button = $HUD/Tools/Jembatan
-@onready var btn_bor: Button = $HUD/Tools/Bor
-@onready var btn_bendungan: Button = $HUD/Tools/Bendungan
-@onready var btn_spillway: Button = $HUD/Tools/Spillway
+@onready var score = $Score
+@onready var overlay_layer = $InfoLayer
+@onready var cursor: Sprite2D = $Cursor
+@onready var hud = $HUD
+
+## Warna sorotan petak di bawah kursor
+@export var cursor_ok: Color = Color(0.45, 1.0, 0.5, 0.9)
+@export var cursor_bad: Color = Color(1.0, 0.4, 0.35, 0.9)
+@export var cursor_info: Color = Color(1, 1, 1, 0.7)
+
+var hover_cell: Vector2i
+var hover_valid: bool = false
 
 enum TileState {
 	DIRT = 0,
@@ -34,19 +35,39 @@ const AREA_SIZE: int = 25
 const MAX_ORIGIN_TRIES: int = 50
 
 var grid_data: Dictionary = {}
-var main_source_id: int = 0
-
-var is_flowing: bool = false
-var flow_queue: Dictionary = {} # dipakai sebagai set: flow_queue[cell] = true
 
 var active_area: Rect2i
 var elevation: Dictionary = {}  # Vector2i -> 0..3
-var dug: Dictionary = {}        # set petak hasil galian (kanal kering atau berair)
+var dug: Dictionary = {}        # set petak hasil galian (kanal); air di dalamnya diatur WaterSim
+var land_variant: Dictionary = {}  # petak daratan -> koordinat atlas varian yang dipakai
+var land_class: Dictionary = {}    # petak daratan -> LandClass (kering / dekat air / pelataran)
+var land_dist: Dictionary = {}     # petak dekat air -> jarak ke air (1..radius)
+
+# --- Tileset: dua sumber atlas ---
+# Sumber 0 = assets/Tiles/terrain_tiles.png (5 kolom x 4 baris), semuanya daratan:
+#   baris 0   = daratan kering yang jauh dari air
+#   baris 1-2 = tanah dekat air (rumput terang/gelap, semak, pohon)
+#   baris 3   = pelataran di sekitar bangunan yang dekat air
+#   Kelas daratan dihitung ulang tiap detik oleh WaterSim dari jarak ke air.
+# Sumber 1 = assets/Tiles/tileset_iso_waterways.png: parit kanal, air, dan jalan.
+const SRC_TERRAIN := 0
+const SRC_WATER_ROAD := 1
+const ATLAS_CANAL_DRY := Vector2i(1, 0)   ## (sumber 1) parit kanal / dasar sungai kering
+const ATLAS_WATER := Vector2i(3, 0)       ## (sumber 1) air: sumber alami, kanal berair, banjir
+const ATLAS_ROAD := Vector2i(4, 0)        ## (sumber 1) jalan
+enum LandClass { DRY, NEAR, COURTYARD }
+const DRY_WEIGHTS := [45, 20, 20, 10, 5]      ## baris 0: polos, retak, kasar, bintik, pohon mati
+const NEAR_WEIGHTS := [40, 20, 20, 12, 8]     ## baris 1-2: polos, bertekstur, semak/bunga, pohon
+const COURTYARD_COLS := [0, 1, 4]             ## baris 3 yang dipakai (kolam batu kolom 2-3 tidak, agar tak dikira air)
+const COURTYARD_WEIGHTS := [40, 30, 30]
 
 # --- Aturan permainan (bisa diubah di Inspector node Node2D) ---
 @export var day_length: float = 30.0  ## detik per hari (bangunan baru muncul tiap awal hari)
 @export var target_days: int = 8      ## bertahan sampai hari ini = menang (sementara, sebelum ada sistem poin)
 @export var damage_quota: int = 5     ## kalah kalau bangunan hancur MELEBIHI angka ini
+@export var demo_mode: bool = false   ## latar menu utama: HUD disembunyikan, input mati, tidak bisa kalah
+
+const MENU_SCENE := "res://scenes/main_menu.tscn"
 
 var elapsed: float = 0.0
 var game_over: bool = false
@@ -62,24 +83,29 @@ const NEIGHBORS_8 := [
 func _ready() -> void:
 	var used_cells = world.get_used_cells()
 	for cell in used_cells:
-		var atlas_coord = world.get_cell_atlas_coords(cell)
-		grid_data[cell] = atlas_coord.x
+		var atlas_coord := world.get_cell_atlas_coords(cell)
+		var source := world.get_cell_source_id(cell)
+		var state := atlas_to_state(source, atlas_coord)
+		grid_data[cell] = state
+		if source == SRC_TERRAIN:
+			land_variant[cell] = atlas_coord
+			land_class[cell] = LandClass.DRY if atlas_coord.y == 0 else \
+				(LandClass.COURTYARD if atlas_coord.y == 3 else LandClass.NEAR)
+			land_dist[cell] = 1 if atlas_coord.y == 1 else 2
+		if state == TileState.CANAL:
+			dug[cell] = true  # saluran yang dicat manual di editor dianggap kanal galian
 		elevation[cell] = world.get_cell_alternative_tile(cell)
-		main_source_id = world.get_cell_source_id(cell)
 
 	choose_active_area()
 	setup_camera()
 
-	overlay.hide()
-	btn_gali.pressed.connect(set_tool.bind(Tool.GALI))
-	btn_ratakan.pressed.connect(set_tool.bind(Tool.RATAKAN))
-	btn_timbun.pressed.connect(set_tool.bind(Tool.TIMBUN))
-	btn_jembatan.pressed.connect(set_tool.bind(Tool.JEMBATAN))
-	btn_bor.pressed.connect(set_tool.bind(Tool.BOR))
-	btn_bendungan.pressed.connect(set_tool.bind(Tool.BENDUNGAN))
-	btn_spillway.pressed.connect(set_tool.bind(Tool.SPILLWAY))
+	Engine.time_scale = 1.0
+	water.setup(self)
 	facilities.setup(self)
 	weather.setup(self)
+	score.setup(self)
+	overlay_layer.setup(self)
+	hud.setup(self)
 	set_tool(Tool.GALI)
 	buildings.building_destroyed.connect(_on_building_destroyed)
 	buildings.building_spawned.connect(func(b): roads.connect_building(b.cell))
@@ -87,6 +113,11 @@ func _ready() -> void:
 	buildings.setup(self)
 	_check_new_day()
 	update_hud()
+	if demo_mode:
+		hud.hide()
+		cursor.hide()
+		# geser pandangan supaya peta tidak tertutup panel menu di kiri
+		camera.offset.x = -108.0 / camera.zoom.x
 
 # --- Loop permainan: hari, kuota kerusakan, menang/kalah ---
 
@@ -94,18 +125,25 @@ func current_day() -> int:
 	return int(elapsed / day_length) + 1
 
 func _process(delta: float) -> void:
+	_update_cursor()
 	if game_over:
 		return
 	elapsed += delta
 	if current_day() > target_days:
-		end_game(true)
+		score.end_of_day()
+		end_game(score.reached(), "waktu")
 	else:
 		_check_new_day()
+		if score.reached():
+			end_game(true)
 	update_hud()
 
 func _check_new_day() -> void:
 	var d := current_day()
 	if d != last_day:
+		if last_day > 0:
+			score.end_of_day()
+		score.start_of_day()
 		last_day = d
 		roads.on_new_day(d)
 		weather.start_day(d)
@@ -113,66 +151,106 @@ func _check_new_day() -> void:
 
 func _on_building_destroyed(_b) -> void:
 	if buildings.destroyed_count > damage_quota:
-		end_game(false)
+		end_game(false, "kuota")
 
-func end_game(won: bool) -> void:
-	if game_over:
+func end_game(won: bool, reason: String = "") -> void:
+	if game_over or demo_mode:
 		return
 	game_over = true
 	buildings.stop()
+	Engine.time_scale = 1.0
 	update_hud()
+	var pts := "Poin %d / %d" % [int(score.total), score.target_points]
+	var text: String
 	if won:
-		message_label.text = "KOTA BERTAHAN!\nKamu berhasil melewati %d hari.\n\nTekan R untuk main lagi" % target_days
+		text = "TARGET TERCAPAI!\n%s pada hari ke-%d.\n\nR: main lagi   |   Esc: menu utama" % [pts, mini(current_day(), target_days)]
+	elif reason == "waktu":
+		text = "WAKTU HABIS\n%s. Target belum tercapai.\n\nR: coba lagi   |   Esc: menu utama" % pts
 	else:
-		message_label.text = "KOTA RUNTUH\n%d bangunan hancur (batas %d).\n\nTekan R untuk coba lagi" % [buildings.destroyed_count, damage_quota]
-	overlay.show()
+		text = "KOTA RUNTUH\n%d bangunan hancur (batas %d).\n\nR: coba lagi   |   Esc: menu utama" % [buildings.destroyed_count, damage_quota]
+	hud.show_end(text)
 
 func update_hud() -> void:
-	var total: int = buildings.buildings.size()
-	var hancur: int = buildings.destroyed_count
-	var terancam: int = buildings.count_state(buildings.Building.State.TERANCAM)
-	var day := mini(current_day(), target_days)
-	var sisa := int(ceil(day_length - fmod(elapsed, day_length)))
-	stats_label.text = "Hari %d / %d  (%ds)    Bangunan: %d  (terancam %d)    Hancur: %d / %d    Jembatan: %d" % [
-		day, target_days, sisa, total - hancur, terancam, hancur, damage_quota, roads.bridge_stock]
-	var besok: String = weather.NAMES[weather.weather_for(current_day() + 1)] if current_day() < target_days else "-"
-	weather_label.text = "Cuaca: %s\nBesok: %s" % [weather.NAMES[weather.current], besok]
-	btn_bor.text = "5 Bor (%d)" % facilities.stock[facilities.Kind.BOR]
-	btn_bendungan.text = "6 Bendungan (%d)" % facilities.stock[facilities.Kind.BENDUNGAN]
-	btn_spillway.text = "7 Spillway (%d)" % facilities.stock[facilities.Kind.SPILLWAY]
-	update_info()
+	hud.refresh()
 
 const TILE_NAMES := ["Tanah", "Kanal kering", "Rumput", "Air", "Jalan"]
 
-func update_info() -> void:
-	var hint := ""
-	match current_tool:
-		Tool.GALI: hint = "Klik kiri: gali kanal"
-		Tool.RATAKAN: hint = "Klik kiri: turunkan  |  Klik kanan: naikkan"
-		Tool.TIMBUN: hint = "Klik kiri: tutup kanal / bongkar jembatan & fasilitas"
-		Tool.BOR: hint = "Klik kiri di tanah: sumber air tanah (tahan kemarau)"
-		Tool.BENDUNGAN: hint = "Klik kiri di tanah: lindungi radius %d dari banjir" % weather.dam_radius
-		Tool.SPILLWAY: hint = "Klik kiri di tepi sumber air: sumber itu tidak meluap"
-		Tool.JEMBATAN: hint = "Klik kiri pada jalan: pasang jembatan (sisa %d)" % roads.bridge_stock
+## Sorotan petak di bawah kursor, berwarna sesuai bisa/tidaknya alat dipakai di sana.
+func _update_cursor() -> void:
+	if demo_mode:
+		return
 	var cell := pick_cell(get_global_mouse_position())
-	var tile := ""
-	if grid_data.has(cell) and is_in_active_area(cell):
-		var t: int = grid_data[cell]
-		var tname: String = TILE_NAMES[t]
-		if t == TileState.WATER:
-			tname = "Kanal berair" if dug.has(cell) else "Sumber air"
-		if roads.bridges.has(cell):
-			tname = "Jembatan (berair)" if t == TileState.WATER else "Jembatan (kering)"
-		if weather.is_flooded(cell):
-			tname = "Banjir"
-		if weather.is_dried(cell):
-			tname = "Sumber air (kering)"
-		if facilities.has_facility(cell):
-			tname = facilities.KIND_NAMES[facilities.kind_at(cell)]
-		if buildings.has_building(cell):
-			tname = "Bangunan"
-		tile = "%s, %s (%d)" % [tname, ELEV_NAMES[get_elev(cell)], get_elev(cell)]
-	info_label.text = "[%s] %s\n%s" % [TOOL_NAMES[current_tool], hint, tile]
+	hover_cell = cell
+	hover_valid = grid_data.has(cell) and is_in_active_area(cell)
+	var over_ui: bool = get_viewport().has_method("gui_get_hovered_control") \
+		and get_viewport().gui_get_hovered_control() != null
+	cursor.visible = hover_valid and not game_over and not over_ui
+	if cursor.visible:
+		cursor.position = cell_to_global(cell)
+		var ok: int = action_preview(cell)[0]
+		cursor.modulate = cursor_ok if ok > 0 else (cursor_bad if ok < 0 else cursor_info)
+
+## Info petak untuk tooltip: judul, detail, dan pratinjau aksi alat yang dipilih.
+func tile_info(cell: Vector2i) -> Dictionary:
+	var t: int = grid_data[cell]
+	var tname: String = TILE_NAMES[t]
+	var wet: bool = water.is_wet(cell)
+	if t == TileState.CANAL:
+		tname = "Kanal berair" if wet else "Kanal kering"
+	if t == TileState.WATER:
+		tname = "Sumber air" if wet else "Sumber air (kering)"
+	if roads.bridges.has(cell):
+		tname = "Jembatan (berair)" if wet else "Jembatan (kering)"
+	if water.is_flooded(cell):
+		tname = "Banjir"
+	if facilities.has_facility(cell):
+		tname = facilities.KIND_NAMES[facilities.kind_at(cell)]
+	var detail := ""
+	if buildings.has_building(cell):
+		var b = buildings.buildings[cell]
+		tname = b.TYPE_DATA[b.type]["name"]
+		detail = "Air %d%%  -  %s" % [int(100.0 * b.water / b.max_water), ["Hidup", "Terancam", "Hancur"][b.state]]
+	elif water.get_depth(cell) > 0.005:
+		detail = "Kedalaman air %.2f" % water.get_depth(cell)
+	var pv: Array = action_preview(cell)
+	return {
+		"title": "%s  |  %s (%d)" % [tname, ELEV_NAMES[get_elev(cell)], get_elev(cell)],
+		"detail": detail,
+		"ok": pv[0],
+		"action": "[%s] %s" % [TOOL_NAMES[current_tool], pv[1]],
+	}
+
+## Pratinjau aksi alat terpilih di petak ini: [1 = bisa, -1 = tidak bisa, 0 = info], teks.
+func action_preview(cell: Vector2i) -> Array:
+	var t: int = grid_data[cell]
+	var land: bool = t == TileState.DIRT or t == TileState.GRASS
+	var occupied: bool = buildings.has_building(cell) or facilities.has_facility(cell)
+	match current_tool:
+		Tool.GALI:
+			if occupied: return [-1, "Petak terisi bangunan/fasilitas"]
+			if roads.is_road(cell): return [-1, "Jalan - pakai Jembatan"]
+			if land: return [1, "Klik: gali kanal"]
+			return [-1, "Sudah kanal/air"]
+		Tool.RATAKAN:
+			if occupied or roads.is_road(cell): return [-1, "Tidak bisa diratakan"]
+			if is_natural_water(cell): return [-1, "Sumber air tidak bisa diratakan"]
+			var h := get_elev(cell)
+			return [1, "Kiri: turun ke %d  |  Kanan: naik ke %d" % [maxi(h - 1, 0), mini(h + 1, MAX_ELEV)]]
+		Tool.TIMBUN:
+			if facilities.has_facility(cell): return [1, "Klik: bongkar %s (stok kembali)" % facilities.KIND_NAMES[facilities.kind_at(cell)]]
+			if roads.bridges.has(cell): return [1, "Klik: lepas jembatan"]
+			if dug.has(cell): return [1, "Klik: tutup kanal"]
+			return [0, "Tidak ada yang bisa ditimbun"]
+		Tool.JEMBATAN:
+			if roads.bridge_stock <= 0: return [-1, "Stok jembatan habis"]
+			if t == TileState.ROAD and not roads.bridges.has(cell): return [1, "Klik: pasang jembatan"]
+			return [-1, "Hanya di jalan"]
+		Tool.BOR, Tool.BENDUNGAN, Tool.SPILLWAY:
+			var why: String = facilities.why_not(current_tool - Tool.BOR, cell)
+			if why == "":
+				return [1, "Klik: pasang %s" % facilities.KIND_NAMES[current_tool - Tool.BOR]]
+			return [-1, why]
+	return [0, ""]
 
 # --- Helper untuk BuildingManager ---
 
@@ -185,16 +263,16 @@ func is_buildable(cell: Vector2i) -> bool:
 	return is_in_active_area(cell) and (t == TileState.DIRT or t == TileState.GRASS) \
 		and not facilities.has_facility(cell)
 
-## Air alami: sumber air, sumur bor, atau genangan banjir (bukan kanal galian).
+## Sumber air alami atau sumur bor (dasar sungai/danau), berair ataupun sedang kering.
 func is_natural_water(cell: Vector2i) -> bool:
-	return grid_data.get(cell, -1) == TileState.WATER and not dug.has(cell)
+	return grid_data.get(cell, -1) == TileState.WATER
 
-## Bangunan teraliri kalau salah satu dari 8 tetangganya WATER yang
-## sama tinggi atau lebih tinggi (air tidak bisa naik).
+## Bangunan teraliri kalau salah satu dari 8 tetangganya kanal/sumber yang berair
+## dan sama tinggi atau lebih tinggi (air tidak bisa naik).
 func is_cell_supplied(cell: Vector2i) -> bool:
 	for n in NEIGHBORS_8:
 		var c := world.get_neighbor_cell(cell, n)
-		if grid_data.get(c, -1) == TileState.WATER and get_elev(c) >= get_elev(cell):
+		if water.is_channel(c) and water.is_wet(c) and get_elev(c) >= get_elev(cell):
 			return true
 	return false
 
@@ -298,7 +376,7 @@ func setup_camera() -> void:
 # manual di editor. Alternative tile di TileSet menaikkan tekstur ELEV_STEP px per tingkat.
 
 const MAX_ELEV: int = 3
-const ELEV_STEP: float = 6.0  ## harus sama dengan selisih texture_origin antar alternative tile
+const ELEV_STEP: float = 4.0  ## harus sama dengan selisih texture_origin antar alternative tile (dinding tile = 4 px)
 const ELEV_NAMES := ["Garis pantai", "Dataran rendah", "Dataran menengah", "Dataran tinggi"]
 
 func get_elev(cell: Vector2i) -> int:
@@ -306,7 +384,7 @@ func get_elev(cell: Vector2i) -> int:
 
 func set_elev(cell: Vector2i, h: int) -> void:
 	elevation[cell] = clampi(h, 0, MAX_ELEV)
-	world.set_cell(cell, main_source_id, Vector2i(grid_data[cell], 0), elevation[cell])
+	water.refresh_cell(cell)
 
 ## Cari tile di bawah kursor dengan memperhitungkan tile yang terangkat.
 ## Tile paling depan (baris terbesar) yang cocok dengan tingginya yang dipilih.
@@ -329,14 +407,22 @@ var current_tool: int = Tool.GALI
 
 func set_tool(t: int) -> void:
 	current_tool = t
-	var btns := [btn_gali, btn_ratakan, btn_timbun, btn_jembatan, btn_bor, btn_bendungan, btn_spillway]
-	for i in btns.size():
-		btns[i].set_pressed_no_signal(i == t)
+	hud.select_tool(t)
 	update_hud()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if demo_mode:
+		return
+	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
+		Engine.time_scale = 1.0
+		get_tree().change_scene_to_file(MENU_SCENE)
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE and not game_over:
+		hud.toggle_pause()
+		return
 	if game_over:
 		if event is InputEventKey and event.pressed and event.physical_keycode == KEY_R:
+			Engine.time_scale = 1.0
 			get_tree().reload_current_scene()
 		return
 
@@ -366,12 +452,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				if not right: perform_filling(cell)
 			Tool.JEMBATAN:
 				if not right and roads.build_bridge(cell):
-					update_water()
 					update_hud()
 			Tool.BOR, Tool.BENDUNGAN, Tool.SPILLWAY:
 				var kind: int = current_tool - Tool.BOR  # urutan sama dengan FacilityManager.Kind
 				if not right and facilities.place(kind, cell):
-					update_water()
 					update_hud()
 
 ## Gali: tanah (DIRT/GRASS) -> kanal.
@@ -381,110 +465,102 @@ func perform_digging(cell_pos: Vector2i) -> void:
 	var current_state = grid_data[cell_pos]
 	if current_state == TileState.DIRT or current_state == TileState.GRASS:
 		dug[cell_pos] = true
-		change_tile_state(cell_pos, TileState.CANAL)
-		update_water()
+		set_base(cell_pos, TileState.CANAL)
 
 ## Ratakan: turunkan (klik kiri) / naikkan (klik kanan) satu tingkat.
 ## Berlaku untuk tanah dan kanal galian, tidak untuk sumber air alami atau bangunan.
 func perform_leveling(cell_pos: Vector2i, delta_h: int) -> void:
 	if buildings.has_building(cell_pos) or roads.is_road(cell_pos) or facilities.has_facility(cell_pos):
 		return
-	if is_natural_water(cell_pos) or weather.is_dried(cell_pos):
+	if is_natural_water(cell_pos):
 		return
 	var h := clampi(get_elev(cell_pos) + delta_h, 0, MAX_ELEV)
 	if h == get_elev(cell_pos):
 		return
 	set_elev(cell_pos, h)
-	update_water()
 
 ## Timbun: tutup kanal galian (kering atau berair) jadi tanah lagi.
 func perform_filling(cell_pos: Vector2i) -> void:
 	if facilities.has_facility(cell_pos):
 		facilities.remove(cell_pos)
-		update_water()
 		update_hud()
 		return
 	if roads.bridges.has(cell_pos):
 		roads.remove_bridge(cell_pos)
-		update_water()
+		water.clear_water(cell_pos)
 		return
 	if not dug.has(cell_pos):
 		return
 	dug.erase(cell_pos)
-	change_tile_state(cell_pos, TileState.DIRT)
-	update_water()
+	set_base(cell_pos, TileState.DIRT)
+	water.clear_water(cell_pos)
 
-func change_tile_state(cell_pos: Vector2i, new_state: int) -> void:
+## Ganti jenis dasar petak (tanah, kanal, jalan, dasar sungai).
+## Tile yang tampil ditentukan WaterSim dari jenis dasar + kedalaman air.
+func set_base(cell_pos: Vector2i, new_state: int) -> void:
 	grid_data[cell_pos] = new_state
-	world.set_cell(cell_pos, main_source_id, Vector2i(new_state, 0), get_elev(cell_pos))
+	if new_state == TileState.DIRT or new_state == TileState.GRASS:
+		land_class[cell_pos] = LandClass.DRY if new_state == TileState.DIRT else LandClass.NEAR
+		land_variant.erase(cell_pos)
+	water.refresh_cell(cell_pos)
 
-# --- Aliran air dengan gravitasi ---
-# Sumber = WATER alami (bukan galian). Air mengalir dari satu petak ke petak kanal
-# di sebelahnya hanya kalau kanal itu SAMA TINGGI atau LEBIH RENDAH.
+## Jenis petak dari koordinat atlas (dipakai saat membaca peta dari editor).
+func atlas_to_state(source: int, a: Vector2i) -> int:
+	if source == SRC_WATER_ROAD:
+		return a.x  # urutan tile lama sama dengan TileState: tanah, kanal, rumput, air, jalan
+	return TileState.DIRT if a.y == 0 else TileState.GRASS  # terrain_tiles: semuanya daratan
 
-## Kanal yang bisa dicapai air dari sumber alami mengikuti gravitasi.
-func compute_reachable() -> Dictionary:
-	var reach := {}
-	var queue: Array[Vector2i] = []
-	for c in dug:
-		if is_in_active_area(c):
-			for n in world.get_surrounding_cells(c):
-				if is_in_active_area(n) and grid_data.get(n, -1) == TileState.WATER \
-						and not dug.has(n) and get_elev(n) >= get_elev(c):
-					reach[c] = true
-					queue.append(c)
-					break
-	while not queue.is_empty():
-		var c: Vector2i = queue.pop_back()
-		for n in world.get_surrounding_cells(c):
-			if dug.has(n) and not reach.has(n) and is_in_active_area(n) and get_elev(n) <= get_elev(c):
-				reach[n] = true
-				queue.append(n)
-	return reach
+## Dipanggil WaterSim saat kelas daratan sebuah petak berubah.
+func set_land_class(cell_pos: Vector2i, cls: int, dist: int) -> void:
+	land_class[cell_pos] = cls
+	land_dist[cell_pos] = dist
+	grid_data[cell_pos] = TileState.DIRT if cls == LandClass.DRY else TileState.GRASS
+	land_variant.erase(cell_pos)
+	water.refresh_cell(cell_pos)
 
-## Kanal yang punya tetangga berair dengan posisi sama tinggi / lebih tinggi.
-func has_feeder(cell: Vector2i) -> bool:
-	for n in world.get_surrounding_cells(cell):
-		if is_in_active_area(n) and grid_data.get(n, -1) == TileState.WATER and get_elev(n) >= get_elev(cell):
-			return true
-	return false
+func _pick(weights: Array) -> int:
+	var total := 0
+	for w in weights:
+		total += w
+	var r := randi() % total
+	var i := 0
+	while r >= weights[i]:
+		r -= weights[i]
+		i += 1
+	return i
 
-## Dipanggil setiap kali peta berubah. Kanal yang terputus langsung kering,
-## kanal yang tersambung terisi bertahap per gelombang 0,5 detik.
-func update_water() -> void:
-	var reach := compute_reachable()
-	for c in dug:
-		if grid_data[c] == TileState.WATER and not reach.has(c):
-			change_tile_state(c, TileState.CANAL)
-	for c in reach:
-		if grid_data[c] == TileState.CANAL and has_feeder(c):
-			flow_queue[c] = true
-	if not is_flowing and not flow_queue.is_empty():
-		process_flow_queue()
+## Varian tile daratan untuk petak ini, sesuai kelasnya; dipilih acak sekali lalu diingat.
+func _land_atlas(cell_pos: Vector2i, state: int) -> Vector2i:
+	if land_variant.has(cell_pos):
+		return land_variant[cell_pos]
+	var cls: int = land_class.get(cell_pos, LandClass.DRY if state == TileState.DIRT else LandClass.NEAR)
+	var v: Vector2i
+	match cls:
+		LandClass.DRY:
+			v = Vector2i(_pick(DRY_WEIGHTS), 0)
+		LandClass.COURTYARD:
+			v = Vector2i(COURTYARD_COLS[_pick(COURTYARD_WEIGHTS)], 3)
+		_:
+			# makin dekat air makin hijau terang (baris 1), agak jauh lebih gelap (baris 2)
+			var row := 1 if land_dist.get(cell_pos, 1) <= 1 else 2
+			if randf() > 0.7:
+				row = 3 - row
+			v = Vector2i(_pick(NEAR_WEIGHTS), row)
+	land_variant[cell_pos] = v
+	return v
 
-func process_flow_queue() -> void:
-	is_flowing = true
-
-	while not flow_queue.is_empty():
-		var current_batch = flow_queue.keys()
-		flow_queue.clear()
-
-		var changes_made = false
-
-		for cell in current_batch:
-			if grid_data.get(cell, -1) == TileState.CANAL and dug.has(cell) and has_feeder(cell):
-				change_tile_state(cell, TileState.WATER)
-				changes_made = true
-
-				for n in world.get_surrounding_cells(cell):
-					if not grid_data.has(n) or not is_in_active_area(n):
-						continue
-					if grid_data[n] == TileState.CANAL and dug.has(n) and get_elev(n) <= get_elev(cell):
-						flow_queue[n] = true
-					elif grid_data[n] == TileState.DIRT and not buildings.has_building(n):
-						change_tile_state(n, TileState.GRASS)
-
-		if changes_made:
-			await get_tree().create_timer(0.5).timeout
-
-	is_flowing = false
+## Dipanggil WaterSim untuk menggambar tile. `tile` = jenis yang tampil (TileState).
+func show_tile(cell_pos: Vector2i, tile: int) -> void:
+	var source := SRC_WATER_ROAD
+	var atlas: Vector2i
+	match tile:
+		TileState.WATER:
+			atlas = ATLAS_WATER
+		TileState.CANAL:
+			atlas = ATLAS_CANAL_DRY
+		TileState.ROAD:
+			atlas = ATLAS_ROAD
+		_:
+			source = SRC_TERRAIN
+			atlas = _land_atlas(cell_pos, tile)
+	world.set_cell(cell_pos, source, atlas, get_elev(cell_pos))

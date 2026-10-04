@@ -1,0 +1,95 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://ui/tool_card.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/card.png" id="2_card"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/card_hover.png" id="3_hover"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/card_selected.png" id="4_sel"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/badge.png" id="5_badge"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBox_card"]
+texture = ExtResource("2_card")
+texture_margin_left = 5.0
+texture_margin_top = 5.0
+texture_margin_right = 5.0
+texture_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBox_hover"]
+texture = ExtResource("3_hover")
+texture_margin_left = 5.0
+texture_margin_top = 5.0
+texture_margin_right = 5.0
+texture_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBox_selected"]
+texture = ExtResource("4_sel")
+texture_margin_left = 5.0
+texture_margin_top = 5.0
+texture_margin_right = 5.0
+texture_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBox_badge"]
+content_margin_left = 2.0
+content_margin_right = 2.0
+texture = ExtResource("5_badge")
+texture_margin_left = 3.0
+texture_margin_top = 3.0
+texture_margin_right = 3.0
+texture_margin_bottom = 3.0
+
+[node name="ToolCard" type="Button"]
+custom_minimum_size = Vector2(60, 62)
+focus_mode = 0
+theme_override_styles/normal = SubResource("StyleBox_card")
+theme_override_styles/hover = SubResource("StyleBox_hover")
+theme_override_styles/pressed = SubResource("StyleBox_selected")
+theme_override_styles/hover_pressed = SubResource("StyleBox_selected")
+toggle_mode = true
+script = ExtResource("1_script")
+
+[node name="Icon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 6.0
+offset_right = 46.0
+offset_bottom = 38.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 40.0
+offset_right = 59.0
+offset_bottom = 58.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.24, 0.22, 0.2, 1)
+theme_override_font_sizes/font_size = 9
+text = "Alat"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Hotkey" type="Label" parent="."]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+offset_right = 14.0
+offset_bottom = 13.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.5, 0.47, 0.42, 1)
+theme_override_font_sizes/font_size = 8
+text = "1"
+
+[node name="Stock" type="Label" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 42.0
+offset_top = 2.0
+offset_right = 58.0
+offset_bottom = 13.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("StyleBox_badge")
+text = "0"
+horizontal_alignment = 1
