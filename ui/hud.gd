@@ -33,6 +33,7 @@ const TIP_INFO := Color(0.45, 0.42, 0.38)
 @onready var legend_height: Control = $Root/Legend/VBox/Height
 @onready var legend_water: Control = $Root/Legend/VBox/Water
 @onready var end_overlay: ColorRect = $Overlay
+@onready var pause_menu = $Root/PauseMenu
 @onready var end_message: Label = $Overlay/Message
 @onready var cards: Array = [
 	$Root/ActionMenu/Tools/Gali, $Root/ActionMenu/Tools/Ratakan, $Root/ActionMenu/Tools/Timbun,
@@ -46,6 +47,8 @@ func setup(w) -> void:
 	world = w
 	for i in cards.size():
 		cards[i].pressed.connect(world.set_tool.bind(i))
+	pause_menu.setup(world)
+	$Root/TopRight/HBox/Menu.pressed.connect(pause_menu.open)
 	btn_pause.pressed.connect(set_speed.bind(0.0))
 	btn_play.pressed.connect(set_speed.bind(1.0))
 	btn_fast.pressed.connect(set_speed.bind(2.0))
@@ -55,6 +58,7 @@ func setup(w) -> void:
 	end_overlay.hide()
 	set_speed(1.0)
 	_update_legend()
+	$Root/DebugHint.visible = world.debug_enabled()
 
 # --- Kecepatan ---
 
@@ -115,7 +119,7 @@ func refresh() -> void:
 			var wt: int = W.weather.weather_for(d)
 			slot.get_node("Icon").texture = W.weather.icon_for(wt)
 			slot.get_node("Label").text = "H%d" % d
-			slot.tooltip_text = "Hari %d: %s" % [d, W.weather.NAMES[wt]]
+			slot.tooltip_text = "Hari %d: %s" % [d, W.weather.describe(d)]
 	var S = W.score
 	points_bar.value = S.progress()
 	points_label.text = "%d/%d" % [int(S.total), S.target_points]
@@ -142,7 +146,8 @@ func _mouse_over_ui() -> bool:
 
 func _update_tooltip() -> void:
 	var cell: Vector2i = world.hover_cell
-	if world.game_over or not world.hover_valid or _mouse_over_ui():
+	if world.game_over or not world.hover_valid or _mouse_over_ui() or pause_menu.visible \
+			or not (GameSettings.get_value("tooltips") or world.dragging):
 		tooltip.hide()
 		return
 	var info: Dictionary = world.tile_info(cell)

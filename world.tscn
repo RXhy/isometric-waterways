@@ -15,6 +15,10 @@
 [ext_resource type="PackedScene" path="res://scenes/kincir.tscn" id="10b_kincir"]
 [ext_resource type="TileSetAtlasSource" path="res://assets/water/water_flow_source.tres" id="39_flow"]
 [ext_resource type="TileSet" path="res://assets/water/water_edge_tileset.tres" id="40_edge"]
+[ext_resource type="Script" path="res://balance_log.gd" id="42_log"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="43_pause"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/ic_menu.png" id="44_ic_menu"]
+[ext_resource type="TileSet" path="res://assets/ui/drag_preview_tileset.tres" id="45_drag"]
 [ext_resource type="Texture2D" path="res://assets/placeholder/icons/kincir.png" id="21b_ic_kincir"]
 [ext_resource type="Texture2D" uid="uid://bk2y5lriirads" path="res://assets/placeholder/hujan.png" id="11_rain"]
 [ext_resource type="Script" uid="uid://dtrxfee8qb6ka" path="res://water_sim.gd" id="12_water"]
@@ -507,6 +511,10 @@ tile_set = ExtResource("40_edge")
 tile_set = SubResource("TileSet_overlay")
 script = ExtResource("28_overlay")
 
+[node name="DragPreview" type="TileMapLayer" parent="."]
+z_index = 2
+tile_set = ExtResource("45_drag")
+
 [node name="Cursor" type="Sprite2D" parent="." unique_id=999617222]
 texture = ExtResource("30_cursor")
 
@@ -530,6 +538,9 @@ kincir_scene = ExtResource("10b_kincir")
 [node name="Weather" type="Node" parent="." unique_id=1561809964]
 script = ExtResource("5_weather")
 icons = Array[Texture2D]([ExtResource("22_ic_cerah"), ExtResource("23_ic_kemarau"), ExtResource("24_ic_hujan")])
+
+[node name="BalanceLog" type="Node" parent="."]
+script = ExtResource("42_log")
 
 [node name="Water" type="Node" parent="." unique_id=984378702]
 script = ExtResource("12_water")
@@ -672,6 +683,17 @@ grow_horizontal = 0
 [node name="HBox" type="HBoxContainer" parent="HUD/Root/TopRight"]
 layout_mode = 2
 theme_override_constants/separation = 2
+
+[node name="Menu" type="Button" parent="HUD/Root/TopRight/HBox"]
+custom_minimum_size = Vector2(18, 16)
+layout_mode = 2
+tooltip_text = "Menu & pengaturan (Esc)"
+focus_mode = 0
+icon = ExtResource("44_ic_menu")
+icon_alignment = 1
+
+[node name="SepMenu" type="VSeparator" parent="HUD/Root/TopRight/HBox"]
+layout_mode = 2
 
 [node name="Pause" type="Button" parent="HUD/Root/TopRight/HBox"]
 custom_minimum_size = Vector2(18, 16)
@@ -948,6 +970,24 @@ title = "Kincir"
 hotkey = "8"
 show_stock = true
 
+[node name="DebugHint" type="Label" parent="HUD/Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = -32.0
+offset_right = 104.0
+offset_bottom = -3.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.8)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 7
+text = "DEBUG\nF1 hari+1   F2 cuaca\nF3 stok   F4 folder log"
+
 [node name="LayerButton" type="Button" parent="HUD/Root" unique_id=742912708]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 1
@@ -1146,6 +1186,9 @@ stretch_mode = 5
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
 text = "Dangkal (< 0.2)"
+
+[node name="PauseMenu" parent="HUD/Root" instance=ExtResource("43_pause")]
+layout_mode = 1
 
 [node name="Overlay" type="ColorRect" parent="HUD" unique_id=1050334264]
 anchors_preset = 15

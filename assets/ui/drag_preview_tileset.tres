@@ -1,0 +1,46 @@
+[gd_resource type="TileSet" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/cursor_tile.png" id="1_5ibtq"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7r2qw"]
+texture = ExtResource("1_5ibtq")
+texture_region_size = Vector2i(32, 16)
+0:0/next_alternative_id = 12
+0:0/0 = 0
+0:0/0/modulate = Color(0.45, 1, 0.5, 0.95)
+0:0/1 = 1
+0:0/1/texture_origin = Vector2i(0, 4)
+0:0/1/modulate = Color(0.45, 1, 0.5, 0.95)
+0:0/2 = 2
+0:0/2/texture_origin = Vector2i(0, 8)
+0:0/2/modulate = Color(0.45, 1, 0.5, 0.95)
+0:0/3 = 3
+0:0/3/texture_origin = Vector2i(0, 12)
+0:0/3/modulate = Color(0.45, 1, 0.5, 0.95)
+0:0/4 = 4
+0:0/4/modulate = Color(1, 0.4, 0.35, 0.95)
+0:0/5 = 5
+0:0/5/texture_origin = Vector2i(0, 4)
+0:0/5/modulate = Color(1, 0.4, 0.35, 0.95)
+0:0/6 = 6
+0:0/6/texture_origin = Vector2i(0, 8)
+0:0/6/modulate = Color(1, 0.4, 0.35, 0.95)
+0:0/7 = 7
+0:0/7/texture_origin = Vector2i(0, 12)
+0:0/7/modulate = Color(1, 0.4, 0.35, 0.95)
+0:0/8 = 8
+0:0/8/modulate = Color(1, 1, 1, 0.45)
+0:0/9 = 9
+0:0/9/texture_origin = Vector2i(0, 4)
+0:0/9/modulate = Color(1, 1, 1, 0.45)
+0:0/10 = 10
+0:0/10/texture_origin = Vector2i(0, 8)
+0:0/10/modulate = Color(1, 1, 1, 0.45)
+0:0/11 = 11
+0:0/11/texture_origin = Vector2i(0, 12)
+0:0/11/modulate = Color(1, 1, 1, 0.45)
+
+[resource]
+tile_shape = 1
+tile_size = Vector2i(32, 16)
+sources/0 = SubResource("TileSetAtlasSource_7r2qw")

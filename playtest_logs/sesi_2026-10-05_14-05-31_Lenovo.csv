@@ -1,0 +1,7 @@
+# WATERWAYS playtest | sesi 2026-10-05_14-05-31 | penguji Lenovo | seed 299606 | hari 8 x 30 detik | target 600 poin
+jenis,hari,detik_game,jam_nyata,cuaca,tingkat_kemarau,poin_total,poin_hari_ini,poin_bangunan,poin_kincir,poin_bonus,poin_jembatan,bangunan_total,hidup,terancam,hancur,sekop_terpakai_hari_ini,sekop_sisa,kanal_digali,persen_kanal_berair,stok_bor,stok_bendungan,stok_spillway,stok_kincir,pasang_bor,pasang_bendungan,pasang_spillway,pasang_kincir,jembatan,keterangan
+AKHIR_HARI,1,30.0,14:06:02,Cerah,0,41,41,21,0,20,0,2,2,0,0,8,7,8,100,1,0,0,3,0,0,0,0,0,
+AKHIR_HARI,2,60.0,14:06:32,Cerah,0,133,91,73,0,60,0,4,4,0,0,8,7,16,100,2,0,0,3,0,0,0,0,0,
+AKHIR_HARI,3,90.0,14:07:02,Kemarau,1,287,154,157,0,130,0,7,7,0,0,15,0,31,96,2,0,0,4,0,0,0,0,0,
+AKHIR_HARI,4,120.0,14:07:32,Cerah,0,500,213,267,0,230,3,10,8,2,0,10,5,37,97,2,3,1,4,0,0,0,0,1,
+AKHIR,5,144.9,14:07:57,Hujan lebat,0,600,99,367,0,230,3,14,14,0,0,0,15,37,97,3,3,1,4,0,0,0,0,1,MENANG target tercapai
