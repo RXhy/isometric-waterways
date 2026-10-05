@@ -1,7 +1,8 @@
 extends CanvasLayer
 ## HUD permainan (node HUD di world.tscn). Tampilan diatur di scene + ui/hud_theme.tres;
 ## script ini hanya mengisi angka dan menanggapi tombol.
-##   Bar atas     : kecepatan, hari, prakiraan cuaca 3 hari, poin (klik = rincian), bangunan hancur
+##   Kiri atas    : poin (klik = rincian) + bangunan hancur   |  Kanan atas: kecepatan
+##   Tab bawah    : hari + prakiraan cuaca 3 hari (di atas toolbar, gaya Terra Nil)
 ##   Bawah        : kartu alat + tombol Lapisan (overlay) dengan legenda
 ##   Dekat kursor : tooltip info petak + pratinjau aksi alat
 
@@ -9,17 +10,17 @@ const TIP_OK := Color(0.18, 0.5, 0.2)
 const TIP_BAD := Color(0.75, 0.2, 0.15)
 const TIP_INFO := Color(0.45, 0.42, 0.38)
 
-@onready var btn_pause: Button = $Root/TopBar/HBox/Pause
-@onready var btn_play: Button = $Root/TopBar/HBox/Play
-@onready var btn_fast: Button = $Root/TopBar/HBox/Fast
-@onready var day_label: Label = $Root/TopBar/HBox/Day
-@onready var day_bar: ProgressBar = $Root/TopBar/HBox/DayBar
-@onready var weather_slots: Array = [$Root/TopBar/HBox/Weather/D0, $Root/TopBar/HBox/Weather/D1, $Root/TopBar/HBox/Weather/D2]
-@onready var weather_arrows: Array = [$Root/TopBar/HBox/Weather/A1, $Root/TopBar/HBox/Weather/A2]
-@onready var points_button: Button = $Root/TopBar/HBox/Points
-@onready var points_bar: ProgressBar = $Root/TopBar/HBox/Points/HBox/Bar
-@onready var points_label: Label = $Root/TopBar/HBox/Points/HBox/Value
-@onready var ruin_label: Label = $Root/TopBar/HBox/Ruin
+@onready var btn_pause: Button = $Root/TopRight/HBox/Pause
+@onready var btn_play: Button = $Root/TopRight/HBox/Play
+@onready var btn_fast: Button = $Root/TopRight/HBox/Fast
+@onready var day_label: Label = $Root/Tabs/DayTab/HBox/Day
+@onready var day_bar: ProgressBar = $Root/Tabs/DayTab/HBox/DayBar
+@onready var weather_slots: Array = [$Root/Tabs/WeatherTab/Weather/D0, $Root/Tabs/WeatherTab/Weather/D1, $Root/Tabs/WeatherTab/Weather/D2]
+@onready var weather_arrows: Array = [$Root/Tabs/WeatherTab/Weather/A1, $Root/Tabs/WeatherTab/Weather/A2]
+@onready var points_button: Button = $Root/TopLeft/HBox/Points
+@onready var points_bar: ProgressBar = $Root/TopLeft/HBox/Points/HBox/Bar
+@onready var points_label: Label = $Root/TopLeft/HBox/Points/HBox/Value
+@onready var ruin_label: Label = $Root/TopLeft/HBox/Ruin
 @onready var points_popup: PanelContainer = $Root/PointsPopup
 @onready var popup_lines: Label = $Root/PointsPopup/VBox/Lines
 @onready var tooltip: PanelContainer = $Root/Tooltip
@@ -36,7 +37,7 @@ const TIP_INFO := Color(0.45, 0.42, 0.38)
 @onready var cards: Array = [
 	$Root/ActionMenu/Tools/Gali, $Root/ActionMenu/Tools/Ratakan, $Root/ActionMenu/Tools/Timbun,
 	$Root/ActionMenu/Tools/Jembatan, $Root/ActionMenu/Tools/Bor, $Root/ActionMenu/Tools/Bendungan,
-	$Root/ActionMenu/Tools/Spillway,
+	$Root/ActionMenu/Tools/Spillway, $Root/ActionMenu/Tools/Kincir,
 ]
 
 var world
@@ -117,7 +118,7 @@ func refresh() -> void:
 			slot.tooltip_text = "Hari %d: %s" % [d, W.weather.NAMES[wt]]
 	var S = W.score
 	points_bar.value = S.progress()
-	points_label.text = "%d / %d" % [int(S.total), S.target_points]
+	points_label.text = "%d/%d" % [int(S.total), S.target_points]
 	ruin_label.text = "%d/%d" % [W.buildings.destroyed_count, W.damage_quota]
 	if points_popup.visible:
 		var lines := ""
@@ -126,10 +127,13 @@ func refresh() -> void:
 		lines += "Hari ini: +%d\n" % int(S.today)
 		lines += "Total: %d / %d  (%d%%)" % [int(S.total), S.target_points, int(S.progress() * 100.0)]
 		popup_lines.text = lines
+	for i in 3:
+		cards[i].set_stock(W.shovel)
 	cards[3].set_stock(W.roads.bridge_stock)
 	cards[4].set_stock(W.facilities.stock[W.facilities.Kind.BOR])
 	cards[5].set_stock(W.facilities.stock[W.facilities.Kind.BENDUNGAN])
 	cards[6].set_stock(W.facilities.stock[W.facilities.Kind.SPILLWAY])
+	cards[7].set_stock(W.facilities.stock[W.facilities.Kind.KINCIR])
 	_update_tooltip()
 
 func _mouse_over_ui() -> bool:
@@ -154,7 +158,7 @@ func _update_tooltip() -> void:
 	var pos := mp + Vector2(12, 14)
 	if pos.x + tooltip.size.x > vs.x - 4:
 		pos.x = mp.x - tooltip.size.x - 8
-	if pos.y + tooltip.size.y > vs.y - 84:
+	if pos.y + tooltip.size.y > vs.y - 72:
 		pos.y = mp.y - tooltip.size.y - 8
 	tooltip.position = pos
 

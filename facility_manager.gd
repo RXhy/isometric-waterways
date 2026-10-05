@@ -1,18 +1,22 @@
 extends Node2D
-## Fasilitas mitigasi: Mesin Bor, Bendungan, Spillway.
+## Fasilitas: Mesin Bor, Bendungan, Spillway (mitigasi cuaca) dan Kincir Air (penghasil poin).
 ## Tampilan tiap fasilitas ada di scenes/*.tscn (diatur lewat Inspector).
 
-enum Kind { BOR, BENDUNGAN, SPILLWAY }
-const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway"]
+enum Kind { BOR, BENDUNGAN, SPILLWAY, KINCIR }
+const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway", "Kincir Air"]
 
 @export var bor_scene: PackedScene
 @export var bendungan_scene: PackedScene
 @export var spillway_scene: PackedScene
-@export var start_stock: Array[int] = [1, 0, 0]  ## stok awal [Bor, Bendungan, Spillway]
-@export var stock_per_forecast: Array[int] = [1, 3, 1]  ## tambahan stok [Bor, Bendungan, Spillway] saat prakiraan cuaca buruk
+@export var kincir_scene: PackedScene
+@export var start_stock: Array[int] = [1, 0, 0, 2]  ## stok awal [Bor, Bendungan, Spillway, Kincir]
+@export var stock_per_forecast: Array[int] = [1, 3, 1, 1]  ## tambahan stok [Bor, Bendungan, Spillway, Kincir]; Kincir bertambah saat besok Cerah
+@export_group("Kincir Air")
+@export var kincir_full_flux: float = 0.1        ## debit (kedalaman/detik) yang membuat kincir berputar penuh
+@export var kincir_points_per_second: float = 1.0 ## poin per detik saat berputar penuh
 
 var world
-var stock: Array[int] = [0, 0, 0]
+var stock: Array[int] = [0, 0, 0, 0]
 var facilities: Dictionary = {}  # Vector2i -> {"kind": int, "node": Node2D}
 
 func setup(w) -> void:
@@ -32,6 +36,8 @@ func on_forecast(weather: int) -> void:
 	elif weather == world.weather.Weather.HUJAN:
 		stock[Kind.BENDUNGAN] += stock_per_forecast[Kind.BENDUNGAN]
 		stock[Kind.SPILLWAY] += stock_per_forecast[Kind.SPILLWAY]
+	else:
+		stock[Kind.KINCIR] += stock_per_forecast[Kind.KINCIR]
 
 ## Alasan fasilitas tidak bisa dipasang di petak ini ("" kalau bisa). Dipakai tooltip HUD.
 func why_not(kind: int, cell: Vector2i) -> String:
@@ -44,6 +50,11 @@ func why_not(kind: int, cell: Vector2i) -> String:
 	var t: int = world.grid_data.get(cell, -1)
 	var land: bool = t == world.TileState.DIRT or t == world.TileState.GRASS
 	match kind:
+		Kind.KINCIR:
+			if not world.water.is_channel(cell):
+				return "Hanya di kanal atau sungai"
+			if world.water.wells.has(cell):
+				return "Petak sudah terisi"
 		Kind.BENDUNGAN:
 			if not (land or world.dug.has(cell)):
 				return "Hanya di tanah atau melintang kanal"
@@ -65,6 +76,9 @@ func can_place(kind: int, cell: Vector2i) -> bool:
 	var t: int = world.grid_data.get(cell, -1)
 	var land: bool = t == world.TileState.DIRT or t == world.TileState.GRASS
 	match kind:
+		Kind.KINCIR:
+			# kincir dipasang di air (kanal galian atau sungai/danau), tidak menghalangi aliran
+			return world.water.is_channel(cell) and not world.water.wells.has(cell)
 		Kind.BENDUNGAN:
 			# tanggul/bendungan boleh di tanah atau melintang di kanal galian
 			return land or world.dug.has(cell)
@@ -76,7 +90,7 @@ func place(kind: int, cell: Vector2i) -> bool:
 	if not can_place(kind, cell):
 		return false
 	stock[kind] -= 1
-	var scene: PackedScene = [bor_scene, bendungan_scene, spillway_scene][kind]
+	var scene: PackedScene = [bor_scene, bendungan_scene, spillway_scene, kincir_scene][kind]
 	var node: Node2D = scene.instantiate()
 	node.position = to_local(world.cell_to_global(cell))
 	add_child(node)
@@ -93,6 +107,8 @@ func place(kind: int, cell: Vector2i) -> bool:
 			world.set_base(cell, world.TileState.CANAL)
 			world.water.set_drain(cell, true)
 			world.weather.apply_targets()
+		Kind.KINCIR:
+			world.water.watch_flux(cell, true)
 	return true
 
 ## Timbun fasilitas: dibongkar, stok dikembalikan.
@@ -112,6 +128,29 @@ func remove(cell: Vector2i) -> void:
 			world.set_base(cell, f["prev"])
 			world.water.clear_water(cell)
 			world.weather.apply_targets()
+		Kind.KINCIR:
+			world.water.watch_flux(cell, false)
 
 func is_well(cell: Vector2i) -> bool:
 	return kind_at(cell) == Kind.BOR
+
+# --- Kincir Air ---
+
+## Putaran kincir di petak ini, 0..1 (1 = debit penuh).
+func kincir_power(cell: Vector2i) -> float:
+	return clampf(world.water.get_flux(cell) / kincir_full_flux, 0.0, 1.0)
+
+## Total poin per detik dari semua kincir saat ini.
+func kincir_points_rate() -> float:
+	var total := 0.0
+	for c in facilities:
+		if facilities[c]["kind"] == Kind.KINCIR:
+			total += kincir_power(c) * kincir_points_per_second
+	return total
+
+func _process(_delta: float) -> void:
+	if world == null:
+		return
+	for c in facilities:
+		if facilities[c]["kind"] == Kind.KINCIR:
+			facilities[c]["node"].set_power(kincir_power(c))

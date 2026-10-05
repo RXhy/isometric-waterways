@@ -7,7 +7,7 @@ extends Node
 @export var day_bonus_per_building: int = 10  ## bonus akhir hari per bangunan yang masih berdiri
 @export var bridge_bonus_per_day: int = 3     ## bonus akhir hari per jembatan terpasang
 
-const SOURCES := ["Bangunan teraliri", "Bonus akhir hari", "Jembatan"]
+const SOURCES := ["Bangunan teraliri", "Kincir air", "Bonus akhir hari", "Jembatan"]
 
 var world
 var by_source: Dictionary = {}  # sumber -> poin
@@ -34,6 +34,9 @@ func _process(delta: float) -> void:
 			n += 1
 	if n > 0:
 		add("Bangunan teraliri", n * supplied_per_second * delta)
+	var k: float = world.facilities.kincir_points_rate()
+	if k > 0.0:
+		add("Kincir air", k * delta)
 
 ## Dipanggil di akhir setiap hari.
 func end_of_day() -> void:

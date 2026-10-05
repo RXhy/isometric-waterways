@@ -66,7 +66,7 @@ func has_building(cell: Vector2i) -> bool:
 	return buildings.has(cell)
 
 func try_spawn() -> bool:
-	var area: Rect2i = world.active_area
+	var area: Rect2i = world.spawn_area  # bangunan hanya muncul di area inti, tidak di bawah UI
 	var max_dist := int(round(lerp(float(max_water_distance_start), float(max_water_distance_end), progress())))
 	for i in 150:
 		var cell := Vector2i(
