@@ -16,6 +16,10 @@ extends Button
 	set(value):
 		hotkey = value
 		_apply()
+@export var show_title: bool = false:  ## tampilkan nama alat di kartu (default: nama muncul di tooltip saat hover, gaya Terra Nil)
+	set(value):
+		show_title = value
+		_apply()
 @export var show_stock: bool = false:  ## tampilkan lencana stok (untuk alat yang jumlahnya terbatas)
 	set(value):
 		show_stock = value
@@ -29,7 +33,9 @@ func _apply() -> void:
 		return
 	$Icon.texture = icon_texture
 	$Title.text = title
+	$Title.visible = show_title
 	$Hotkey.text = hotkey
+	tooltip_text = "%s  [%s]" % [title, hotkey]
 	$Stock.visible = show_stock
 
 ## Dipanggil HUD untuk memperbarui angka stok. Kartu meredup kalau stok habis.
@@ -37,3 +43,4 @@ func set_stock(n: int) -> void:
 	$Stock.text = str(n)
 	$Stock.visible = show_stock
 	$Icon.modulate = Color(1, 1, 1) if n > 0 else Color(0.45, 0.45, 0.45)
+	$Stock.modulate = Color(1, 1, 1) if n > 0 else Color(1, 0.75, 0.7)
