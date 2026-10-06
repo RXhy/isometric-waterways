@@ -300,21 +300,26 @@ func water_distance(cell: Vector2i, max_r: int) -> int:
 # --- Area bermain acak (AREA_SIZE x AREA_SIZE) ---
 
 func choose_active_area() -> void:
-	var max_origin := MAP_SIZE - AREA_SIZE
-	for i in MAX_ORIGIN_TRIES:
-		var origin := Vector2i(randi_range(0, max_origin), randi_range(0, max_origin))
-		var rect := Rect2i(origin, Vector2i(AREA_SIZE, AREA_SIZE))
-		if area_has_water(rect):
-			active_area = rect
-			return
+	var start_x = 0
+	var start_y = 0
+	active_area = Rect2i(Vector2i(start_x, start_y), Vector2i(AREA_SIZE, AREA_SIZE))
+	return
+
+	# var max_origin := MAP_SIZE - AREA_SIZE
+	# for i in MAX_ORIGIN_TRIES:
+	# 	var origin := Vector2i(randi_range(0, max_origin), randi_range(0, max_origin))
+	# 	var rect := Rect2i(origin, Vector2i(AREA_SIZE, AREA_SIZE))
+	# 	if area_has_water(rect):
+	# 		active_area = rect
+	# 		return
 
 	# Cadangan kalau percobaan acak gagal: ambil area pertama yang ada airnya.
-	for y in range(max_origin + 1):
-		for x in range(max_origin + 1):
-			var rect := Rect2i(Vector2i(x, y), Vector2i(AREA_SIZE, AREA_SIZE))
-			if area_has_water(rect):
-				active_area = rect
-				return
+	# for y in range(max_origin + 1):
+	# 	for x in range(max_origin + 1):
+	# 		var rect := Rect2i(Vector2i(x, y), Vector2i(AREA_SIZE, AREA_SIZE))
+	# 		if area_has_water(rect):
+	# 			active_area = rect
+	# 			return
 
 	push_warning("Tidak ada area %dx%d yang berisi WATER." % [AREA_SIZE, AREA_SIZE])
 	active_area = Rect2i(Vector2i.ZERO, Vector2i(AREA_SIZE, AREA_SIZE))
