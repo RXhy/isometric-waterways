@@ -1,0 +1,31 @@
+# WATERWAYS playtest | sesi 2026-10-06_10-59-05 | penguji Royan | seed 255415 | hari 8 x 30 detik | target 600 poin
+jenis,hari,detik_game,jam_nyata,cuaca,tingkat_kemarau,poin_total,poin_hari_ini,poin_bangunan,poin_kincir,poin_bonus,poin_jembatan,bangunan_total,hidup,terancam,hancur,sekop_terpakai_hari_ini,sekop_sisa,kanal_digali,persen_kanal_berair,stok_bor,stok_bendungan,stok_spillway,stok_kincir,pasang_bor,pasang_bendungan,pasang_spillway,pasang_kincir,jembatan,keterangan
+DEBUG,1,2.0,10:59:07,Kemarau,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Kemarau
+DEBUG,1,2.4,10:59:07,Hujan lebat,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Hujan lebat
+DEBUG,1,2.7,10:59:07,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Cerah
+DEBUG,1,3.0,10:59:08,Kemarau,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Kemarau
+DEBUG,1,3.3,10:59:08,Hujan lebat,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Hujan lebat
+DEBUG,1,3.8,10:59:08,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Cerah
+DEBUG,1,4.4,10:59:09,Kemarau,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Kemarau
+DEBUG,1,6.6,10:59:11,Hujan lebat,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Hujan lebat
+DEBUG,1,7.4,10:59:12,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Cerah
+DEBUG,1,8.2,10:59:13,Kemarau,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Kemarau
+DEBUG,1,8.5,10:59:13,Hujan lebat,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Hujan lebat
+DEBUG,1,8.8,10:59:13,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Cerah
+DEBUG,1,9.1,10:59:14,Kemarau,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Kemarau
+DEBUG,1,9.6,10:59:14,Hujan lebat,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Hujan lebat
+DEBUG,1,10.0,10:59:15,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,15,0,0,1,0,0,3,0,0,0,0,0,F2 cuaca dipaksa Cerah
+DEBUG,1,15.1,10:59:20,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,25,0,0,2,1,1,4,0,0,0,0,0,"F3 +10 sekop, +1 semua stok"
+DEBUG,1,15.7,10:59:20,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,35,0,0,3,2,2,5,0,0,0,0,0,"F3 +10 sekop, +1 semua stok"
+DEBUG,1,16.0,10:59:21,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,45,0,0,4,3,3,6,0,0,0,0,0,"F3 +10 sekop, +1 semua stok"
+DEBUG,1,16.2,10:59:21,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,55,0,0,5,4,4,7,0,0,0,0,0,"F3 +10 sekop, +1 semua stok"
+DEBUG,1,16.4,10:59:21,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,65,0,0,6,5,5,8,0,0,0,0,0,"F3 +10 sekop, +1 semua stok"
+DEBUG,1,16.6,10:59:21,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,75,0,0,7,6,6,9,0,0,0,0,0,"F3 +10 sekop, +1 semua stok"
+DEBUG,1,16.8,10:59:21,Cerah,0,0,0,0,0,0,0,2,2,0,0,0,85,0,0,8,7,7,10,0,0,0,0,0,"F3 +10 sekop, +1 semua stok"
+AKHIR_HARI,1,30.0,10:59:33,Cerah,0,20,20,0,0,20,0,2,1,1,0,24,61,24,54,8,7,7,10,0,0,0,0,0,
+HANCUR,2,38.0,10:59:37,Cerah,0,20,0,0,0,20,0,4,2,1,1,0,15,24,54,8,7,7,11,0,0,0,0,0,"Ladang kekeringan di (9, 8)"
+HANCUR,2,50.0,10:59:43,Cerah,0,20,0,0,0,20,0,4,1,1,2,7,8,31,51,8,7,7,11,0,0,0,0,0,"Rumah kekeringan di (13, 18)"
+HANCUR,2,58.0,10:59:47,Cerah,0,20,0,0,0,20,0,4,0,1,3,15,0,39,69,8,7,7,11,0,0,0,0,0,"Ladang kekeringan di (8, 3)"
+AKHIR_HARI,2,60.0,10:59:48,Cerah,0,30,10,0,0,30,0,4,0,1,3,15,0,39,69,8,7,7,11,0,0,0,0,0,
+HANCUR,3,70.0,10:59:58,Cerah,0,30,0,0,0,30,0,7,3,0,4,0,15,39,69,8,7,7,12,0,0,0,0,0,"Rumah kekeringan di (18, 6)"
+AKHIR,3,82.0,11:00:10,Cerah,0,30,0,0,0,30,0,7,2,1,4,8,7,47,55,8,7,7,12,0,0,0,0,0,DITINGGALKAN kembali ke menu
