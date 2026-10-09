@@ -13,6 +13,7 @@ static var data := {
 	"vol_sfx": 0.8,
 	"fullscreen": false,
 	"tooltips": true,
+	"menu_variant": -1,  # layout main menu terakhir dipilih di layar debug (-1 = default)
 }
 static var _loaded := false
 

@@ -78,7 +78,9 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 ## Tombol debug F1-F4 (hanya aktif di build debug/editor, otomatis mati di export release).
 @export var debug_tools: bool = true
 
-const MENU_SCENE := "res://scenes/main_menu.tscn"
+## Main menu yang dituju saat keluar dari game: varian yang dipilih di layar debug (MenuChoice).
+var MENU_SCENE: String:
+	get: return MenuChoice.scene_path()
 
 var elapsed: float = 0.0
 var game_over: bool = false
@@ -467,6 +469,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
 		if game_over:
+			if _survey_typing():
+				hud.get_node("Overlay/EndSurvey").feedback.release_focus()
+				return
+			_flush_survey()
 			Engine.time_scale = 1.0
 			get_tree().change_scene_to_file(MENU_SCENE)
 		elif dragging:
@@ -482,7 +488,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		hud.toggle_pause()
 		return
 	if game_over:
-		if event is InputEventKey and event.pressed and event.physical_keycode == KEY_R:
+		if event is InputEventKey and event.pressed and event.physical_keycode == KEY_R and not _survey_typing():
+			_flush_survey()
 			balance_log.log_end("DITINGGALKAN", "main ulang")
 			Engine.time_scale = 1.0
 			get_tree().reload_current_scene()
@@ -521,10 +528,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				_start_drag(cell, right)
 			Tool.JEMBATAN:
 				if not right and roads.build_bridge(cell):
+					balance_log.count("pasang_jembatan")
 					update_hud()
 			Tool.BOR, Tool.BENDUNGAN, Tool.SPILLWAY, Tool.KINCIR:
 				var kind: int = current_tool - Tool.BOR  # urutan sama dengan FacilityManager.Kind
 				if not right and facilities.place(kind, cell):
+					balance_log.count("pasang_fasilitas")
 					update_hud()
 
 ## Gali: tanah (DIRT/GRASS) -> kanal.
@@ -535,6 +544,7 @@ func perform_digging(cell_pos: Vector2i) -> void:
 	if (current_state == TileState.DIRT or current_state == TileState.GRASS) and shovel > 0:
 		shovel -= 1
 		shovel_used += 1
+		balance_log.count("gali")
 		dug[cell_pos] = true
 		set_base(cell_pos, TileState.CANAL)
 
@@ -550,22 +560,26 @@ func perform_leveling(cell_pos: Vector2i, delta_h: int) -> void:
 		return
 	shovel -= 1
 	shovel_used += 1
+	balance_log.count("ratakan_naik" if delta_h > 0 else "ratakan_turun")
 	set_elev(cell_pos, h)
 
 ## Timbun: tutup kanal galian (kering atau berair) jadi tanah lagi.
 func perform_filling(cell_pos: Vector2i) -> void:
 	if facilities.has_facility(cell_pos):
 		facilities.remove(cell_pos)
+		balance_log.count("bongkar_fasilitas")
 		update_hud()
 		return
 	if roads.bridges.has(cell_pos):
 		roads.remove_bridge(cell_pos)
+		balance_log.count("lepas_jembatan")
 		water.clear_water(cell_pos)
 		return
 	if not dug.has(cell_pos) or shovel <= 0:
 		return
 	shovel -= 1
 	shovel_used += 1
+	balance_log.count("timbun")
 	dug.erase(cell_pos)
 	set_base(cell_pos, TileState.DIRT)
 	water.clear_water(cell_pos)
@@ -707,6 +721,8 @@ func _finish_drag() -> void:
 	var path := drag_path.duplicate()
 	var status := drag_status.duplicate()
 	cancel_drag()
+	if path.size() > 1:
+		balance_log.count("drag")
 	for i in path.size():
 		if status[i] <= 0:
 			continue
@@ -806,3 +822,15 @@ func _drag_summary() -> Array:
 	if bad > 0:
 		txt += "  |  %d petak merah dilewati" % bad
 	return [1 if n > 0 else -1, txt]
+
+# --- Survei layar akhir ---
+
+func _survey_typing() -> bool:
+	var s = hud.get_node_or_null("Overlay/EndSurvey")
+	return s != null and s.is_typing()
+
+## Simpan isian survei yang belum dikirim sebelum meninggalkan layar akhir.
+func _flush_survey() -> void:
+	var s = hud.get_node_or_null("Overlay/EndSurvey")
+	if s:
+		s.flush()

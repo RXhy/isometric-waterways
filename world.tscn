@@ -19,6 +19,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="43_pause"]
 [ext_resource type="Texture2D" path="res://assets/placeholder/ui/ic_menu.png" id="44_ic_menu"]
 [ext_resource type="TileSet" path="res://assets/ui/drag_preview_tileset.tres" id="45_drag"]
+[ext_resource type="PackedScene" path="res://scenes/ui/end_survey.tscn" id="46_survey"]
 [ext_resource type="Texture2D" path="res://assets/placeholder/icons/kincir.png" id="21b_ic_kincir"]
 [ext_resource type="Texture2D" uid="uid://bk2y5lriirads" path="res://assets/placeholder/hujan.png" id="11_rain"]
 [ext_resource type="Script" uid="uid://dtrxfee8qb6ka" path="res://water_sim.gd" id="12_water"]
@@ -1206,6 +1207,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+offset_bottom = -165.0
 theme_override_colors/font_color = Color(0.97, 0.95, 0.9, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
@@ -1213,3 +1215,7 @@ theme_override_font_sizes/font_size = 20
 text = "KOTA RUNTUH"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="EndSurvey" parent="HUD/Overlay" instance=ExtResource("46_survey")]
+visible = false
+layout_mode = 1

@@ -98,6 +98,9 @@ func show_end(text: String) -> void:
 	end_message.text = text
 	end_overlay.show()
 	tooltip.hide()
+	# layar akhir bersih: sembunyikan toolbar & tab supaya survei tidak tertumpuk
+	for n in [$Root/ActionMenu, $Root/Tabs, $Root/LayerButton, $Root/Legend, $Root/DebugHint, $Root/PointsPopup]:
+		n.hide()
 
 # --- Pembaruan tiap frame ---
 
@@ -129,6 +132,7 @@ func refresh() -> void:
 		for src in S.SOURCES:
 			lines += "%s: %d\n" % [src, int(S.by_source.get(src, 0.0))]
 		lines += "Hari ini: +%d\n" % int(S.today)
+		lines += "Calon bonus malam ini: %d bangunan\n" % S.bonus_buildings()
 		lines += "Total: %d / %d  (%d%%)" % [int(S.total), S.target_points, int(S.progress() * 100.0)]
 		popup_lines.text = lines
 	for i in 3:

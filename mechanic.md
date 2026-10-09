@@ -325,7 +325,7 @@ tile_air(c)  = DANGKAL jika kedalaman < 0.18 (bukan sumber alami)
 |---|---|---|
 | Bangunan teraliri | 0,5 poin/detik per bangunan | Score → `supplied_per_second` |
 | Kincir air | hingga 1 poin/detik per kincir (× putaran 0–100%) | Facilities → `kincir_points_per_second` |
-| Bonus akhir hari | 10 × bangunan yang masih berdiri | Score → `day_bonus_per_building` |
+| Bonus akhir hari | 10 × bangunan yang **dialiri pemain minimal setengah hari itu** (hujan tidak dihitung) | Score → `day_bonus_per_building`, `day_bonus_min_supplied` (0,5) |
 | Jembatan | 3 × jembatan terpasang, tiap akhir hari | Score → `bridge_bonus_per_day` |
 
 **Kincir air:** putaran = debit air yang keluar dari petak kincir ÷ 0,1 (Facilities → `kincir_full_flux`), dibatasi 0–100%. Air hanya mengalir kalau ada yang "menyedot" di hilirnya: penguapan kanal panjang, spillway, resapan banjir, atau air baru yang sedang mengisi kanal. Jadi kincir di **hulu kanal yang panjang** berputar lebih kencang. Kincir di danau yang tenang diam saja.
@@ -349,6 +349,30 @@ Setiap kali game dimainkan, otomatis dibuat:
   - satu baris setiap bangunan hancur, beserta penyebabnya
   - satu baris hasil akhir
 - `playtest_logs/ringkasan_<penguji>.csv`, berisi satu baris per sesi.
+
+**Isi log sesi:**
+
+| Bagian | Isi |
+|---|---|
+| Header (`#`) | Sesi, penguji, **versi build** (`branch@commit`), seed, **param_id**, lalu baris `PARAM` berisi **semua angka balancing** yang berlaku |
+| `AKHIR_HARI` | Kondisi saat hari berakhir: poin per sumber, bangunan, sekop, stok, fasilitas. Ditambah agregat sepanjang hari itu: jumlah aksi (gali, ratakan turun/naik, timbun, pasang/bongkar fasilitas, jembatan, drag), detik bangunan terancam, jumlah bangunan yang pernah terancam, % waktu bangunan teraliri, banjir terluas (petak), % sumber kering terparah, rata-rata putaran kincir, detik jeda / 2× / menu, bangunan gagal muncul |
+| `PERTAMA` | Momen pertama: aksi pertama pemain, bangunan pertama terancam, bangunan pertama hancur, target poin tercapai |
+| `HANCUR` | Setiap bangunan hancur, beserta penyebabnya (kekeringan/banjir) |
+| `DEBUG` | Pemakaian tombol F1–F3 |
+| `AKHIR` / `SURVEI` | Hasil permainan, lalu jawaban survei layar akhir |
+
+**`ringkasan_<penguji>.csv`** berisi satu baris per sesi:
+- versi, param_id, seed, hasil
+- waktu momen-momen pertama
+- total aksi
+- total waktu jeda / 2× / menu
+- jawaban survei (tegang & adil, 1–5)
+
+Sesi dengan `param_id` yang sama memakai angka balancing yang persis sama, jadi bisa langsung dibandingkan. Kalau format ringkasan berubah, file lama otomatis disimpan dengan akhiran `_format_lama_…`.
+
+**Survei layar akhir:** setelah menang/kalah, muncul 2 pertanyaan bertombol 1–5 ("seberapa tegang" dan "seberapa adil"). Survei bisa dimatikan di BalanceLog → `end_survey`.
+
+Sesi yang **terhenti karena game ditutup** (tombol X, tombol Stop di editor, atau crash) **otomatis dihapus**, sehingga folder hanya berisi sesi yang selesai. Fitur ini bisa dimatikan di BalanceLog → `delete_unfinished`. Keluar lewat menu (Main Ulang / Menu Utama) tetap tercatat sebagai DITINGGALKAN.
 
 Nama penguji diambil dari nama user Windows, atau dari BalanceLog → `tester_name`. Saat dijalankan dari editor, folder log ada di dalam project. Untuk hasil export, folder ada di sebelah .exe. Tekan **F4** untuk membuka folder.
 
@@ -388,4 +412,6 @@ Ubah **satu kelompok knob per putaran playtest**, dan gunakan **seed yang sama**
 | `balance_log.gd` | Log playtest otomatis |
 | `ui/hud.gd` | HUD (poin, kecepatan, hari & cuaca, toolbar, tooltip) |
 | `scenes/*.tscn` | Tampilan bangunan, fasilitas, kincir, jembatan, kartu alat |
+| `scenes/menu_map.tscn` | Peta diorama khusus latar main menu (diedit langsung di editor) |
+| `tools/build_menu_map.gd` | Script pembuat awal `menu_map.tscn` (menjalankannya lagi akan menimpa hasil editan) |
 | `DAFTAR_ASET.md` | Daftar aset yang dibutuhkan artist |
