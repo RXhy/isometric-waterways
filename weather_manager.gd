@@ -14,8 +14,8 @@ enum Weather { CERAH, KEMARAU, HUJAN }
 const NAMES := ["Cerah", "Kemarau", "Hujan lebat"]
 
 @export var schedule: Array[Weather] = [
-	Weather.CERAH, Weather.CERAH, Weather.KEMARAU, Weather.CERAH,
-	Weather.HUJAN, Weather.KEMARAU, Weather.HUJAN, Weather.KEMARAU,
+	Weather.CERAH, Weather.CERAH, Weather.CERAH, Weather.CERAH,
+	Weather.CERAH, Weather.CERAH, Weather.CERAH, Weather.CERAH,
 ]  ## cuaca tiap hari (indeks 0 = hari 1); hari di luar daftar = Cerah
 @export var icons: Array[Texture2D] = []    ## ikon [Cerah, Kemarau, Hujan lebat] untuk HUD
 @export var rain_surge: float = 0.35        ## kenaikan target sumber saat hujan (di atas tepi = meluap)

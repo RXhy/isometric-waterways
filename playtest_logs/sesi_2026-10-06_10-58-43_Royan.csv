@@ -1,0 +1,17 @@
+# WATERWAYS playtest | sesi 2026-10-06_10-58-43 | penguji Royan | seed 641877 | hari 8 x 30 detik | target 600 poin
+jenis,hari,detik_game,jam_nyata,cuaca,tingkat_kemarau,poin_total,poin_hari_ini,poin_bangunan,poin_kincir,poin_bonus,poin_jembatan,bangunan_total,hidup,terancam,hancur,sekop_terpakai_hari_ini,sekop_sisa,kanal_digali,persen_kanal_berair,stok_bor,stok_bendungan,stok_spillway,stok_kincir,pasang_bor,pasang_bendungan,pasang_spillway,pasang_kincir,jembatan,keterangan
+DEBUG,1,16.3,10:58:59,Cerah,0,0,0,0,0,0,0,2,2,0,0,15,0,15,60,1,0,0,3,0,0,0,0,0,F1 lompat ke hari 2
+AKHIR_HARI,1,30.0,10:58:59,Cerah,0,20,20,0,0,20,0,2,2,0,0,15,0,15,60,1,0,0,3,0,0,0,0,0,
+DEBUG,2,30.9,10:59:00,Cerah,0,20,0,0,0,20,0,4,4,0,0,0,15,15,60,1,0,0,4,0,0,0,0,0,F1 lompat ke hari 3
+AKHIR_HARI,2,60.0,10:59:00,Cerah,0,60,40,0,0,60,0,4,4,0,0,0,15,15,60,1,0,0,4,0,0,0,0,0,
+DEBUG,3,60.4,10:59:00,Cerah,0,60,0,0,0,60,0,7,7,0,0,0,15,15,60,1,0,0,5,0,0,0,0,0,F1 lompat ke hari 4
+AKHIR_HARI,3,90.0,10:59:00,Cerah,0,130,70,0,0,130,0,7,7,0,0,0,15,15,60,1,0,0,5,0,0,0,0,0,
+DEBUG,4,90.3,10:59:01,Cerah,0,130,0,0,0,130,0,10,10,0,0,0,15,15,60,1,0,0,6,0,0,0,0,0,F1 lompat ke hari 5
+AKHIR_HARI,4,120.0,10:59:01,Cerah,0,230,100,0,0,230,0,10,10,0,0,0,15,15,60,1,0,0,6,0,0,0,0,0,
+DEBUG,5,120.3,10:59:01,Cerah,0,230,0,0,0,230,0,14,14,0,0,0,15,15,60,1,0,0,7,0,0,0,0,0,F1 lompat ke hari 6
+AKHIR_HARI,5,150.0,10:59:01,Cerah,0,370,140,0,0,370,0,14,14,0,0,0,15,15,60,1,0,0,7,0,0,0,0,0,
+DEBUG,6,150.2,10:59:01,Cerah,0,370,0,0,0,370,0,18,18,0,0,0,15,15,60,1,0,0,8,0,0,0,0,0,F1 lompat ke hari 7
+AKHIR_HARI,6,180.0,10:59:01,Cerah,0,550,180,0,0,550,0,18,18,0,0,0,15,15,60,1,0,0,8,0,0,0,0,0,
+DEBUG,7,180.2,10:59:01,Cerah,0,550,0,0,0,550,0,23,23,0,0,0,15,15,60,1,0,0,9,0,0,0,0,0,F1 lompat ke hari 8
+AKHIR_HARI,7,210.0,10:59:01,Cerah,0,780,230,0,0,780,0,23,23,0,0,0,15,15,60,1,0,0,9,0,0,0,0,0,
+AKHIR,8,210.0,10:59:01,Cerah,0,780,0,0,0,780,0,28,28,0,0,0,15,15,60,1,0,0,10,0,0,0,0,0,MENANG target tercapai
