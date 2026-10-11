@@ -42,6 +42,10 @@ const TIP_INFO := Color(0.45, 0.42, 0.38)
 ]
 
 var world
+var ui_hidden: bool = false  ## H: sembunyikan semua UI (untuk screenshot/trailer atau melihat peta penuh)
+var _toast: PanelContainer
+var _toast_label: Label
+var _toast_tw: Tween
 
 func setup(w) -> void:
 	world = w
@@ -59,6 +63,59 @@ func setup(w) -> void:
 	set_speed(1.0)
 	_update_legend()
 	$Root/DebugHint.visible = world.debug_enabled()
+	_make_toast()
+
+# --- Sembunyikan UI (tombol H / menu jeda) ---
+
+func _hideable() -> Array:
+	return [$Root/TopLeft, $Root/TopRight, $Root/Tabs, $Root/ActionMenu, $Root/LayerButton,
+		$Root/Legend, $Root/DebugHint, $Root/PointsPopup, tooltip]
+
+func toggle_ui() -> void:
+	set_ui_hidden(not ui_hidden)
+
+func set_ui_hidden(on: bool) -> void:
+	ui_hidden = on
+	if on:
+		for n in _hideable():
+			n.hide()
+		toast("UI disembunyikan - tekan H untuk menampilkan")
+	else:
+		for n in [$Root/TopLeft, $Root/TopRight, $Root/Tabs, $Root/ActionMenu, $Root/LayerButton]:
+			n.show()
+		$Root/DebugHint.visible = world.debug_enabled()
+		_update_legend()
+
+# --- Pesan singkat di atas layar ---
+
+func _make_toast() -> void:
+	_toast = PanelContainer.new()
+	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_toast_label = Label.new()
+	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.add_child(_toast_label)
+	$Root.add_child(_toast)
+	_toast.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_toast.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_toast.position.y = 40
+	_toast.modulate.a = 0.0
+	_toast.hide()
+
+## Tampilkan pesan pendek beberapa detik (tetap jalan walau game dijeda).
+func toast(text: String, seconds: float = 2.5) -> void:
+	if _toast == null:
+		return
+	_toast_label.text = text
+	_toast.show()
+	_toast.reset_size()
+	_toast.position.x = (get_viewport().get_visible_rect().size.x - _toast.size.x) / 2.0
+	if _toast_tw:
+		_toast_tw.kill()
+	_toast_tw = create_tween().set_ignore_time_scale(true)
+	_toast_tw.tween_property(_toast, "modulate:a", 1.0, 0.2)
+	_toast_tw.tween_interval(seconds)
+	_toast_tw.tween_property(_toast, "modulate:a", 0.0, 0.6)
+	_toast_tw.tween_callback(_toast.hide)
 
 # --- Kecepatan ---
 
@@ -84,6 +141,8 @@ func _cycle_layer() -> void:
 	_update_legend()
 
 func _update_legend() -> void:
+	if ui_hidden:
+		return
 	var m: int = world.overlay_layer.mode if world else 0
 	layer_button.set_pressed_no_signal(m != 0)
 	layer_button.tooltip_text = "Lapisan info: %s (klik untuk ganti)" % (world.overlay_layer.NAMES[m] if world else "")
@@ -95,6 +154,10 @@ func _update_legend() -> void:
 # --- Akhir permainan ---
 
 func show_end(text: String) -> void:
+	if ui_hidden:
+		ui_hidden = false
+		$Root/TopLeft.show()
+		$Root/TopRight.show()
 	end_message.text = text
 	end_overlay.show()
 	tooltip.hide()
@@ -125,7 +188,8 @@ func refresh() -> void:
 			slot.tooltip_text = "Hari %d: %s" % [d, W.weather.describe(d)]
 	var S = W.score
 	points_bar.value = S.progress()
-	points_label.text = "%d/%d" % [int(S.total), S.target_points]
+	points_label.text = "%d/%d" % [int(S.total), S.next_threshold()]
+	points_button.tooltip_text = "Bintang %d/3  |  1: %d  2: %d  3: %d poin" % [S.stars(), S.target_points, S.star2_points, S.star3_points]
 	ruin_label.text = "%d/%d" % [W.buildings.destroyed_count, W.damage_quota]
 	if points_popup.visible:
 		var lines := ""
@@ -133,7 +197,8 @@ func refresh() -> void:
 			lines += "%s: %d\n" % [src, int(S.by_source.get(src, 0.0))]
 		lines += "Hari ini: +%d\n" % int(S.today)
 		lines += "Calon bonus malam ini: %d bangunan\n" % S.bonus_buildings()
-		lines += "Total: %d / %d  (%d%%)" % [int(S.total), S.target_points, int(S.progress() * 100.0)]
+		lines += "Total: %d  |  Bintang %d/3\n" % [int(S.total), S.stars()]
+		lines += "Bintang 1/2/3: %d / %d / %d" % [S.target_points, S.star2_points, S.star3_points]
 		popup_lines.text = lines
 	for i in 3:
 		cards[i].set_stock(W.shovel)
@@ -150,7 +215,7 @@ func _mouse_over_ui() -> bool:
 
 func _update_tooltip() -> void:
 	var cell: Vector2i = world.hover_cell
-	if world.game_over or not world.hover_valid or _mouse_over_ui() or pause_menu.visible \
+	if ui_hidden or world.game_over or not world.hover_valid or _mouse_over_ui() or pause_menu.visible \
 			or not (GameSettings.get_value("tooltips") or world.dragging):
 		tooltip.hide()
 		return

@@ -9,7 +9,10 @@ const Building = preload("res://building.gd")
 @export var building_scene: PackedScene  ## scenes/building.tscn
 
 @export var buildings_first_day: int = 2          ## jumlah bangunan yang muncul di awal hari 1
-@export var extra_buildings_per_day: float = 0.5  ## tambahan per hari (0.5 = +1 tiap 2 hari)
+## Laju bangunan baru per hari (setelah hari 1), naik pelan dari awal ke akhir permainan.
+## Pecahan dikumpulkan: 0.6/hari = rata-rata 3 bangunan tiap 5 hari. Total 45 hari ~ 40 bangunan.
+@export var spawn_rate_start: float = 0.6
+@export var spawn_rate_end: float = 1.2
 @export var min_building_spacing: int = 3       ## jarak minimal antar bangunan (tile)
 @export var min_water_distance: int = 3         ## minimal panjang kanal yang perlu digali
 @export var max_water_distance_start: int = 6   ## maksimal panjang kanal di awal
@@ -21,6 +24,7 @@ var buildings: Dictionary = {}  # Vector2i -> Building
 var destroyed_count: int = 0
 var day: int = 1
 var running: bool = false
+var _spawn_acc: float = 0.0  # sisa pecahan laju spawn
 
 func setup(w) -> void:
 	world = w
@@ -33,8 +37,23 @@ func stop() -> void:
 func progress() -> float:
 	return clamp(float(day - 1) / max(1.0, float(world.target_days - 1)), 0.0, 1.0)
 
+## Laju spawn (bangunan/hari) di hari d.
+func spawn_rate(d: int) -> float:
+	var p: float = clamp(float(d - 1) / max(1.0, float(world.target_days - 1)), 0.0, 1.0)
+	return lerp(spawn_rate_start, spawn_rate_end, p)
+
+## Jumlah bangunan BARU yang muncul di awal hari d.
 func buildings_for_day(d: int) -> int:
-	return int(buildings_first_day + (d - 1) * extra_buildings_per_day)
+	if d <= 1:
+		return buildings_first_day
+	_spawn_acc += spawn_rate(d)
+	var n := int(_spawn_acc)
+	_spawn_acc -= n
+	return n
+
+## Area muncul bangunan = lahan yang sudah terbuka (melebar bertahap, lihat Node2D grup "Lahan & ekspansi").
+func current_spawn_area() -> Rect2i:
+	return world.unlocked_area
 
 ## Dipanggil world.gd setiap awal hari (termasuk hari 1).
 func start_day(d: int) -> void:
@@ -67,7 +86,7 @@ func has_building(cell: Vector2i) -> bool:
 	return buildings.has(cell)
 
 func try_spawn() -> bool:
-	var area: Rect2i = world.spawn_area  # bangunan hanya muncul di area inti, tidak di bawah UI
+	var area: Rect2i = current_spawn_area()  # area inti yang melebar seiring hari, tidak di bawah UI
 	var max_dist := int(round(lerp(float(max_water_distance_start), float(max_water_distance_end), progress())))
 	for i in 150:
 		var cell := Vector2i(
@@ -96,6 +115,8 @@ func _spawn(cell: Vector2i, type: int) -> void:
 	b.position = to_local(world.cell_to_global(cell))
 	add_child(b)
 	buildings[cell] = b
+	# ujung kanal/jalan di sebelahnya ikut berbelok ke bangunan baru
+	world.water.refresh_cell(cell)
 	building_spawned.emit(b)
 
 func count_state(state: int) -> int:

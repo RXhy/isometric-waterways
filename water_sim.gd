@@ -73,7 +73,10 @@ func setup(w) -> void:
 	# air di luar area main ikut memakai tile beranimasi (tenang) agar tampilannya seragam
 	for c in world.grid_data:
 		if world.grid_data[c] == world.TileState.WATER and not world.is_in_active_area(c):
-			world.show_tile(c, world.TileState.WATER, WaterRow.TENANG)
+			if world.use_tileset_v2:
+				world.set_v2_cell(c, world.v2_atlas(c))
+			else:
+				world.show_tile(c, world.TileState.WATER, WaterRow.TENANG)
 	refresh_all()
 	update_land()
 
@@ -307,10 +310,20 @@ func water_row(c: Vector2i) -> int:
 
 ## Kunci tampilan petak (jenis tile + baris arus) untuk cache.
 func _vis_key(c: Vector2i) -> int:
+	if world.use_tileset_v2:
+		var a: Vector2i = world.v2_atlas(c)
+		if a.x >= 0:
+			return V2_KEY + a.y * 100 + a.x  # tile tileset v2 (bentuk sambungan + tingkat air)
 	var t := visual_tile(c)
 	return t * 100 + (water_row(c) if t == world.TileState.WATER else 0)
 
+const V2_KEY := 100000
+
 func _show(c: Vector2i, key: int) -> void:
+	if key >= V2_KEY:
+		var k: int = key - V2_KEY
+		world.set_v2_cell(c, Vector2i(k % 100, k / 100))
+		return
 	var t: int = key / 100
 	world.show_tile(c, t, key % 100 if t == world.TileState.WATER else -1)
 
@@ -323,6 +336,22 @@ func refresh_cell(c: Vector2i) -> void:
 		_refresh_edge(c)
 		for nb in world.world.get_surrounding_cells(c):
 			_refresh_edge(nb)
+			# bentuk sambungan kanal/jalan/tepi danau tetangga ikut berubah
+			if world.use_tileset_v2:
+				_reshow(nb)
+				# kanal di sekeliling bangunan tetangga: sambungan ke bangunan bisa pindah
+				if world.buildings.has_building(nb):
+					for nb2 in world.world.get_surrounding_cells(nb):
+						_reshow(nb2)
+
+## Perbarui tampilan satu petak kalau kuncinya berubah.
+func _reshow(c: Vector2i) -> void:
+	if not _vis.has(c):
+		return
+	var k := _vis_key(c)
+	if k != _vis[c]:
+		_vis[c] = k
+		_show(c, k)
 
 func refresh_all() -> void:
 	var changed: Array[Vector2i] = []
@@ -351,7 +380,7 @@ func _refresh_edge(c: Vector2i) -> void:
 	if not world.grid_data.has(c):
 		return
 	var mask := 0
-	if _shows_water(c):
+	if _shows_water(c) and not world.use_tileset_v2:  # tileset v2 sudah punya tepi sendiri
 		for si in 4:
 			var nb: Vector2i = world.world.get_neighbor_cell(c, SIDES[si])
 			if world.grid_data.has(nb) and not _shows_water(nb):

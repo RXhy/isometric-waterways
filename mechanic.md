@@ -11,8 +11,8 @@ Dokumen ini menjelaskan **alur permainan (core loop)** dan **sistem air** WATERW
 
 WATERWAYS adalah game puzzle-strategi isometrik. Pemain berperan sebagai perencana saluran air. Kota tumbuh sendiri: bangunan baru muncul setiap hari. Tugas pemain adalah **mengalirkan air** dari sumber alam ke bangunan dengan menggali kanal, mengatur ketinggian tanah, dan memasang fasilitas, sambil menghadapi **kemarau** dan **hujan lebat**.
 
-- **Menang:** total poin mencapai target (default **600**) sebelum hari terakhir berakhir.
-- **Kalah:** bangunan yang hancur **melebihi kuota** (default **5**), atau waktu habis sebelum target tercapai.
+- Permainan berlangsung **45 hari**. Di akhir hari ke-45, poin dinilai jadi **bintang**: ≥ 5000 = 1 bintang (menang), ≥ 7000 = 2 bintang, ≥ 9000 = 3 bintang.
+- **Kalah:** bangunan yang hancur **melebihi kuota** (default **8**), atau hari ke-45 selesai dengan poin < 5000.
 
 ---
 
@@ -38,8 +38,10 @@ flowchart LR
 | Aturan | Default | Atur di |
 |---|---|---|
 | Panjang satu hari | 30 detik | Node2D → `day_length` |
-| Jumlah hari | 8 | Node2D → `target_days` |
+| Jumlah hari | 45 | Node2D → `target_days` |
 | Kecepatan | Jeda / 1× / 2× (tombol kanan atas, Spasi = jeda) | — |
+| Zoom | Scroll mouse (ke arah kursor), 0,75× – 2,5× | Node2D → grup **Kamera** (`zoom_out_limit`, `zoom_in_limit`, `zoom_step`, `zoom_smooth`) |
+| Geser kamera | Seret tombol tengah mouse, WASD / panah, atau trackpad | Node2D → `pan_speed` |
 
 Yang terjadi di **awal setiap hari**, berurutan:
 1. Bonus akhir hari sebelumnya dihitung (lihat §6).
@@ -50,7 +52,11 @@ Yang terjadi di **awal setiap hari**, berurutan:
 ### 2.2 Area main
 - Peta besar berukuran 250×250 petak dan **dibuat di editor Godot** (TileMapLayer `World`), bukan di-generate saat runtime.
 - Setiap permainan memilih **area inti 25×25** secara acak yang pasti berisi sumber air. Kamera diatur supaya area itu pas di layar.
-- **Semua petak yang terlihat di layar** (termasuk yang tertutup UI) ikut disimulasikan dan bisa dipakai. Bangunan baru hanya muncul di area inti.
+- Pusat area main dipilih acak (berisi air, jauh dari tepi peta) supaya kamera selalu menaruhnya di **tengah layar**. Isi Node2D → `area_center` untuk mengunci posisi tertentu.
+- **Semua petak yang bisa terlihat saat zoom out penuh** ikut disimulasikan (air mengalir di sana). Kamera tidak bisa keluar dari bingkai itu. Makin kecil `zoom_out_limit`, makin luas area (dan makin berat simulasinya).
+- **Lahan aktif** = bagian tengah layar yang tidak tertutup UI (garis krem; luar lahan digelapkan). Alat dan bangunan baru hanya di lahan aktif. Lahan **melebar 4 kali** (hari 10, 19, 28, 37) sampai seluruh bingkai zoom out di luar UI; kamera ikut menyesuaikan dan muncul pesan "Lahan baru terbuka!".
+- Atur di Node2D, grup **Lahan & ekspansi**: `start_area_scale` (0,8), `expansion_steps` (4), `expand_every_days` (9), `ui_margin_top/bottom/side`, `locked_shade`, `border_color`.
+- **Tombol H** (atau "Sembunyikan UI" di menu jeda) menyembunyikan semua UI; tekan H lagi untuk menampilkan.
 - Pengacakan memakai **seed**: Node2D → `map_seed` (0 = acak). Seed yang terpakai selalu dicatat di log playtest, jadi peta yang sama bisa diulang.
 
 ---
@@ -61,7 +67,8 @@ Yang terjadi di **awal setiap hari**, berurutan:
 | Aturan | Default | Atur di |
 |---|---|---|
 | Bangunan di hari 1 | 2 | Buildings → `buildings_first_day` |
-| Tambahan per hari | +0,5 (= +1 tiap 2 hari) | Buildings → `extra_buildings_per_day` |
+| Laju bangunan baru | 0,6/hari (awal) → 1,2/hari (hari 45), pecahan dikumpulkan; total ±40 bangunan | Buildings → `spawn_rate_start`, `spawn_rate_end` |
+| Area muncul melebar | inti 25×25 → seluruh bingkai zoom out | Buildings → `spawn_area_growth` (0 = tidak melebar) |
 | Peluang jadi Ladang (sisanya Rumah) | 35% | Buildings → `farm_chance` |
 | Jarak minimal antarbangunan | 3 petak | Buildings → `min_building_spacing` |
 | Jarak ke air terdekat | min 3, maks 6 (awal) → 12 (akhir) petak | Buildings → `min_water_distance`, `max_water_distance_start/_end` |
@@ -83,10 +90,19 @@ Atur di `building.gd` → `TYPE_DATA`.
 - Cadangan habis: **Hancur** (jadi reruntuhan).
 - **Banjir**: kalau petak bangunan tergenang ≥ 6 detik, bangunan juga hancur (Building → `flood_limit`).
 
-**Aturan "teraliri":** bangunan teraliri kalau salah satu dari **8 petak di sekelilingnya** adalah kanal atau sumber air yang **sedang berair** dan **elevasinya sama atau lebih tinggi** dari bangunan (air tidak bisa naik). Saat **hujan lebat**, semua bangunan dianggap teraliri.
+**Aturan "teraliri":** bangunan teraliri kalau salah satu dari **4 petak yang bersisian** (kiri-atas, kanan-atas, kiri-bawah, kanan-bawah; **bukan serong/sudut**) adalah kanal atau sumber air yang **sedang berair** dan **elevasinya sama atau lebih tinggi** dari bangunan (air tidak bisa naik). Saat **hujan lebat**, semua bangunan dianggap teraliri.
 
-### 3.3 Jalan
+### 3.3 Tileset air & jalan (tilesset_water_road.png)
+- `assets/Tiles/tilesset_water_road.png` (grid 32 px) dipasang otomatis saat game mulai (Node2D grup **Tileset air & jalan**, `use_tileset_v2`).
+- **Air alami** (baris 0–8): 9 bentuk tepi danau dipilih dari sisi mana yang berbatasan dengan daratan. Warna bibir mengikuti daratan di sebelahnya (kering / rumput / rumput gelap). Tiap kelompok 3 baris = kering, dangkal, penuh (dari kedalaman air; batas penuh `v2_full_depth`).
+- **Kanal galian** (baris 10–15): 11 bentuk sambungan (2 lurus, 4 belokan, 4 pertigaan, perempatan) dipilih dari tetangga kanal/air di 4 sisi; ujung buntu memakai tile lurus. Bata (10–12) atau batu (13–15) lewat `canal_style`.
+- **Jalan** (baris 17): 11 bentuk sambungan yang sama; ujung jalan menyambung ke bangunan di sebelahnya.
+- Gali kanal (klik/drag): sekop langsung dipotong, lalu kanal muncul petak demi petak mengikuti urutan drag dengan animasi jatuh (`dig_step_delay`, `dig_drop_time`, `dig_drop_height`).
+- Animasi arus & buih tepi lama tidak dipakai selama tileset ini aktif.
+
+### 3.4 Jalan
 - Setiap bangunan baru otomatis disambungkan ke bangunan lain dengan jalan (jalur terpendek, mengutamakan jalan yang sudah ada).
+- Jalan **dibangun petak demi petak** dari jaringan jalan lama menuju bangunan baru, dengan animasi petak "jatuh" ke tempatnya (gaya Terra Nil). Atur di Roads, grup **Animasi jalan**: `road_start_delay` (0,6 s), `road_step_delay` (0,08 s/petak), `road_drop_time`, `road_drop_height`. Petak yang masih menunggu sudah dianggap jalan (tidak bisa digali/dibangun).
 - **Jalan memotong kanal**: tanah di jalan tidak bisa digali. Untuk melewatkan air menyeberangi jalan, pasang **Jembatan** (§4.2).
 
 ---
@@ -217,11 +233,11 @@ Artinya, kemarau secara visual membuat peta jadi cokelat, dan menggali kanal mem
 
 Cuaca **tidak mengubah petak secara langsung**. Cuaca hanya mengubah **target sumber**, lalu kekeringan dan banjir muncul sendiri dari simulasi.
 
-**Jadwal default** (Weather → `schedule`):
-
-| Hari | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
-|---|---|---|---|---|---|---|---|---|
-| Cuaca | Cerah | Cerah | **Kemarau 1** | Cerah | **Hujan** | **Kemarau 2** | **Hujan** | **Kemarau 3** |
+**Jadwal otomatis** (Weather → `auto_schedule` = aktif): dibuat dari seed peta, jadi seed yang sama = cuaca yang sama.
+- Hari 1–3 selalu Cerah (`calm_days`).
+- Peluang Kemarau naik 15% → 35%, Hujan lebat 12% → 22% dari awal ke akhir (grup **Jadwal otomatis**).
+- Cuaca ekstrem yang sama paling banyak 2 hari berturut-turut (`max_streak`).
+- Matikan `auto_schedule` untuk memakai daftar `schedule` manual.
 
 Bar bawah menampilkan prakiraan 3 hari. Tooltip-nya menyebut tingkat kemarau.
 
@@ -239,7 +255,7 @@ Bar bawah menampilkan prakiraan 3 hari. Tooltip-nya menyebut tingkat kemarau.
 
 - Rumusnya: `target = 0.5 × (1 − keparahan × kemajuan_hari)`, dengan `keparahan = min(maks, awal + langkah × (n − 1))`, dikali 1,5 untuk badan air kecil.
 - Sumur bor tidak terpengaruh.
-- Atur di Weather, grup **Kemarau**: `drought_severity_start` (0,3), `drought_severity_step` (0,2), `drought_severity_max` (0,8), `drought_ramp_time` (20), `drought_small_body` (15), `drought_small_mult` (1,5).
+- Atur di Weather, grup **Kemarau**: `drought_severity_start` (0,3), `drought_severity_step` (0,05), `drought_severity_max` (0,8), `drought_ramp_time` (20), `drought_small_body` (15), `drought_small_mult` (1,5).
 
 **Hujan lebat:**
 - Target sumber naik **+0,35** (menjadi 0,85, di atas bibir kanal), sehingga sumber **meluap** ke daratan yang lebih rendah. Inilah banjir.
@@ -323,18 +339,24 @@ tile_air(c)  = DANGKAL jika kedalaman < 0.18 (bukan sumber alami)
 
 | Sumber poin | Besar | Atur di |
 |---|---|---|
-| Bangunan teraliri | 0,5 poin/detik per bangunan | Score → `supplied_per_second` |
-| Kincir air | hingga 1 poin/detik per kincir (× putaran 0–100%) | Facilities → `kincir_points_per_second` |
-| Bonus akhir hari | 10 × bangunan yang **dialiri pemain minimal setengah hari itu** (hujan tidak dihitung) | Score → `day_bonus_per_building`, `day_bonus_min_supplied` (0,5) |
-| Jembatan | 3 × jembatan terpasang, tiap akhir hari | Score → `bridge_bonus_per_day` |
+| Bangunan teraliri | 0,2 poin/detik per bangunan | Score → `supplied_per_second` |
+| Kincir air | hingga 0,25 poin/detik per kincir (× putaran 0–100%) | Facilities → `kincir_points_per_second` |
+| Bonus akhir hari | 4 × bangunan yang **dialiri pemain minimal setengah hari itu** (hujan tidak dihitung) | Score → `day_bonus_per_building`, `day_bonus_min_supplied` (0,5) |
+| Jembatan | 1 × jembatan yang **dilewati air**, tiap akhir hari | Score → `bridge_bonus_per_day` |
+
+Patokan: satu bangunan yang dialiri penuh sehari = 0,2 × 30 + 4 = **10 poin**.
 
 **Kincir air:** putaran = debit air yang keluar dari petak kincir ÷ 0,1 (Facilities → `kincir_full_flux`), dibatasi 0–100%. Air hanya mengalir kalau ada yang "menyedot" di hilirnya: penguapan kanal panjang, spillway, resapan banjir, atau air baru yang sedang mengisi kanal. Jadi kincir di **hulu kanal yang panjang** berputar lebih kencang. Kincir di danau yang tenang diam saja.
 
 | Kondisi | Default | Atur di |
 |---|---|---|
-| **Menang** | Total poin ≥ 600 | Score → `target_points` |
-| **Kalah** (kuota) | Bangunan hancur > 5 | Node2D → `damage_quota` |
-| **Kalah** (waktu) | Hari ke-8 selesai dan poin < 600 | Node2D → `target_days` |
+| **Menang** | Hari ke-45 selesai dan poin ≥ 5000 (1 bintang) | Score → `target_points` |
+| 2 / 3 bintang | ≥ 7000 / ≥ 9000 | Score → `star2_points`, `star3_points` |
+| Selesai saat 1 bintang tercapai | mati (main terus sampai hari 45) | Score → `end_on_target` |
+| **Kalah** (kuota) | Bangunan hancur > 8 | Node2D → `damage_quota` |
+| **Kalah** (waktu) | Hari ke-45 selesai dan poin < 5000 | Node2D → `target_days` |
+
+Bar poin di kiri atas menunjukkan progres ke **bintang berikutnya**.
 
 Klik bar poin di kiri atas untuk melihat rincian poin per sumber.
 

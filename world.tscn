@@ -49,6 +49,7 @@
 [ext_resource type="Texture2D" uid="uid://dljyljn8gnnxn" path="res://assets/placeholder/ui/ic_arrow.png" id="37_arrow"]
 [ext_resource type="Texture2D" uid="uid://o124y14oc8x7" path="res://assets/placeholder/ui/card.png" id="38_card"]
 [ext_resource type="Texture2D" path="res://assets/placeholder/ui/card_selected.png" id="41_card_sel"]
+[ext_resource type="Texture2D" path="res://assets/Tiles/tilesset_water_road.png" id="60_water_road"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fj7yv"]
 texture = ExtResource("1_f3sb7")
@@ -496,6 +497,7 @@ region = Rect2(132, 4, 24, 8)
 
 [node name="Node2D" type="Node2D" unique_id=667692345]
 script = ExtResource("1_fj7yv")
+water_road_texture = ExtResource("60_water_road")
 
 [node name="World" type="TileMapLayer" parent="." unique_id=594608813]
 y_sort_enabled = true

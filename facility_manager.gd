@@ -13,7 +13,7 @@ const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway", "Kincir Air"]
 @export var stock_per_forecast: Array[int] = [1, 3, 1, 1]  ## tambahan stok [Bor, Bendungan, Spillway, Kincir]; Kincir bertambah saat besok Cerah
 @export_group("Kincir Air")
 @export var kincir_full_flux: float = 0.1        ## debit (kedalaman/detik) yang membuat kincir berputar penuh
-@export var kincir_points_per_second: float = 1.0 ## poin per detik saat berputar penuh
+@export var kincir_points_per_second: float = 0.25 ## poin per detik saat berputar penuh (7.5/hari, setara ~1 bangunan terlayani)
 
 var world
 var stock: Array[int] = [0, 0, 0, 0]
@@ -45,6 +45,8 @@ func why_not(kind: int, cell: Vector2i) -> String:
 		return "Stok %s habis" % KIND_NAMES[kind]
 	if facilities.has(cell) or world.buildings.has_building(cell):
 		return "Petak sudah terisi"
+	if world.dig_pending.has(cell):
+		return "Sedang digali"
 	if world.roads.is_road(cell):
 		return "Tidak bisa di jalan"
 	var t: int = world.grid_data.get(cell, -1)
@@ -71,7 +73,7 @@ func why_not(kind: int, cell: Vector2i) -> String:
 func can_place(kind: int, cell: Vector2i) -> bool:
 	if stock[kind] <= 0 or facilities.has(cell) or world.buildings.has_building(cell):
 		return false
-	if not world.is_in_active_area(cell) or world.roads.is_road(cell):
+	if not world.is_playable(cell) or world.roads.is_road(cell):
 		return false
 	var t: int = world.grid_data.get(cell, -1)
 	var land: bool = t == world.TileState.DIRT or t == world.TileState.GRASS

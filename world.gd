@@ -57,6 +57,7 @@ var land_dist: Dictionary = {}     # petak dekat air -> jarak ke air (1..radius)
 const SRC_TERRAIN := 0
 const SRC_WATER_ROAD := 1
 const SRC_WATER_FLOW := 2  ## assets/water/water_flow_source.tres: air beranimasi (tenang, arus 4 arah pelan/deras, dangkal)
+const SRC_V2 := 3          ## assets/Tiles/tilesset_water_road.png (dibuat saat runtime, lihat _build_v2_source)
 const ATLAS_CANAL_DRY := Vector2i(1, 0)   ## (sumber 1) parit kanal / dasar sungai kering
 const ATLAS_WATER := Vector2i(3, 0)       ## (sumber 1) air: sumber alami, kanal berair, banjir
 const ATLAS_ROAD := Vector2i(4, 0)        ## (sumber 1) jalan
@@ -68,8 +69,8 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 
 # --- Aturan permainan (bisa diubah di Inspector node Node2D) ---
 @export var day_length: float = 30.0  ## detik per hari (bangunan baru muncul tiap awal hari)
-@export var target_days: int = 8      ## bertahan sampai hari ini = menang (sementara, sebelum ada sistem poin)
-@export var damage_quota: int = 5     ## kalah kalau bangunan hancur MELEBIHI angka ini
+@export var target_days: int = 45     ## lama permainan (hari). Di akhir hari terakhir poin dinilai jadi bintang (lihat node Score)
+@export var damage_quota: int = 8     ## kalah kalau bangunan hancur MELEBIHI angka ini (~20% dari ~40 bangunan selama 45 hari)
 @export var shovel_per_day: int = 15  ## aksi sekop (Gali / Ratakan / Timbun kanal) per hari; sisa tidak terbawa ke besok
 @export var demo_mode: bool = false  ## latar menu utama: HUD disembunyikan, input mati, tidak bisa kalah
 ## Seed peta & kejadian acak. 0 = acak tiap main (seed yang terpakai dicatat di log playtest).
@@ -77,6 +78,57 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 @export var map_seed: int = 0
 ## Tombol debug F1-F4 (hanya aktif di build debug/editor, otomatis mati di export release).
 @export var debug_tools: bool = true
+
+@export_group("Kamera")
+## Zoom dengan scroll mouse (ke arah kursor). Nilai relatif terhadap zoom awal (1 = pas area inti).
+## Batas zoom out juga menentukan luas area main: semua yang terlihat saat zoom out penuh
+## ikut disimulasikan, jadi jangan terlalu kecil (berat untuk simulasi air).
+@export_range(0.4, 1.0, 0.05) var zoom_out_limit: float = 0.75
+@export_range(1.0, 4.0, 0.1) var zoom_in_limit: float = 2.5
+@export var zoom_step: float = 1.15        ## pengali zoom tiap satu putaran scroll
+@export var zoom_smooth: float = 12.0      ## kehalusan animasi zoom (makin besar makin cepat)
+@export var pan_speed: float = 360.0       ## kecepatan geser kamera WASD / panah (px layar per detik)
+
+@export_group("Tileset air & jalan")
+## Pakai tileset baru assets/Tiles/tilesset_water_road.png (11 kolom x 32 px):
+##   baris 0-8  : air alami (danau/sungai) 9 bentuk tepi; 3 kelompok warna bibir (kering / rumput / rumput gelap),
+##                tiap kelompok 3 baris = kering, dangkal, penuh
+##   baris 10-15: kanal galian 11 bentuk sambungan (lurus, belokan, T, perempatan); 10-12 bata, 13-15 batu,
+##                tiap gaya 3 baris = kering, dangkal, penuh
+##   baris 17   : jalan 11 bentuk sambungan (urutan sama dengan kanal)
+## Matikan untuk kembali ke tile lama (air beranimasi + buih tepi).
+@export var use_tileset_v2: bool = true
+@export var water_road_texture: Texture2D
+## Gaya kanal galian: 0 = bata coklat (baris 10-12), 1 = batu abu-abu (baris 13-15).
+@export_range(0, 1) var canal_style: int = 0
+## Kedalaman air minimal agar tile tampil "penuh" (di bawahnya "dangkal"; di bawah wet_threshold "kering").
+@export var v2_full_depth: float = 0.3
+## Geser vertikal tile baru terhadap tile daratan (px). -7 = bibir tile sejajar permukaan tanah.
+@export var v2_top_shift: int = -7
+## 0 = kanal rata dengan tanah seperti air alami & jalan (parit, dinding depan tertutup tanah).
+## Nilai > 0 menggambar kanal setelah baris di depannya (dinding depan ikut terlihat, kesan menonjol).
+@export var v2_canal_sort_boost: int = 0
+## Animasi gali: kanal muncul petak demi petak mengikuti urutan drag (seperti jalan).
+@export var dig_step_delay: float = 0.05
+@export var dig_drop_time: float = 0.2
+@export var dig_drop_height: float = 8.0
+
+@export_group("Lahan & ekspansi")
+## Pusat area main di peta. (-1, -1) = acak tiap main: dipilih yang berisi air dan jauh dari tepi peta,
+## jadi kamera selalu bisa menaruh area main tepat di tengah layar.
+@export var area_center: Vector2i = Vector2i(-1, -1)
+## Lahan yang bisa dipakai di awal = bagian tengah layar yang tidak tertutup UI.
+## Lahan lalu melebar bertahap sampai seluruh bingkai zoom out (dikurangi tepi UI).
+## Ukuran lahan awal relatif terhadap layar awal di luar UI (0.8 = 80%, sisanya terbuka lewat ekspansi).
+@export_range(0.4, 1.0, 0.05) var start_area_scale: float = 0.8
+@export var expansion_steps: int = 4        ## berapa kali lahan melebar
+@export var expand_every_days: int = 9      ## lahan melebar tiap sekian hari (default: hari 10, 19, 28, 37)
+## Porsi layar yang tertutup UI (atas = bar poin, bawah = tab hari + toolbar). Lahan & bangunan tidak di sini.
+@export_range(0.0, 0.4, 0.01) var ui_margin_top: float = 0.12
+@export_range(0.0, 0.4, 0.01) var ui_margin_bottom: float = 0.26
+@export_range(0.0, 0.4, 0.01) var ui_margin_side: float = 0.05
+@export var locked_shade: Color = Color(0.12, 0.08, 0.05, 0.5)  ## warna gelap lahan yang belum terbuka
+@export var border_color: Color = Color(1.0, 0.95, 0.8, 0.9)    ## garis batas lahan aktif
 
 ## Main menu yang dituju saat keluar dari game: varian yang dipilih di layar debug (MenuChoice).
 var MENU_SCENE: String:
@@ -111,6 +163,8 @@ func _ready() -> void:
 			dug[cell] = true  # saluran yang dicat manual di editor dianggap kanal galian
 		elevation[cell] = world.get_cell_alternative_tile(cell)
 
+	_build_v2_source()
+
 	if map_seed == 0:
 		randomize()
 		map_seed = randi_range(1, 999999)
@@ -119,7 +173,7 @@ func _ready() -> void:
 	choose_active_area()
 	spawn_area = active_area
 	setup_camera()
-	active_area = visible_area()
+	_setup_zoom()
 
 	Engine.time_scale = 1.0
 	GameSettings.load_settings()
@@ -149,6 +203,8 @@ func current_day() -> int:
 	return int(elapsed / day_length) + 1
 
 func _process(delta: float) -> void:
+	_update_camera()
+	_process_dig_queue(delta)
 	_update_cursor()
 	if game_over:
 		return
@@ -159,7 +215,7 @@ func _process(delta: float) -> void:
 		end_game(score.reached(), "waktu")
 	else:
 		_check_new_day()
-		if score.reached():
+		if score.end_on_target and score.reached():
 			end_game(true)
 	update_hud()
 
@@ -174,6 +230,9 @@ func _check_new_day() -> void:
 		shovel_used = 0
 		last_day = d
 		roads.on_new_day(d)
+		var k := unlock_step_for_day(d)
+		if k != unlock_step:
+			_expand_to(k)
 		weather.start_day(d)
 		buildings.start_day(d)
 
@@ -190,12 +249,14 @@ func end_game(won: bool, reason: String = "") -> void:
 	balance_log.log_end("MENANG" if won else "KALAH", reason if reason != "" else "target tercapai")
 	Engine.time_scale = 1.0
 	update_hud()
-	var pts := "Poin %d / %d" % [int(score.total), score.target_points]
+	var pts := "Poin %d  |  Bintang %d/3" % [int(score.total), score.stars()]
 	var text: String
-	if won:
+	if won and reason == "waktu":
+		text = "%d HARI SELESAI!\n%s\n(bintang 2: %d, bintang 3: %d)\n\nR: main lagi   |   Esc: menu utama" % [target_days, pts, score.star2_points, score.star3_points]
+	elif won:
 		text = "TARGET TERCAPAI!\n%s pada hari ke-%d.\n\nR: main lagi   |   Esc: menu utama" % [pts, mini(current_day(), target_days)]
 	elif reason == "waktu":
-		text = "WAKTU HABIS\n%s. Target belum tercapai.\n\nR: coba lagi   |   Esc: menu utama" % pts
+		text = "WAKTU HABIS\nPoin %d. Butuh %d untuk 1 bintang.\n\nR: coba lagi   |   Esc: menu utama" % [int(score.total), score.target_points]
 	else:
 		text = "KOTA RUNTUH\n%d bangunan hancur (batas %d).\n\nR: coba lagi   |   Esc: menu utama" % [buildings.destroyed_count, damage_quota]
 	hud.show_end(text)
@@ -260,6 +321,9 @@ func tile_info(cell: Vector2i) -> Dictionary:
 
 ## Pratinjau aksi alat terpilih di petak ini: [1 = bisa, -1 = tidak bisa, 0 = info], teks.
 func action_preview(cell: Vector2i) -> Array:
+	if not is_playable(cell):
+		var nd := next_unlock_day()
+		return [-1, "Lahan belum terbuka" + (" (hari %d)" % nd if nd > 0 else "")]
 	var t: int = grid_data[cell]
 	var land: bool = t == TileState.DIRT or t == TileState.GRASS
 	var occupied: bool = buildings.has_building(cell) or facilities.has_facility(cell)
@@ -268,6 +332,7 @@ func action_preview(cell: Vector2i) -> Array:
 		Tool.GALI:
 			if occupied: return [-1, "Petak terisi bangunan/fasilitas"]
 			if roads.is_road(cell): return [-1, "Jalan - pakai Jembatan"]
+			if dig_pending.has(cell): return [0, "Sedang digali"]
 			if land: return [-1, "Sekop habis - tambah lagi besok"] if no_shovel else [1, "Klik: gali kanal"]
 			return [-1, "Sudah kanal/air"]
 		Tool.RATAKAN:
@@ -301,16 +366,21 @@ func cell_to_global(cell: Vector2i) -> Vector2:
 func is_buildable(cell: Vector2i) -> bool:
 	var t: int = grid_data.get(cell, -1)
 	return is_in_active_area(cell) and (t == TileState.DIRT or t == TileState.GRASS) \
-		and not facilities.has_facility(cell)
+		and not facilities.has_facility(cell) and not roads.is_road(cell) and not dig_pending.has(cell)
 
 ## Sumber air alami atau sumur bor (dasar sungai/danau), berair ataupun sedang kering.
 func is_natural_water(cell: Vector2i) -> bool:
 	return grid_data.get(cell, -1) == TileState.WATER
 
-## Bangunan teraliri kalau salah satu dari 8 tetangganya kanal/sumber yang berair
-## dan sama tinggi atau lebih tinggi (air tidak bisa naik).
+const NEIGHBORS_SIDE := [
+	TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE, TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE,
+	TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE,
+]
+
+## Bangunan teraliri kalau salah satu dari 4 tetangga SISI-nya (bukan sudut/serong) kanal/sumber
+## yang berair dan sama tinggi atau lebih tinggi (air tidak bisa naik).
 func is_cell_supplied(cell: Vector2i) -> bool:
-	for n in NEIGHBORS_8:
+	for n in NEIGHBORS_SIDE:
 		var c := world.get_neighbor_cell(cell, n)
 		if water.is_channel(c) and water.is_wet(c) and get_elev(c) >= get_elev(cell):
 			return true
@@ -340,10 +410,38 @@ func water_distance(cell: Vector2i, max_r: int) -> int:
 # --- Area bermain acak (AREA_SIZE x AREA_SIZE) ---
 
 func choose_active_area() -> void:
-	var start_x = 0
-	var start_y = 0
-	active_area = Rect2i(Vector2i(start_x, start_y), Vector2i(AREA_SIZE, AREA_SIZE))
+	var c := area_center
+	if demo_mode:
+		c = Vector2i(AREA_SIZE / 2, AREA_SIZE / 2)
+	elif c.x < 0 or c.y < 0:
+		c = _random_area_center()
+	active_area = Rect2i(c - Vector2i(AREA_SIZE / 2, AREA_SIZE / 2), Vector2i(AREA_SIZE, AREA_SIZE))
 	return
+
+## Pusat acak yang punya air (tapi tidak didominasi air) dan cukup jauh dari tepi peta
+## supaya bingkai zoom out penuh (~34 kolom x ~76 baris) tetap di dalam peta.
+func _random_area_center() -> Vector2i:
+	var mx := 22
+	var my := 46
+	var best := Vector2i(MAP_SIZE / 2, MAP_SIZE / 2)
+	var best_n := 0
+	for i in MAX_ORIGIN_TRIES:
+		var c := Vector2i(randi_range(mx, MAP_SIZE - 1 - mx), randi_range(my, MAP_SIZE - 1 - my))
+		var n := _water_count(Rect2i(c - Vector2i(10, 10), Vector2i(21, 21)))
+		if n >= 12 and n <= 150:
+			return c
+		if n > best_n and n <= 220:
+			best = c
+			best_n = n
+	return best
+
+func _water_count(rect: Rect2i) -> int:
+	var n := 0
+	for y in range(rect.position.y, rect.end.y):
+		for x in range(rect.position.x, rect.end.x):
+			if grid_data.get(Vector2i(x, y), -1) == TileState.WATER:
+				n += 1
+	return n
 
 	# var max_origin := MAP_SIZE - AREA_SIZE
 	# for i in MAX_ORIGIN_TRIES:
@@ -428,6 +526,214 @@ func setup_camera() -> void:
 
 	camera.make_current()
 
+# --- Zoom & geser kamera ---
+# Scroll = zoom ke arah kursor · tombol tengah mouse (seret) / WASD / panah = geser.
+# Kamera tidak bisa keluar dari bingkai zoom out penuh (play_rect), jadi area yang
+# disimulasikan tetap sama sepanjang permainan.
+
+var base_zoom: float = 0.0     ## zoom awal (pas area inti 25x25)
+var target_zoom: float = 0.0
+var play_rect: Rect2           ## bingkai kamera saat zoom out penuh (koordinat global)
+var unlocked_area: Rect2i      ## lahan yang sudah terbuka: alat & bangunan hanya di sini
+var unlock_core: Rect2i        ## lahan awal (tengah layar, di luar UI)
+var unlock_max: Rect2i         ## lahan terluas (seluruh bingkai zoom out, di luar UI)
+var unlock_step: int = 0
+var _shade: Node2D             ## gambar gelap lahan terkunci + garis batas
+var _pan_goal: Vector2         ## tujuan geser kamera otomatis (saat lahan melebar)
+var _pan_goal_on: bool = false
+var _zoom_anchor: Vector2      ## posisi kursor di layar saat scroll (titik yang dipertahankan)
+var _panning: bool = false
+var _cam_last_us: int = 0
+
+func _setup_zoom() -> void:
+	base_zoom = camera.zoom.x
+	target_zoom = base_zoom
+	var base_pos: Vector2 = camera.position
+	var screen := get_viewport_rect().size
+	var zmin: float = base_zoom * (1.0 if demo_mode else zoom_out_limit)
+	var pos := _clamp_view(base_pos, zmin, _map_rect())
+	var half := screen / zmin / 2.0
+	play_rect = Rect2(pos - half, half * 2.0)
+	# area aktif = semua yang bisa terlihat saat zoom out penuh
+	camera.zoom = Vector2(zmin, zmin)
+	camera.position = pos
+	active_area = visible_area()
+	camera.zoom = Vector2(base_zoom, base_zoom)
+	camera.position = base_pos
+	# lahan awal = tengah tampilan awal di luar UI; lahan terluas = tengah bingkai zoom out di luar UI
+	var base_view := Rect2(base_pos - screen / base_zoom / 2.0, screen / base_zoom)
+	var core_px := _ui_inset(base_view)
+	core_px = core_px.grow_individual(
+		-core_px.size.x * (1.0 - start_area_scale) / 2.0, -core_px.size.y * (1.0 - start_area_scale) / 2.0,
+		-core_px.size.x * (1.0 - start_area_scale) / 2.0, -core_px.size.y * (1.0 - start_area_scale) / 2.0)
+	unlock_core = _cells_in(core_px).intersection(active_area)
+	unlock_max = _cells_in(_ui_inset(play_rect)).merge(unlock_core).intersection(active_area)
+	if demo_mode:
+		unlock_core = active_area
+		unlock_max = active_area
+	unlocked_area = unlock_core
+	spawn_area = unlock_core
+	_cam_last_us = Time.get_ticks_usec()
+	_shade = LockedShade.new()
+	_shade.w = self
+	_shade.z_index = 1
+	add_child(_shade)
+	move_child(_shade, world.get_index() + 1)
+	_shade.set_rect(_cells_px(unlocked_area), false)
+
+## Bagian rect (koordinat global) yang tidak tertutup UI.
+func _ui_inset(r: Rect2) -> Rect2:
+	return Rect2(r.position + Vector2(r.size.x * ui_margin_side, r.size.y * ui_margin_top),
+		r.size * Vector2(1.0 - 2.0 * ui_margin_side, 1.0 - ui_margin_top - ui_margin_bottom))
+
+## Petak yang seluruhnya berada di dalam rect global.
+func _cells_in(r: Rect2) -> Rect2i:
+	var lo := world.local_to_map(world.to_local(r.position)) + Vector2i(1, 2)
+	var hi := world.local_to_map(world.to_local(r.end)) - Vector2i(1, 2)
+	return Rect2i(lo, (hi - lo + Vector2i.ONE).max(Vector2i.ONE))
+
+## Kotak piksel (global) yang menutupi sekumpulan petak.
+func _cells_px(a: Rect2i) -> Rect2:
+	var half := Vector2(world.tile_set.tile_size) / 2.0
+	var a0 := world.to_global(world.map_to_local(a.position))
+	var a1 := world.to_global(world.map_to_local(a.position + Vector2i(0, 1)))
+	var b0 := world.to_global(world.map_to_local(a.end - Vector2i.ONE))
+	var b1 := world.to_global(world.map_to_local(a.end - Vector2i(1, 2)))
+	var lo := a0.min(a1) - half
+	var hi := b0.max(b1) + half
+	return Rect2(lo, hi - lo)
+
+## Lahan aktif (bisa dipakai alat, tempat bangunan muncul).
+func is_playable(cell: Vector2i) -> bool:
+	return unlocked_area.has_point(cell) and active_area.has_point(cell)
+
+## Lahan untuk tahap ekspansi k (0 = awal).
+func _area_for_step(k: int) -> Rect2i:
+	var t: float = clampf(float(k) / float(maxi(expansion_steps, 1)), 0.0, 1.0)
+	var lo := Vector2i(roundi(lerpf(unlock_core.position.x, unlock_max.position.x, t)), roundi(lerpf(unlock_core.position.y, unlock_max.position.y, t)))
+	var hi := Vector2i(roundi(lerpf(unlock_core.end.x, unlock_max.end.x, t)), roundi(lerpf(unlock_core.end.y, unlock_max.end.y, t)))
+	return Rect2i(lo, hi - lo)
+
+func unlock_step_for_day(d: int) -> int:
+	if expand_every_days <= 0:
+		return 0
+	return clampi((d - 1) / expand_every_days, 0, expansion_steps)
+
+## Hari lahan berikutnya terbuka (-1 kalau sudah terluas).
+func next_unlock_day() -> int:
+	if unlock_step >= expansion_steps or expand_every_days <= 0:
+		return -1
+	return (unlock_step + 1) * expand_every_days + 1
+
+func _expand_to(k: int) -> void:
+	unlock_step = k
+	unlocked_area = _area_for_step(k)
+	_shade.set_rect(_cells_px(unlocked_area), true)
+	balance_log.log_note("EKSPANSI", "lahan tahap %d: %s" % [k, str(unlocked_area)])
+	hud.toast("Lahan baru terbuka! (%d/%d)" % [k, expansion_steps])
+	_focus_on(_cells_px(unlocked_area))
+
+## Geser & zoom out kamera pelan-pelan supaya seluruh lahan terlihat di luar UI.
+func _focus_on(r: Rect2) -> void:
+	var screen := get_viewport_rect().size
+	var usable := screen * Vector2(1.0 - 2.0 * ui_margin_side, 1.0 - ui_margin_top - ui_margin_bottom)
+	var fit: float = minf(usable.x / r.size.x, usable.y / r.size.y)
+	if fit < camera.zoom.x:
+		target_zoom = clampf(fit, base_zoom * zoom_out_limit, base_zoom * zoom_in_limit)
+		_zoom_anchor = screen / 2.0
+	# pusat layar di luar UI sedikit di atas pusat sebenarnya (UI bawah lebih tebal)
+	var shift := Vector2(0, (ui_margin_bottom - ui_margin_top) * screen.y / 2.0) / target_zoom
+	_pan_goal = r.get_center() + shift
+	_pan_goal_on = true
+
+## Batas peta dalam koordinat global (titik tengah tile terluar, supaya tepi bergerigi tak terlihat).
+func _map_rect() -> Rect2:
+	var a := world.to_global(world.map_to_local(Vector2i(1, 0)))
+	var b := world.to_global(world.map_to_local(Vector2i(MAP_SIZE - 1, MAP_SIZE - 1)))
+	return Rect2(a, b - a)
+
+## Geser posisi kamera supaya pandangan (zoom z) tetap di dalam rect. Kalau pandangan lebih
+## besar dari rect, kamera ditaruh di tengah rect.
+func _clamp_view(pos: Vector2, z: float, rect: Rect2) -> Vector2:
+	var half := get_viewport_rect().size / z / 2.0
+	var out := pos
+	if rect.size.x <= half.x * 2.0:
+		out.x = rect.get_center().x
+	else:
+		out.x = clampf(pos.x, rect.position.x + half.x, rect.end.x - half.x)
+	if rect.size.y <= half.y * 2.0:
+		out.y = rect.get_center().y
+	else:
+		out.y = clampf(pos.y, rect.position.y + half.y, rect.end.y - half.y)
+	return out
+
+func zoom_by(factor: float, screen_anchor: Vector2) -> void:
+	if base_zoom <= 0.0:
+		return
+	target_zoom = clampf(target_zoom * factor, base_zoom * zoom_out_limit, base_zoom * zoom_in_limit)
+	_zoom_anchor = screen_anchor
+
+## Input kamera dari _unhandled_input. true = event sudah dipakai.
+func _camera_input(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		match event.button_index:
+			MOUSE_BUTTON_WHEEL_UP:
+				if event.pressed:
+					zoom_by(zoom_step, event.position)
+				return true
+			MOUSE_BUTTON_WHEEL_DOWN:
+				if event.pressed:
+					zoom_by(1.0 / zoom_step, event.position)
+				return true
+			MOUSE_BUTTON_MIDDLE:
+				_panning = event.pressed
+				return true
+	elif event is InputEventMouseMotion and _panning:
+		_pan_goal_on = false
+		camera.position = _clamp_view(camera.position - event.relative / camera.zoom.x, camera.zoom.x, play_rect)
+		return true
+	elif event is InputEventMagnifyGesture:  # trackpad pinch
+		zoom_by(event.factor, event.position)
+		return true
+	elif event is InputEventPanGesture:      # trackpad dua jari
+		camera.position = _clamp_view(camera.position + event.delta * 8.0 / camera.zoom.x, camera.zoom.x, play_rect)
+		return true
+	return false
+
+## Dipanggil tiap frame. Memakai waktu nyata supaya zoom & geser tetap jalan saat dijeda.
+func _update_camera() -> void:
+	var now := Time.get_ticks_usec()
+	var dt: float = minf(float(now - _cam_last_us) / 1000000.0, 0.1)
+	_cam_last_us = now
+	if demo_mode or base_zoom <= 0.0:
+		return
+	var z: float = camera.zoom.x
+	var focus: Control = get_viewport().gui_get_focus_owner()
+	var typing: bool = focus is LineEdit or focus is TextEdit
+	if not game_over and not hud.pause_menu.visible and not typing:
+		var dir := Vector2.ZERO
+		if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT): dir.x -= 1.0
+		if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): dir.x += 1.0
+		if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP): dir.y -= 1.0
+		if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN): dir.y += 1.0
+		if dir != Vector2.ZERO:
+			_pan_goal_on = false
+			camera.position += dir.normalized() * pan_speed * dt / z
+	if _pan_goal_on:
+		camera.position = camera.position.lerp(_pan_goal, 1.0 - exp(-4.0 * dt))
+		if camera.position.distance_to(_pan_goal) < 0.5:
+			_pan_goal_on = false
+	if absf(z - target_zoom) > 0.00001:
+		var nz: float = lerpf(z, target_zoom, 1.0 - exp(-zoom_smooth * dt))
+		if absf(nz - target_zoom) < 0.0005:
+			nz = target_zoom
+		# pertahankan titik peta di bawah kursor saat zoom
+		var off: Vector2 = _zoom_anchor - get_viewport_rect().size / 2.0
+		var anchor_world: Vector2 = camera.position + off / z
+		camera.zoom = Vector2(nz, nz)
+		camera.position = anchor_world - off / nz
+	camera.position = _clamp_view(camera.position, camera.zoom.x, play_rect)
+
 # --- Elevasi ---
 # Elevasi disimpan sebagai alternative tile di layer World (0..3), jadi bisa dicat
 # manual di editor. Alternative tile di TileSet menaikkan tekstur ELEV_STEP px per tingkat.
@@ -489,6 +795,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if hud.pause_menu.visible:
 		return
+	if _camera_input(event):
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE and not game_over:
 		hud.toggle_pause()
 		return
@@ -510,6 +818,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_6: set_tool(Tool.BENDUNGAN)
 			KEY_7: set_tool(Tool.SPILLWAY)
 			KEY_8: set_tool(Tool.KINCIR)
+			KEY_H: hud.toggle_ui()
 		return
 
 	if event is InputEventMouseButton and (event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT):
@@ -524,7 +833,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not event.pressed:
 			return
 		var cell := pick_cell(get_global_mouse_position())
-		if not grid_data.has(cell) or not is_in_active_area(cell):
+		if not grid_data.has(cell) or not is_playable(cell):
 			return
 		match current_tool:
 			Tool.GALI, Tool.TIMBUN:
@@ -728,12 +1037,15 @@ func _finish_drag() -> void:
 	cancel_drag()
 	if path.size() > 1:
 		balance_log.count("drag")
+	var order := 0
 	for i in path.size():
 		if status[i] <= 0:
 			continue
 		var c: Vector2i = path[i]
 		match current_tool:
-			Tool.GALI: perform_digging(c)
+			Tool.GALI:
+				queue_dig(c, order * dig_step_delay)
+				order += 1
 			Tool.RATAKAN: perform_leveling(c, 1 if drag_right else -1)
 			Tool.TIMBUN: perform_filling(c)
 	update_hud()
@@ -787,13 +1099,13 @@ func _drag_cost(c: Vector2i) -> int:
 	return 1
 
 func _drag_cell_status(c: Vector2i, budget: int) -> int:
-	if not grid_data.has(c) or not is_in_active_area(c):
+	if not grid_data.has(c) or not is_playable(c):
 		return -1
 	var t: int = grid_data[c]
 	match current_tool:
 		Tool.GALI:
-			if water.is_channel(c):
-				return 0  # sudah kanal/air: dilewati saja
+			if water.is_channel(c) or dig_pending.has(c):
+				return 0  # sudah kanal/air (atau sedang digali): dilewati saja
 		Tool.TIMBUN:
 			if not dug.has(c) and not facilities.has_facility(c) and not roads.bridges.has(c):
 				return 0  # tidak ada yang perlu ditimbun
@@ -839,3 +1151,259 @@ func _flush_survey() -> void:
 	var s = hud.get_node_or_null("Overlay/EndSurvey")
 	if s:
 		s.flush()
+
+# --- Gambar lahan terkunci ---
+
+## Menggelapkan semua di luar lahan aktif + garis batas. Melebar dengan animasi saat ekspansi.
+class LockedShade extends Node2D:
+	var w
+	var rect: Rect2
+	var _tw: Tween
+
+	func set_rect(r: Rect2, animate: bool) -> void:
+		if _tw:
+			_tw.kill()
+		if not animate:
+			rect = r
+			queue_redraw()
+			return
+		_tw = create_tween()
+		_tw.tween_method(func(v: Rect2):
+			rect = v
+			queue_redraw(), rect, r, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	func _draw() -> void:
+		if w == null or w.demo_mode:
+			return
+		var big := 4000.0
+		var r := Rect2(to_local(rect.position), rect.size)
+		var col: Color = w.locked_shade
+		draw_rect(Rect2(r.position.x - big, r.position.y - big, r.size.x + big * 2.0, big), col)
+		draw_rect(Rect2(r.position.x - big, r.end.y, r.size.x + big * 2.0, big), col)
+		draw_rect(Rect2(r.position.x - big, r.position.y, big, r.size.y), col)
+		draw_rect(Rect2(r.end.x, r.position.y, big, r.size.y), col)
+		draw_rect(r, w.border_color, false, 1.0)
+
+# --- Tileset air & jalan v2 (assets/Tiles/tilesset_water_road.png) ---
+
+enum Side { TL = 1, TR = 2, BL = 4, BR = 8 }
+const SIDE_CELLS := [
+	[TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE, Side.TL], [TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE, Side.TR],
+	[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE, Side.BL], [TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE, Side.BR],
+]
+## Kolom tile kanal/jalan dari sisi yang TERSAMBUNG (bitmask TL=1, TR=2, BL=4, BR=8).
+## 0: TR+BR, 1: BL+BR, 2: lurus TL-BR, 3: lurus TR-BL, 4: TL+TR, 5: TL+BL,
+## 6-9: pertigaan tanpa TL / BL / TR / BR, 10: perempatan.
+const LINK_COL := {
+	0: 2, 1: 2, 8: 2, 9: 2, 2: 3, 4: 3, 6: 3,
+	10: 0, 12: 1, 3: 4, 5: 5,
+	14: 6, 11: 7, 13: 8, 7: 9, 15: 10,
+}
+## Kolom tile air alami dari sisi yang berbatasan dengan DARATAN (bertembok).
+## 8: tengah, 1/3/4/6: satu sisi (TL/TR/BL/BR), 2/5/0/7: sudut (TL+TR / BL+BR / TL+BL / TR+BR).
+const LAKE_COL := {
+	0: 8, 1: 1, 2: 3, 4: 4, 8: 6,
+	3: 2, 12: 5, 5: 0, 10: 7,
+	9: 1, 6: 3,                      # dua sisi berseberangan: tidak ada tile-nya, pakai tembok belakang
+	7: 2, 11: 2, 13: 0, 14: 7, 15: 2,  # tiga/empat sisi: pakai sudut terdekat
+}
+const V2_CANAL_ROW := 10
+const V2_ROAD_ROW := 17
+
+var dig_pending: Dictionary = {}   ## petak yang sudah dipesan untuk digali (menunggu animasi)
+var _dig_queue: Array = []
+var _dig_clock: float = 0.0
+
+## Buat atlas source tileset baru saat runtime (4 tingkat elevasi sebagai alternative tile,
+## offset & warna mengikuti tile daratan). Artist cukup menimpa PNG-nya.
+func _build_v2_source() -> void:
+	if not use_tileset_v2:
+		return
+	var tex: Texture2D = water_road_texture
+	if tex == null:
+		push_warning("water_road_texture kosong: tileset v2 dimatikan.")
+		use_tileset_v2 = false
+		return
+	var ts: TileSet = world.tile_set
+	if ts.has_source(SRC_V2):
+		return
+	var land: TileSetAtlasSource = ts.get_source(SRC_TERRAIN) as TileSetAtlasSource
+	var src := TileSetAtlasSource.new()
+	src.texture = tex
+	src.texture_region_size = Vector2i(32, 32)
+	var grid := Vector2i(tex.get_width() / 32, tex.get_height() / 32)
+	var rows: Array[int] = []
+	for r in 9:
+		rows.append(r)
+	for r in range(V2_CANAL_ROW, V2_CANAL_ROW + 6):
+		rows.append(r)
+	rows.append(V2_ROAD_ROW)
+	for r in rows:
+		var cols: int = 9 if r < 9 else 11
+		for c in mini(cols, grid.x):
+			var a := Vector2i(c, r)
+			if r >= grid.y:
+				continue
+			src.create_tile(a)
+			for h in MAX_ELEV + 1:
+				if h > 0:
+					src.create_alternative_tile(a, h)
+				var td: TileData = src.get_tile_data(a, h)
+				var ref: TileData = land.get_tile_data(Vector2i(0, 0), h) if land and land.has_alternative_tile(Vector2i(0, 0), h) else null
+				td.texture_origin = (ref.texture_origin if ref else Vector2i(0, 4 * h + 4)) + Vector2i(0, v2_top_shift)
+				td.modulate = ref.modulate if ref else Color.WHITE
+				if r >= V2_CANAL_ROW and r < V2_CANAL_ROW + 6:
+					td.y_sort_origin = v2_canal_sort_boost
+	ts.add_source(src, SRC_V2)
+
+## Pasang tile v2 di peta.
+func set_v2_cell(c: Vector2i, a: Vector2i) -> void:
+	world.set_cell(c, SRC_V2, a, get_elev(c))
+
+func _water_level(c: Vector2i) -> int:
+	if grid_data.get(c, -1) == TileState.WATER and not is_in_active_area(c):
+		return 2  # di luar area simulasi: air alami selalu penuh
+	var d: float = water.get_depth(c)
+	if d < water.wet_threshold:
+		return 0
+	return 1 if d < v2_full_depth else 2
+
+## Bitmask sisi yang memenuhi syarat.
+func _side_mask(c: Vector2i, pred: Callable) -> int:
+	var m := 0
+	for s in SIDE_CELLS:
+		if pred.call(world.get_neighbor_cell(c, s[0])):
+			m |= s[1]
+	return m
+
+func _is_channel_like(n: Vector2i) -> bool:
+	return water.is_channel(n) or dig_pending.has(n)
+
+func _is_road_like(n: Vector2i) -> bool:
+	return roads.is_road(n)
+
+## Petak kanal yang "masuk" ke bangunan ini: kanal galian di sisi bangunan, utamakan ujung kanal
+## (paling sedikit sambungan), lalu urutan sisi tetap. (-1,-1) kalau tidak ada.
+func canal_link(b: Vector2i) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_n := 99
+	for s in SIDE_CELLS:
+		var n := world.get_neighbor_cell(b, s[0])
+		if grid_data.get(n, -1) != TileState.CANAL and not dig_pending.has(n):
+			continue
+		var links := 0
+		var m := _side_mask(n, _is_channel_like)
+		for bit in [1, 2, 4, 8]:
+			if m & bit:
+				links += 1
+		if links < best_n:
+			best_n = links
+			best = n
+	return best
+
+## Kelompok warna bibir air alami dari daratan di sekitarnya: 0 kering, 1 rumput, 2 rumput gelap.
+func _lake_group(c: Vector2i) -> int:
+	for s in SIDE_CELLS:
+		var n := world.get_neighbor_cell(c, s[0])
+		if not grid_data.has(n) or _is_channel_like(n):
+			continue
+		var cls: int = land_class.get(n, LandClass.DRY)
+		if cls == LandClass.DRY:
+			return 0
+		return 1 if (cls == LandClass.COURTYARD or land_dist.get(n, 1) <= 1) else 2
+	return 0
+
+## Koordinat atlas tileset v2 untuk petak ini, atau (-1, -1) kalau petak ini memakai tile daratan.
+func v2_atlas(c: Vector2i) -> Vector2i:
+	var t: int = grid_data.get(c, -1)
+	match t:
+		TileState.ROAD:
+			var m := _side_mask(c, _is_road_like)
+			if m == 0 or m == 1 or m == 2 or m == 4 or m == 8:
+				# ujung jalan: sambungkan ke bangunan di sebelahnya
+				m |= _side_mask(c, func(n): return buildings.has_building(n))
+			return Vector2i(LINK_COL.get(m, 2), V2_ROAD_ROW)
+		TileState.CANAL:
+			var cm := _side_mask(c, _is_channel_like)
+			# kanal menyambung masuk ke bangunan di sebelahnya (satu sambungan per bangunan)
+			cm |= _side_mask(c, func(n): return buildings.has_building(n) and canal_link(n) == c)
+			return Vector2i(LINK_COL.get(cm, 2), V2_CANAL_ROW + canal_style * 3 + _water_level(c))
+		TileState.WATER:
+			var land_m := _side_mask(c, func(n): return grid_data.has(n) and not _is_channel_like(n))
+			return Vector2i(LAKE_COL.get(land_m, 8), _lake_group(c) * 3 + _water_level(c))
+		_:
+			if is_in_active_area(c) and water.is_flooded(c):
+				return Vector2i(8, _lake_group(c) * 3 + 1)  # daratan tergenang banjir
+	return Vector2i(-1, -1)
+
+# --- Animasi petak "jatuh" (jalan baru & kanal galian) ---
+
+## Sprite tile dari atlas yang jatuh dari atas sambil memudar masuk, lalu on_done dipanggil
+## (biasanya memasang tile aslinya). parent = node tempat sprite digambar.
+func drop_fx(cell: Vector2i, source_id: int, atlas: Vector2i, parent: Node2D, on_done: Callable,
+		drop_time: float = 0.22, drop_height: float = 10.0) -> void:
+	var src: TileSetAtlasSource = world.tile_set.get_source(source_id) as TileSetAtlasSource if world.tile_set.has_source(source_id) else null
+	if src == null or drop_time <= 0.0 or not src.has_tile(atlas):
+		on_done.call()
+		return
+	var td: TileData = src.get_tile_data(atlas, get_elev(cell)) if src.has_alternative_tile(atlas, get_elev(cell)) else src.get_tile_data(atlas, 0)
+	var spr := Sprite2D.new()
+	spr.texture = src.texture
+	spr.region_enabled = true
+	spr.region_rect = Rect2(src.get_tile_texture_region(atlas))
+	spr.modulate = td.modulate
+	# sprite jadi anak layer World (ikut y-sort) supaya tertutup tanah di depannya persis seperti tile aslinya
+	var _unused = parent
+	spr.position = world.map_to_local(cell) + Vector2(0, 0.5)
+	var final_off: Vector2 = -Vector2(td.texture_origin) - Vector2(0, 0.5)
+	spr.offset = final_off - Vector2(0, drop_height)
+	spr.self_modulate = Color(1, 1, 1, 0)
+	spr.scale = Vector2(0.7, 0.7)
+	world.add_child(spr)
+	var tw := spr.create_tween().set_parallel(true)
+	tw.tween_property(spr, "offset", final_off, drop_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(spr, "scale", Vector2.ONE, drop_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(spr, "self_modulate:a", 1.0, drop_time * 0.6)
+	tw.chain().tween_callback(func():
+		on_done.call()
+		spr.queue_free())
+
+## Pesan galian: sekop langsung dipotong, petaknya dikerjakan setelah delay (animasi berurutan).
+func queue_dig(c: Vector2i, delay: float) -> void:
+	var st: int = grid_data.get(c, -1)
+	if dig_pending.has(c) or shovel <= 0 or not (st == TileState.DIRT or st == TileState.GRASS) \
+			or buildings.has_building(c) or facilities.has_facility(c) or roads.is_road(c):
+		return
+	shovel -= 1
+	shovel_used += 1
+	balance_log.count("gali")
+	dig_pending[c] = true
+	_dig_queue.append({"cell": c, "at": _dig_clock + delay})
+	_dig_queue.sort_custom(func(a, b): return a["at"] < b["at"])
+	# tetangga kanal ikut diperbarui supaya sambungannya langsung terlihat menyambung
+	water.refresh_cell(c)
+
+func _process_dig_queue(delta: float) -> void:
+	_dig_clock += delta
+	while not _dig_queue.is_empty() and _dig_queue[0]["at"] <= _dig_clock:
+		var c: Vector2i = _dig_queue.pop_front()["cell"]
+		if use_tileset_v2:
+			var keep: int = grid_data.get(c, -1)
+			grid_data[c] = TileState.CANAL
+			var a := v2_atlas(c)
+			grid_data[c] = keep
+			a.y = V2_CANAL_ROW + canal_style * 3  # animasi: kanal kering
+			drop_fx(c, SRC_V2, a, roads, _finish_dig.bind(c), dig_drop_time, dig_drop_height)
+		else:
+			_finish_dig(c)
+
+func _finish_dig(c: Vector2i) -> void:
+	dig_pending.erase(c)
+	var st: int = grid_data.get(c, -1)
+	if (st == TileState.DIRT or st == TileState.GRASS) and not buildings.has_building(c) \
+			and not facilities.has_facility(c) and not roads.is_road(c):
+		dug[c] = true
+		set_base(c, TileState.CANAL)
+	else:
+		shovel += 1  # batal (petak keburu terisi): sekop dikembalikan
+		water.refresh_cell(c)

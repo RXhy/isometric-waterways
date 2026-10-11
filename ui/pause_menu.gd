@@ -22,10 +22,19 @@ func setup(w) -> void:
 	$Panel/VBox/Main/Options.pressed.connect(_show_settings)
 	$Panel/VBox/Main/MainMenu.pressed.connect(_to_menu)
 	$Panel/VBox/Settings/Back.pressed.connect(_show_main)
+	# tombol sembunyikan UI (dibuat di kode supaya scene menu tidak perlu diubah)
+	var hide_ui: Button = $Panel/VBox/Main/Options.duplicate(0)  # salin gaya tombol, tanpa sinyal
+	hide_ui.name = "HideUI"
+	hide_ui.text = "Sembunyikan UI (H)"
+	main_list.add_child(hide_ui)
+	main_list.move_child(hide_ui, $Panel/VBox/Main/Options.get_index() + 1)
+	hide_ui.pressed.connect(func():
+		close()
+		world.hud.set_ui_hidden(true))
 	vol_master.value = GameSettings.get_value("vol_master")
 	vol_music.value = GameSettings.get_value("vol_music")
 	vol_sfx.value = GameSettings.get_value("vol_sfx")
-	fullscreen.button_pressed = GameSettings.get_value("fullscreen")
+	fullscreen.button_pressed = DisplayServer.window_get_mode() >= DisplayServer.WINDOW_MODE_FULLSCREEN
 	tooltips.button_pressed = GameSettings.get_value("tooltips")
 	vol_master.value_changed.connect(func(v): GameSettings.set_value("vol_master", v))
 	vol_music.value_changed.connect(func(v): GameSettings.set_value("vol_music", v))

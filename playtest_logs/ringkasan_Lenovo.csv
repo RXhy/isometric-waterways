@@ -1,4 +1,4 @@
 sesi,penguji,versi,param_id,seed,hasil,sebab,hari,detik_game,poin,target,hancur,kincir_terpasang,detik_aksi_pertama,hari_terancam_pertama,detik_terancam_pertama,detik_hancur_pertama,detik_target_tercapai,total_gali,total_ratakan,total_timbun,total_pasang_fasilitas,total_drag,jeda_total_detik,cepat2x_total_detik,menu_total_detik,gagal_spawn_total,survei_tegang,survei_adil,saran,file_log
-2026-10-05_19-14-52,Lenovo,core-gameplay@caef783,6699c695,616052,DITINGGALKAN,main ulang,3,61.2,53,600,2,0,5.8,1,24.0,40.0,,30,0,0,1,6,2.6,0.0,1.5,0,,,,sesi_2026-10-05_19-14-52_Lenovo.csv
-2026-10-05_19-15-58,Lenovo,core-gameplay@caef783,6699c695,557522,DITINGGALKAN,main ulang,1,1.5,0,600,0,0,,,,,,0,0,0,0,0,0.0,0.0,1.2,0,,,,sesi_2026-10-05_19-15-58_Lenovo.csv
-2026-10-05_19-16-01,Lenovo,core-gameplay@caef783,6699c695,277096,DITINGGALKAN,kembali ke menu,1,1.1,0,600,0,0,,,,,,0,0,0,0,0,0.0,0.0,2.1,0,,,,sesi_2026-10-05_19-16-01_Lenovo.csv
+2026-10-09_11-27-18,Lenovo,core-gameplay@c40dd94,269fb20a,28045,MENANG,target tercapai,5,140.9,600,600,1,0,6.7,3,84.0,100.0,140.9,34,0,0,0,9,0.0,0.0,0.0,0,2,2,,sesi_2026-10-09_11-27-18_Lenovo.csv
+2026-10-11_16-47-06,Lenovo,core-gameplay@c40dd94,56a09347,675994,KALAH,kuota,14,418.0,267,5000,9,0,5.4,3,84.0,100.0,,8,0,1,0,2,0.0,0.0,0.0,0,,,,sesi_2026-10-11_16-47-06_Lenovo.csv
+2026-10-11_16-55-13,Lenovo,core-gameplay@c40dd94,cdca3624,841666,KALAH,kuota,29,850.0,1569,5000,9,1,3.7,11,301.1,307.0,,51,0,0,7,13,7.3,249.7,8.5,0,,,,sesi_2026-10-11_16-55-13_Lenovo.csv

@@ -13,6 +13,9 @@ extends Node
 enum Weather { CERAH, KEMARAU, HUJAN }
 const NAMES := ["Cerah", "Kemarau", "Hujan lebat"]
 
+## Jadwal cuaca dibuat otomatis untuk semua hari (lihat grup "Jadwal otomatis").
+## Matikan kalau ingin memakai daftar `schedule` di bawah secara manual.
+@export var auto_schedule: bool = true
 @export var schedule: Array[Weather] = [
 	Weather.CERAH, Weather.CERAH, Weather.CERAH, Weather.CERAH,
 	Weather.CERAH, Weather.CERAH, Weather.CERAH, Weather.CERAH,
@@ -24,7 +27,7 @@ const NAMES := ["Cerah", "Kemarau", "Hujan lebat"]
 ## Seberapa banyak sumber air menyusut di kemarau PERTAMA (0 = tidak menyusut, 1 = kering total).
 @export_range(0.0, 1.0, 0.05) var drought_severity_start: float = 0.3
 ## Tambahan keparahan tiap kemarau berikutnya (kemarau ke-2 = start + step, ke-3 = start + 2*step, ...).
-@export_range(0.0, 0.5, 0.05) var drought_severity_step: float = 0.2
+@export_range(0.0, 0.5, 0.01) var drought_severity_step: float = 0.05
 ## Batas keparahan paling tinggi.
 @export_range(0.0, 1.0, 0.05) var drought_severity_max: float = 0.8
 ## Detik sejak awal hari sampai kemarau mencapai puncaknya (air menyusut bertahap selama ini).
@@ -34,6 +37,17 @@ const NAMES := ["Cerah", "Kemarau", "Hujan lebat"]
 ## Pengali keparahan untuk badan air kecil (1.5 = 50% lebih parah).
 @export var drought_small_mult: float = 1.5
 
+@export_group("Jadwal otomatis")
+## Hari-hari awal selalu Cerah supaya pemain sempat belajar menggali kanal.
+@export var calm_days: int = 3
+## Peluang kemarau / hujan lebat per hari, naik pelan dari awal ke akhir permainan.
+@export_range(0.0, 1.0, 0.01) var drought_chance_start: float = 0.15
+@export_range(0.0, 1.0, 0.01) var drought_chance_end: float = 0.35
+@export_range(0.0, 1.0, 0.01) var rain_chance_start: float = 0.12
+@export_range(0.0, 1.0, 0.01) var rain_chance_end: float = 0.22
+## Cuaca ekstrem yang sama paling banyak sekian hari berturut-turut.
+@export var max_streak: int = 2
+
 var world
 var current: int = Weather.CERAH
 var _day_start: float = 0.0
@@ -41,6 +55,32 @@ var _t: float = 0.0
 
 func setup(w) -> void:
 	world = w
+	if auto_schedule:
+		schedule = generate_schedule(world.target_days, world.map_seed)
+
+## Jadwal cuaca acak tapi tetap: seed peta yang sama = jadwal yang sama (bisa diulang saat balancing).
+## Kurva: tenang di awal, makin sering kemarau/hujan menjelang akhir (seperti Mini Motorways).
+func generate_schedule(days: int, seed_value: int) -> Array[Weather]:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(seed_value) ^ 0x5eed
+	var out: Array[Weather] = []
+	var streak := 0
+	for d in range(1, days + 1):
+		var w: Weather = Weather.CERAH
+		if d > calm_days:
+			var p: float = clampf(float(d - calm_days - 1) / maxf(1.0, float(days - calm_days - 1)), 0.0, 1.0)
+			var pk: float = lerpf(drought_chance_start, drought_chance_end, p)
+			var ph: float = lerpf(rain_chance_start, rain_chance_end, p)
+			var r := rng.randf()
+			if r < pk:
+				w = Weather.KEMARAU
+			elif r < pk + ph:
+				w = Weather.HUJAN
+			if w != Weather.CERAH and not out.is_empty() and out[-1] == w and streak >= max_streak:
+				w = Weather.CERAH
+		streak = streak + 1 if (not out.is_empty() and out[-1] == w) else 1
+		out.append(w)
+	return out
 
 func weather_for(day: int) -> int:
 	return schedule[day - 1] if day >= 1 and day - 1 < schedule.size() else Weather.CERAH

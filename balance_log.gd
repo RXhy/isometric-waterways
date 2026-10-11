@@ -13,8 +13,8 @@ extends Node
 ##   - AKHIR      : hasil permainan;  SURVEI : jawaban survei layar akhir
 ## playtest_logs/ringkasan_<penguji>.csv : satu baris per sesi (cocok untuk dibandingkan di spreadsheet).
 ##
-## Sesi yang terhenti karena game ditutup (X / Stop editor / crash) otomatis dihapus (delete_unfinished).
-## Keluar lewat menu (Main Ulang / Menu Utama) tetap tercatat sebagai DITINGGALKAN.
+## Hanya sesi yang SELESAI (MENANG / KALAH) yang disimpan. Sesi yang ditinggalkan (Main Ulang,
+## Menu Utama, tombol X, Stop di editor, crash) otomatis dihapus, termasuk barisnya di ringkasan.
 ## Semua nama file unik per penguji/sesi, jadi folder ini aman di-commit ke git tanpa konflik.
 ##
 ## Lokasi folder:
@@ -23,8 +23,8 @@ extends Node
 ## Tekan F4 saat bermain untuk membuka foldernya.
 
 @export var enabled: bool = true
-## Hapus otomatis log sesi yang terhenti karena game ditutup (tombol X jendela, tombol Stop di
-## editor, atau game crash), supaya folder log hanya berisi sesi yang selesai / ditinggalkan lewat menu.
+## Hapus otomatis log sesi yang tidak selesai (ditinggalkan lewat menu, tombol X, Stop di editor,
+## atau crash), supaya folder log hanya berisi sesi MENANG / KALAH.
 @export var delete_unfinished: bool = true
 ## Nama penguji (opsional). Kosong = pakai nama user komputer.
 @export var tester_name: String = ""
@@ -180,12 +180,12 @@ func _params_snapshot() -> String:
 	var p := {
 		"day_length": W.day_length, "target_days": W.target_days, "damage_quota": W.damage_quota,
 		"shovel_per_day": W.shovel_per_day, "max_drag_length": W.max_drag_length,
-		"target_points": W.score.target_points, "supplied_per_second": W.score.supplied_per_second,
+		"target_points": W.score.target_points, "star2_points": W.score.star2_points, "star3_points": W.score.star3_points, "supplied_per_second": W.score.supplied_per_second,
 		"day_bonus_per_building": W.score.day_bonus_per_building, "day_bonus_min_supplied": W.score.day_bonus_min_supplied, "bridge_bonus_per_day": W.score.bridge_bonus_per_day,
 		"start_stock": F.start_stock, "stock_per_forecast": F.stock_per_forecast,
 		"kincir_full_flux": F.kincir_full_flux, "kincir_points_per_second": F.kincir_points_per_second,
 		"bridges_start": W.roads.bridges_start, "bridges_per_day": W.roads.bridges_per_day,
-		"buildings_first_day": B.buildings_first_day, "extra_buildings_per_day": B.extra_buildings_per_day,
+		"buildings_first_day": B.buildings_first_day, "spawn_rate_start": B.spawn_rate_start, "spawn_rate_end": B.spawn_rate_end, "expansion_steps": W.expansion_steps, "expand_every_days": W.expand_every_days,
 		"farm_chance": B.farm_chance, "min_building_spacing": B.min_building_spacing,
 		"min_water_distance": B.min_water_distance, "max_water_distance_start": B.max_water_distance_start,
 		"max_water_distance_end": B.max_water_distance_end,
@@ -208,19 +208,31 @@ func _params_snapshot() -> String:
 
 # --- File & folder ---
 
-## Hapus file sesi lama yang tidak punya baris AKHIR (game ditutup paksa / Stop di editor / crash).
+## Hapus file sesi lama yang tidak selesai: tanpa baris AKHIR (game ditutup paksa / Stop di editor /
+## crash) atau berakhir DITINGGALKAN. Baris DITINGGALKAN di file ringkasan juga dibuang.
 func _cleanup_unfinished() -> void:
 	var dir := DirAccess.open(folder)
 	if dir == null:
 		return
 	for f in dir.get_files():
-		if not (f.begins_with("sesi_") and f.ends_with(".csv")):
+		if not f.ends_with(".csv"):
 			continue
 		var path := folder.path_join(f)
 		var text := FileAccess.get_file_as_string(path)
-		if not ("\nAKHIR," in text or text.begins_with("AKHIR,")):
-			DirAccess.remove_absolute(path)
-			print("BalanceLog: log tidak selesai dihapus: ", f)
+		if f.begins_with("sesi_"):
+			var finished: bool = "\nAKHIR," in text or text.begins_with("AKHIR,")
+			if not finished or "DITINGGALKAN" in text:
+				DirAccess.remove_absolute(path)
+				print("BalanceLog: log tidak selesai dihapus: ", f)
+		elif f.begins_with("ringkasan_") and ",DITINGGALKAN," in text:
+			var kept: PackedStringArray = []
+			for line in text.split("\n"):
+				if not ",DITINGGALKAN," in line:
+					kept.append(line)
+			var w := FileAccess.open(path, FileAccess.WRITE)
+			if w:
+				w.store_string("\n".join(kept))
+				w.close()
 
 ## Buang log sesi ini (dipakai saat game ditutup sebelum selesai).
 func discard() -> void:
@@ -418,6 +430,9 @@ func log_note(kind: String, note: String) -> void:
 func log_end(result: String, reason: String) -> void:
 	if not enabled or _ended:
 		return
+	if result == "DITINGGALKAN" and delete_unfinished:
+		discard()  # hanya sesi MENANG / KALAH yang disimpan
+		return
 	var day: int = mini(world.current_day(), world.target_days)
 	if result == "MENANG" and target_reached < 0.0:
 		target_reached = world.elapsed
@@ -515,6 +530,6 @@ func _notification(what: int) -> void:
 	# jendela game ditutup sebelum selesai -> log sesi ini dibuang (atau dicatat kalau fitur hapus dimatikan)
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and world != null and enabled and not _ended:
 		if delete_unfinished:
-			discard()
+			discard()  # ditutup sebelum selesai: log dibuang
 		else:
 			log_end("DITINGGALKAN", "game ditutup")

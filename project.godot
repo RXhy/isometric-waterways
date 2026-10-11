@@ -16,14 +16,15 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Isometric-Water"
 run/main_scene="res://scenes/debug/menu_picker.tscn"
-config/features=PackedStringArray("4.6", "Forward Plus")
+config/features=PackedStringArray("4.7", "Forward Plus")
 
 [display]
 
 window/size/viewport_width=640
 window/size/viewport_height=360
+window/size/mode=3
 window/size/window_width_override=1920
-window/size/window_height_override=1280
+window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
 
 [dotnet]

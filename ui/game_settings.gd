@@ -11,7 +11,7 @@ static var data := {
 	"vol_master": 0.8,
 	"vol_music": 0.8,
 	"vol_sfx": 0.8,
-	"fullscreen": false,
+	"fullscreen": true,
 	"tooltips": true,
 	"menu_variant": -1,  # layout main menu terakhir dipilih di layar debug (-1 = default)
 }
@@ -34,17 +34,19 @@ static func get_value(key: String):
 static func set_value(key: String, value) -> void:
 	load_settings()
 	data[key] = value
-	apply()
+	apply(key == "fullscreen")
 	var cfg := ConfigFile.new()
 	for k in data:
 		cfg.set_value("game", k, data[k])
 	cfg.save(PATH)
 
-static func apply() -> void:
+## window = true hanya saat pemain mengubah opsi Layar penuh; saat game dibuka, mode jendela
+## mengikuti Project Settings (layar penuh 1920x1080) supaya tidak tertimpa nilai lama.
+static func apply(window: bool = false) -> void:
 	_set_bus("Master", data["vol_master"])
 	_set_bus("Music", data["vol_music"])
 	_set_bus("SFX", data["vol_sfx"])
-	if DisplayServer.get_name() != "headless":
+	if window and DisplayServer.get_name() != "headless":
 		var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if data["fullscreen"] else DisplayServer.WINDOW_MODE_WINDOWED
 		if DisplayServer.window_get_mode() != mode:
 			DisplayServer.window_set_mode(mode)
