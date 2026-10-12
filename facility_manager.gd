@@ -12,6 +12,10 @@ const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway", "Kincir Air"]
 @export var start_stock: Array[int] = [1, 0, 0, 2]  ## stok awal [Bor, Bendungan, Spillway, Kincir]
 @export var stock_per_forecast: Array[int] = [1, 3, 1, 1]  ## tambahan stok [Bor, Bendungan, Spillway, Kincir]; Kincir bertambah saat besok Cerah
 @export_group("Kincir Air")
+## Fungsi utama kincir: POMPA. Air dari petak kincir diangkat ke kanal/sungai di sebelahnya
+## (4 sisi) yang lebih tinggi, supaya aliran bisa naik ke dataran yang lebih tinggi.
+@export var kincir_lift_rate: float = 0.8   ## air yang diangkat per detik (kedalaman/detik)
+@export var kincir_max_lift: int = 1        ## beda tingkat elevasi maksimal yang bisa dinaikkan
 @export var kincir_full_flux: float = 0.1        ## debit (kedalaman/detik) yang membuat kincir berputar penuh
 @export var kincir_points_per_second: float = 0.25 ## poin per detik saat berputar penuh (7.5/hari, setara ~1 bangunan terlayani)
 
@@ -155,4 +159,5 @@ func _process(_delta: float) -> void:
 		return
 	for c in facilities:
 		if facilities[c]["kind"] == Kind.KINCIR:
-			facilities[c]["node"].set_power(kincir_power(c))
+			# berputar saat dialiri air ATAU saat sedang memompa
+			facilities[c]["node"].set_power(maxf(kincir_power(c), world.water.pump_power(c)))

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://tay1r0w5xnme"
-path="res://.godot/imported/tileset_iso_waterways.png-57c2d45d81474a960d5ab3f3b3d9ac59.ctex"
+uid="uid://b86rxnp2s6x2a"
+path="res://.godot/imported/Polygon 1.png-8d2e952308f1988fa1438e09a1bb9197.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tileset_iso_waterways.png"
-dest_files=["res://.godot/imported/tileset_iso_waterways.png-57c2d45d81474a960d5ab3f3b3d9ac59.ctex"]
+source_file="res://assets/ui/Polygon 1.png"
+dest_files=["res://.godot/imported/Polygon 1.png-8d2e952308f1988fa1438e09a1bb9197.ctex"]
 
 [params]
 

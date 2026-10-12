@@ -92,7 +92,7 @@ func try_spawn() -> bool:
 		var cell := Vector2i(
 			randi_range(area.position.x + 1, area.end.x - 2),
 			randi_range(area.position.y + 2, area.end.y - 3))
-		if buildings.has(cell) or not world.is_buildable(cell):
+		if buildings.has(cell) or not world.is_buildable(cell) or not world.is_playable(cell):
 			continue
 		if _too_close_to_building(cell):
 			continue

@@ -120,8 +120,10 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 @export var area_center: Vector2i = Vector2i(-1, -1)
 ## Lahan yang bisa dipakai di awal = bagian tengah layar yang tidak tertutup UI.
 ## Lahan lalu melebar bertahap sampai seluruh bingkai zoom out (dikurangi tepi UI).
-## Ukuran lahan awal relatif terhadap layar awal di luar UI (0.8 = 80%, sisanya terbuka lewat ekspansi).
-@export_range(0.4, 1.0, 0.05) var start_area_scale: float = 0.8
+## Lahan aktif berbentuk belah ketupat (isometrik), mengikuti grid peta.
+## Seberapa besar tepi UI (atas/bawah) yang dihindari ujung belah ketupat: 1 = tidak menyentuh UI sama
+## sekali, 0.5 = ujung atas/bawah boleh sedikit masuk ke area UI (lebih luas).
+@export_range(0.0, 1.0, 0.05) var diamond_ui_respect: float = 0.5
 @export var expansion_steps: int = 4        ## berapa kali lahan melebar
 @export var expand_every_days: int = 9      ## lahan melebar tiap sekian hari (default: hari 10, 19, 28, 37)
 ## Porsi layar yang tertutup UI (atas = bar poin, bawah = tab hari + toolbar). Lahan & bangunan tidak di sini.
@@ -305,9 +307,16 @@ func tile_info(cell: Vector2i) -> Dictionary:
 		tname = b.TYPE_DATA[b.type]["name"]
 		detail = "Air %d%%  -  %s" % [int(100.0 * b.water / b.max_water), ["Hidup", "Terancam", "Hancur"][b.state]]
 	elif facilities.kind_at(cell) == facilities.Kind.KINCIR:
+		var targets: Array = water.pump_targets.get(cell, [])
+		if water.pumped.has(cell):
+			detail = "Memompa air naik ke %d kanal (%.1f/detik)" % [targets.size(), water.pumped[cell]]
+		elif not targets.is_empty():
+			detail = "Siap memompa - petak kincir butuh air"
+		else:
+			detail = "Tidak memompa - pasang di sebelah kanal %d tingkat lebih tinggi" % 1
 		var pw: float = facilities.kincir_power(cell)
-		detail = "Putaran %d%%  -  +%.1f poin/detik" % [int(pw * 100.0), pw * facilities.kincir_points_per_second] \
-			if pw >= 0.03 else "Diam - butuh air yang mengalir"
+		if pw >= 0.03:
+			detail += "\n+%.1f poin/detik dari arus" % (pw * facilities.kincir_points_per_second)
 	elif water.get_depth(cell) > 0.005:
 		detail = "Kedalaman air %.2f" % water.get_depth(cell)
 	var pv: Array = action_preview(cell)
@@ -354,6 +363,10 @@ func action_preview(cell: Vector2i) -> Array:
 		Tool.BOR, Tool.BENDUNGAN, Tool.SPILLWAY, Tool.KINCIR:
 			var why: String = facilities.why_not(current_tool - Tool.BOR, cell)
 			if why == "":
+				if current_tool == Tool.KINCIR:
+					var n: int = water.lift_targets(cell).size()
+					return [1, "Klik: pasang Kincir - pompa naik ke %d kanal" % n] if n > 0 \
+						else [1, "Klik: pasang Kincir (belum ada kanal lebih tinggi di sebelahnya)"]
 				return [1, "Klik: pasang %s" % facilities.KIND_NAMES[current_tool - Tool.BOR]]
 			return [-1, why]
 	return [0, ""]
@@ -535,9 +548,13 @@ func setup_camera() -> void:
 var base_zoom: float = 0.0     ## zoom awal (pas area inti 25x25)
 var target_zoom: float = 0.0
 var play_rect: Rect2           ## bingkai kamera saat zoom out penuh (koordinat global)
-var unlocked_area: Rect2i      ## lahan yang sudah terbuka: alat & bangunan hanya di sini
-var unlock_core: Rect2i        ## lahan awal (tengah layar, di luar UI)
-var unlock_max: Rect2i         ## lahan terluas (seluruh bingkai zoom out, di luar UI)
+var unlocked_area: Rect2i      ## kotak pembungkus lahan aktif (untuk mencari tempat spawn)
+var unlock_core: Rect2i        ## kotak pembungkus lahan awal
+var unlock_max: Rect2i         ## kotak pembungkus lahan terluas
+var iso_center: Vector2i       ## pusat lahan belah ketupat (koordinat isometrik, lihat iso_of)
+var unlock_r0: int = 0         ## "jari-jari" lahan awal (petak dari pusat ke ujung, sepanjang sumbu isometrik)
+var unlock_rmax: int = 0       ## jari-jari lahan terluas
+var unlock_r: int = 0          ## jari-jari lahan sekarang
 var unlock_step: int = 0
 var _shade: Node2D             ## gambar gelap lahan terkunci + garis batas
 var _pan_goal: Vector2         ## tujuan geser kamera otomatis (saat lahan melebar)
@@ -561,17 +578,18 @@ func _setup_zoom() -> void:
 	active_area = visible_area()
 	camera.zoom = Vector2(base_zoom, base_zoom)
 	camera.position = base_pos
-	# lahan awal = tengah tampilan awal di luar UI; lahan terluas = tengah bingkai zoom out di luar UI
+	# lahan belah ketupat: awal = muat di tampilan awal, terluas = muat di bingkai zoom out
 	var base_view := Rect2(base_pos - screen / base_zoom / 2.0, screen / base_zoom)
-	var core_px := _ui_inset(base_view)
-	core_px = core_px.grow_individual(
-		-core_px.size.x * (1.0 - start_area_scale) / 2.0, -core_px.size.y * (1.0 - start_area_scale) / 2.0,
-		-core_px.size.x * (1.0 - start_area_scale) / 2.0, -core_px.size.y * (1.0 - start_area_scale) / 2.0)
-	unlock_core = _cells_in(core_px).intersection(active_area)
-	unlock_max = _cells_in(_ui_inset(play_rect)).merge(unlock_core).intersection(active_area)
+	var mid_shift: float = (ui_margin_bottom - ui_margin_top) * diamond_ui_respect * base_view.size.y / 2.0
+	iso_center = iso_of(world.local_to_map(world.to_local(base_view.get_center() - Vector2(0, mid_shift))))
+	unlock_r0 = _r_fit(base_view)
+	unlock_rmax = maxi(unlock_r0, _r_fit(play_rect))
 	if demo_mode:
-		unlock_core = active_area
-		unlock_max = active_area
+		unlock_r0 = 999
+		unlock_rmax = 999
+	unlock_r = unlock_r0
+	unlock_core = _diamond_bounds(unlock_r0)
+	unlock_max = _diamond_bounds(unlock_rmax)
 	unlocked_area = unlock_core
 	spawn_area = unlock_core
 	_cam_last_us = Time.get_ticks_usec()
@@ -580,7 +598,49 @@ func _setup_zoom() -> void:
 	_shade.z_index = 1
 	add_child(_shade)
 	move_child(_shade, world.get_index() + 1)
-	_shade.set_rect(_cells_px(unlocked_area), false)
+	_shade.set_rect(_diamond_px(unlock_r), false)
+
+## Koordinat isometrik petak: (i, j) dengan i+ = kanan-bawah layar, j+ = kanan-atas layar.
+## Petak yang |i - pusat.i| <= r dan |j - pusat.j| <= r membentuk belah ketupat di layar.
+func iso_of(cell: Vector2i) -> Vector2i:
+	var p := world.map_to_local(cell)
+	return Vector2i(roundi((p.x / 16.0 + p.y / 8.0) / 2.0), roundi((p.x / 16.0 - p.y / 8.0) / 2.0))
+
+func in_diamond(cell: Vector2i, r: int) -> bool:
+	var d := iso_of(cell) - iso_center
+	return absi(d.x) <= r and absi(d.y) <= r
+
+## Jari-jari belah ketupat terbesar yang muat di tampilan ini (memperhitungkan tepi UI).
+func _r_fit(view: Rect2) -> int:
+	var h: float = view.size.y * (1.0 - (ui_margin_top + ui_margin_bottom) * diamond_ui_respect)
+	var w: float = view.size.x * (1.0 - 2.0 * ui_margin_side)
+	return maxi(2, mini(int((h / 16.0 - 1.0) / 2.0), int((w / 32.0 - 1.0) / 2.0)))
+
+## Kotak (koordinat peta) yang membungkus lahan belah ketupat berjari-jari r.
+func _diamond_bounds(r: int) -> Rect2i:
+	var out := Rect2i()
+	var first := true
+	for y in range(active_area.position.y, active_area.end.y):
+		for x in range(active_area.position.x, active_area.end.x):
+			var c := Vector2i(x, y)
+			if in_diamond(c, r):
+				if first:
+					out = Rect2i(c, Vector2i.ONE)
+					first = false
+				else:
+					out = out.expand(c)
+	if first:
+		return active_area
+	return Rect2i(out.position, out.size + Vector2i.ONE).intersection(active_area)
+
+## Kotak piksel (global) yang membungkus belah ketupat berjari-jari r (gambarnya belah ketupat di dalamnya).
+func _diamond_px(r: int) -> Rect2:
+	# kebalikan iso_of: posisi lokal = (16 (i + j), 8 (i - j))
+	var local := Vector2((iso_center.x + iso_center.y) * 16.0, (iso_center.x - iso_center.y) * 8.0)
+	# naikkan sesuai elevasi petak tengah supaya garis batas pas dengan tile yang terangkat
+	var c := world.to_global(local) - Vector2(0, ELEV_STEP * get_elev(world.local_to_map(local)))
+	var half := Vector2(32.0 * r + 16.0, 16.0 * r + 8.0)
+	return Rect2(c - half, half * 2.0)
 
 ## Bagian rect (koordinat global) yang tidak tertutup UI.
 func _ui_inset(r: Rect2) -> Rect2:
@@ -606,14 +666,12 @@ func _cells_px(a: Rect2i) -> Rect2:
 
 ## Lahan aktif (bisa dipakai alat, tempat bangunan muncul).
 func is_playable(cell: Vector2i) -> bool:
-	return unlocked_area.has_point(cell) and active_area.has_point(cell)
+	return active_area.has_point(cell) and in_diamond(cell, unlock_r)
 
-## Lahan untuk tahap ekspansi k (0 = awal).
-func _area_for_step(k: int) -> Rect2i:
+## Jari-jari lahan untuk tahap ekspansi k (0 = awal).
+func _radius_for_step(k: int) -> int:
 	var t: float = clampf(float(k) / float(maxi(expansion_steps, 1)), 0.0, 1.0)
-	var lo := Vector2i(roundi(lerpf(unlock_core.position.x, unlock_max.position.x, t)), roundi(lerpf(unlock_core.position.y, unlock_max.position.y, t)))
-	var hi := Vector2i(roundi(lerpf(unlock_core.end.x, unlock_max.end.x, t)), roundi(lerpf(unlock_core.end.y, unlock_max.end.y, t)))
-	return Rect2i(lo, hi - lo)
+	return roundi(lerpf(unlock_r0, unlock_rmax, t))
 
 func unlock_step_for_day(d: int) -> int:
 	if expand_every_days <= 0:
@@ -628,11 +686,12 @@ func next_unlock_day() -> int:
 
 func _expand_to(k: int) -> void:
 	unlock_step = k
-	unlocked_area = _area_for_step(k)
-	_shade.set_rect(_cells_px(unlocked_area), true)
-	balance_log.log_note("EKSPANSI", "lahan tahap %d: %s" % [k, str(unlocked_area)])
+	unlock_r = _radius_for_step(k)
+	unlocked_area = _diamond_bounds(unlock_r)
+	_shade.set_rect(_diamond_px(unlock_r), true)
+	balance_log.log_note("EKSPANSI", "lahan tahap %d: jari-jari %d" % [k, unlock_r])
 	hud.toast("Lahan baru terbuka! (%d/%d)" % [k, expansion_steps])
-	_focus_on(_cells_px(unlocked_area))
+	_focus_on(_diamond_px(unlock_r))
 
 ## Geser & zoom out kamera pelan-pelan supaya seluruh lahan terlihat di luar UI.
 func _focus_on(r: Rect2) -> void:
@@ -1176,14 +1235,26 @@ class LockedShade extends Node2D:
 	func _draw() -> void:
 		if w == null or w.demo_mode:
 			return
+		# lahan aktif = belah ketupat di dalam rect; di luarnya digelapkan (4 segilima + 4 pita)
 		var big := 4000.0
 		var r := Rect2(to_local(rect.position), rect.size)
 		var col: Color = w.locked_shade
+		var c := r.get_center()
+		var t := Vector2(c.x, r.position.y)
+		var rt := Vector2(r.end.x, c.y)
+		var b := Vector2(c.x, r.end.y)
+		var l := Vector2(r.position.x, c.y)
+		# pita di luar kotak pembungkus
 		draw_rect(Rect2(r.position.x - big, r.position.y - big, r.size.x + big * 2.0, big), col)
 		draw_rect(Rect2(r.position.x - big, r.end.y, r.size.x + big * 2.0, big), col)
 		draw_rect(Rect2(r.position.x - big, r.position.y, big, r.size.y), col)
 		draw_rect(Rect2(r.end.x, r.position.y, big, r.size.y), col)
-		draw_rect(r, w.border_color, false, 1.0)
+		# 4 sudut kotak pembungkus di luar belah ketupat
+		draw_colored_polygon(PackedVector2Array([r.position, t, l]), col)
+		draw_colored_polygon(PackedVector2Array([t, Vector2(r.end.x, r.position.y), rt]), col)
+		draw_colored_polygon(PackedVector2Array([rt, r.end, b]), col)
+		draw_colored_polygon(PackedVector2Array([b, Vector2(r.position.x, r.end.y), l]), col)
+		draw_polyline(PackedVector2Array([t, rt, b, l, t]), w.border_color, 1.0)
 
 # --- Tileset air & jalan v2 (assets/Tiles/tilesset_water_road.png) ---
 

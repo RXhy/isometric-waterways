@@ -3,7 +3,12 @@
 [ext_resource type="Script" uid="uid://cpdljr2xq1dbb" path="res://ui/main_menu.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/menu_map.tscn" id="2_world"]
 [ext_resource type="PackedScene" path="res://scenes/ui/menu_item_dark.tscn" id="3_item"]
-[ext_resource type="Texture2D" path="res://assets/logo_fiks_hd.png" id="4_logo"]
+[ext_resource type="Texture2D" path="res://assets/ui/logo_fiks_hd.png" id="4_logo"]
+[ext_resource type="Texture2D" path="res://assets/ui/Rectangle 2.png" id="5_panel"]
+[ext_resource type="Texture2D" path="res://assets/ui/NEW GAME.png" id="6_t_new"]
+[ext_resource type="Texture2D" path="res://assets/ui/LOAD GAME.png" id="7_t_load"]
+[ext_resource type="Texture2D" path="res://assets/ui/TUTORIAL.png" id="8_t_tut"]
+[ext_resource type="Texture2D" path="res://assets/ui/EXIT.png" id="9_t_exit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
 bg_color = Color(0.17, 0.16, 0.15, 0.86)
@@ -35,14 +40,16 @@ script = ExtResource("1_script")
 [node name="UI" type="CanvasLayer" parent="." unique_id=271214607]
 layer = 10
 
-[node name="LeftPanel" type="Panel" parent="UI" unique_id=1013220172]
+[node name="LeftPanel" type="TextureRect" parent="UI" unique_id=1013220172]
+texture_filter = 2
 anchors_preset = 9
 anchor_bottom = 1.0
 offset_left = 100.0
-offset_right = 278.0
+offset_right = 265.0
 grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBox_panel")
+texture = ExtResource("5_panel")
+expand_mode = 1
 
 [node name="Logo" type="TextureRect" parent="UI" unique_id=2038094760]
 texture_filter = 2
@@ -57,9 +64,9 @@ stretch_mode = 5
 
 [node name="Menu" type="VBoxContainer" parent="UI" unique_id=880736554]
 unique_name_in_owner = true
-offset_left = 107.0
+offset_left = 108.0
 offset_top = 162.0
-offset_right = 270.0
+offset_right = 256.0
 offset_bottom = 290.0
 theme_override_constants/separation = 12
 
@@ -67,6 +74,7 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 layout_mode = 2
 text = "NEW GAME"
+label_texture = ExtResource("6_t_new")
 
 [node name="LoadGame" parent="UI/Menu" unique_id=1257861244 instance=ExtResource("3_item")]
 unique_name_in_owner = true
@@ -74,16 +82,19 @@ layout_mode = 2
 tooltip_text = "Belum ada permainan tersimpan"
 disabled = true
 text = "LOAD GAME"
+label_texture = ExtResource("7_t_load")
 
 [node name="Tutorial" parent="UI/Menu" unique_id=1458045321 instance=ExtResource("3_item")]
 unique_name_in_owner = true
 layout_mode = 2
 text = "TUTORIAL"
+label_texture = ExtResource("8_t_tut")
 
 [node name="Exit" parent="UI/Menu" unique_id=1024870949 instance=ExtResource("3_item")]
 unique_name_in_owner = true
 layout_mode = 2
 text = "EXIT"
+label_texture = ExtResource("9_t_exit")
 
 [node name="Footer" type="Label" parent="UI" unique_id=1594169936]
 anchors_preset = 2
@@ -91,7 +102,7 @@ anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 112.0
 offset_top = -20.0
-offset_right = 270.0
+offset_right = 260.0
 offset_bottom = -8.0
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.62, 0.6, 0.56, 1)

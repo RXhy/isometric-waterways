@@ -40,6 +40,8 @@ var drains: Dictionary = {}      # petak spillway -> true
 var walls: Dictionary = {}       # petak bendungan -> true
 var cells: Array[Vector2i] = []  # semua petak di area aktif
 var watched: Dictionary = {}     # petak yang dipasangi kincir air
+var pumped: Dictionary = {}      # petak kincir -> air yang diangkat (kedalaman/detik) pada langkah terakhir
+var pump_targets: Dictionary = {}  # petak kincir -> daftar petak tujuan (lebih tinggi)
 var flux: Dictionary = {}        # petak -> debit keluar rata-rata (kedalaman/detik)
 var flow_vec: Dictionary = {}    # petak -> arah aliran bersih rata-rata (x: sumbu kiri-atas/kanan-bawah, y: kiri-bawah/kanan-atas)
 var _edge_vis: Dictionary = {}   # cache tile buih tepi yang sedang tampil
@@ -239,6 +241,9 @@ func step_sim(dt: float) -> void:
 			var nb: Vector2i = world.world.get_neighbor_cell(c, SIDES[si])
 			if not _open(nb):
 				continue
+			# kincir = pompa satu arah: air yang sudah dinaikkan tidak mengalir balik ke petak kincir
+			if watched.has(nb) and world.get_elev(c) > world.get_elev(nb):
+				continue
 			var level := surface(nb)
 			if channel and not is_channel(nb):
 				level = max(level, bank)  # air hanya tumpah ke daratan kalau melewati tepi kanal
@@ -273,6 +278,9 @@ func step_sim(dt: float) -> void:
 		flux[c] = f0 + (o - f0) * a
 		flow_vec[c] = v0 + ((netvec.get(c, Vector2.ZERO) as Vector2) / dt - v0) * a
 
+	# 2b) Kincir air: angkat air dari petaknya ke kanal/sungai di sebelahnya yang lebih tinggi
+	_pump(dt)
+
 	# 3) Penguapan, resapan, spillway
 	for c in depth.keys():
 		var d: float = depth[c]
@@ -286,6 +294,40 @@ func step_sim(dt: float) -> void:
 			depth.erase(c)
 		else:
 			depth[c] = d
+
+## Kincir air sebagai pompa: memindahkan air dari petak kincir ke tetangga sisi yang berupa
+## kanal/sungai dan lebih tinggi 1..kincir_max_lift tingkat. Butuh air di petak kincir.
+func _pump(dt: float) -> void:
+	pumped.clear()
+	var F = world.facilities
+	for k in watched:
+		var targets := lift_targets(k)
+		pump_targets[k] = targets
+		var d := get_depth(k)
+		if targets.is_empty() or d < wet_threshold:
+			continue
+		var amt: float = minf(F.kincir_lift_rate * dt, d - wet_threshold * 0.5)
+		if amt <= 0.0:
+			continue
+		depth[k] = d - amt
+		for t in targets:
+			depth[t] = get_depth(t) + amt / targets.size()
+		pumped[k] = amt / dt
+
+## Petak tujuan kincir di k: kanal/sungai di 4 sisi yang lebih tinggi dan belum penuh.
+func lift_targets(k: Vector2i) -> Array:
+	var out := []
+	var max_lift: int = world.facilities.kincir_max_lift
+	for si in 4:
+		var nb: Vector2i = world.world.get_neighbor_cell(k, SIDES[si])
+		var dh: int = world.get_elev(nb) - world.get_elev(k)
+		if dh >= 1 and dh <= max_lift and is_channel(nb) and _open(nb) and get_depth(nb) < channel_depth:
+			out.append(nb)
+	return out
+
+## Petak kincir sedang mengangkat air? (0..1, dipakai animasi)
+func pump_power(k: Vector2i) -> float:
+	return clampf(pumped.get(k, 0.0) / maxf(world.facilities.kincir_lift_rate, 0.001), 0.0, 1.0)
 
 # --- Tampilan ---
 

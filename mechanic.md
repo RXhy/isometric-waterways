@@ -54,8 +54,8 @@ Yang terjadi di **awal setiap hari**, berurutan:
 - Setiap permainan memilih **area inti 25×25** secara acak yang pasti berisi sumber air. Kamera diatur supaya area itu pas di layar.
 - Pusat area main dipilih acak (berisi air, jauh dari tepi peta) supaya kamera selalu menaruhnya di **tengah layar**. Isi Node2D → `area_center` untuk mengunci posisi tertentu.
 - **Semua petak yang bisa terlihat saat zoom out penuh** ikut disimulasikan (air mengalir di sana). Kamera tidak bisa keluar dari bingkai itu. Makin kecil `zoom_out_limit`, makin luas area (dan makin berat simulasinya).
-- **Lahan aktif** = bagian tengah layar yang tidak tertutup UI (garis krem; luar lahan digelapkan). Alat dan bangunan baru hanya di lahan aktif. Lahan **melebar 4 kali** (hari 10, 19, 28, 37) sampai seluruh bingkai zoom out di luar UI; kamera ikut menyesuaikan dan muncul pesan "Lahan baru terbuka!".
-- Atur di Node2D, grup **Lahan & ekspansi**: `start_area_scale` (0,8), `expansion_steps` (4), `expand_every_days` (9), `ui_margin_top/bottom/side`, `locked_shade`, `border_color`.
+- **Lahan aktif** berbentuk **belah ketupat isometrik** di tengah layar, mengikuti grid peta (garis krem; luar lahan digelapkan). Alat dan bangunan baru hanya di lahan aktif. Lahan **melebar 4 kali** (hari 10, 19, 28, 37): jari-jarinya naik dari yang muat di layar awal sampai yang muat di bingkai zoom out; kamera ikut menyesuaikan dan muncul pesan "Lahan baru terbuka!".
+- Atur di Node2D, grup **Lahan & ekspansi**: `diamond_ui_respect` (0,5 = ujung atas/bawah boleh sedikit masuk area UI; 1 = tidak menyentuh UI), `expansion_steps` (4), `expand_every_days` (9), `ui_margin_top/bottom/side`, `locked_shade`, `border_color`.
 - **Tombol H** (atau "Sembunyikan UI" di menu jeda) menyembunyikan semua UI; tekan H lagi untuk menampilkan.
 - Pengacakan memakai **seed**: Node2D → `map_seed` (0 = acak). Seed yang terpakai selalu dicatat di log playtest, jadi peta yang sama bisa diulang.
 
@@ -143,7 +143,7 @@ Elevasi punya 4 tingkat (0–3): Garis pantai, Dataran rendah, Dataran menengah,
 | **Mesin Bor** (5) | Sumber air tanah permanen, **tidak terpengaruh kemarau** | Di tanah | 1 | +1 kalau besok **Kemarau** |
 | **Bendungan** (6) | Petak kedap air, menahan/membelokkan aliran | Di tanah atau melintang di kanal galian | 0 | +3 kalau besok **Hujan** |
 | **Spillway** (7) | Saluran pembuang. Badan air yang punya spillway **tidak meluap** saat hujan | Di tanah, **bersebelahan** dengan sumber air | 0 | +1 kalau besok **Hujan** |
-| **Kincir Air** (8) | Menghasilkan poin dari **air yang mengalir** (§6) | Di kanal atau sungai/danau | 2 | +1 kalau besok **Cerah** |
+| **Kincir Air** (8) | **Pompa**: mengangkat air dari petaknya ke kanal/sungai di sebelahnya yang **1 tingkat lebih tinggi**, supaya aliran bisa naik ke dataran atas. Bonus kecil poin dari arus (§6) | Di kanal atau sungai/danau | 2 | +1 kalau besok **Cerah** |
 
 Atur stok di Facilities → `start_stock` dan `stock_per_forecast` (urutan: Bor, Bendungan, Spillway, Kincir). Untuk jembatan, atur di Roads → `bridges_start`, `bridges_per_day`.
 
@@ -346,7 +346,9 @@ tile_air(c)  = DANGKAL jika kedalaman < 0.18 (bukan sumber alami)
 
 Patokan: satu bangunan yang dialiri penuh sehari = 0,2 × 30 + 4 = **10 poin**.
 
-**Kincir air:** putaran = debit air yang keluar dari petak kincir ÷ 0,1 (Facilities → `kincir_full_flux`), dibatasi 0–100%. Air hanya mengalir kalau ada yang "menyedot" di hilirnya: penguapan kanal panjang, spillway, resapan banjir, atau air baru yang sedang mengisi kanal. Jadi kincir di **hulu kanal yang panjang** berputar lebih kencang. Kincir di danau yang tenang diam saja.
+**Kincir air sebagai pompa:** tiap detik kincir memindahkan air dari petaknya ke tetangga sisi (↖ ↗ ↙ ↘) yang berupa kanal/sungai, lebih tinggi 1 tingkat (Facilities → `kincir_max_lift`), dan belum penuh. Lajunya 0,8 kedalaman/detik dibagi rata ke semua petak tujuan (Facilities → `kincir_lift_rate`). Pompa satu arah: air yang sudah naik tidak mengalir balik ke petak kincir. Petak kincir butuh air (tersambung ke sungai/kanal berair). Cara pakai: gali kanal di dataran atas sampai menempel ke sisi petak air di bawahnya, lalu pasang kincir di petak air itu.
+
+**Poin kincir:** putaran = debit air yang keluar dari petak kincir ÷ 0,1 (Facilities → `kincir_full_flux`), dibatasi 0–100%. Air hanya mengalir kalau ada yang "menyedot" di hilirnya: penguapan kanal panjang, spillway, resapan banjir, atau air baru yang sedang mengisi kanal. Jadi kincir di **hulu kanal yang panjang** berputar lebih kencang. Kincir di danau yang tenang diam saja.
 
 | Kondisi | Default | Atur di |
 |---|---|---|
