@@ -1,39 +1,51 @@
 extends SceneTree
-## Pembuat awal peta khusus main menu -> scenes/menu_map.tscn
-## Jalankan SEKALI dari terminal:  godot --headless -s res://tools/build_menu_map.gd
-## Setelah itu peta diedit langsung di editor Godot (scenes/menu_map.tscn);
-## script ini hanya titik awal, menjalankannya lagi akan MENIMPA hasil editan.
+## Pembuat peta latar main menu -> scenes/menu_map.tscn
+## Jalankan dari terminal:  godot --headless --path . -s res://tools/build_menu_map.gd
+## Menjalankannya lagi akan MENIMPA scenes/menu_map.tscn (termasuk editan manual di editor).
 ##
-## Koordinat desain memakai sumbu isometrik (i, j) dari pojok kiri pulau:
-##   i+ = ke kanan-bawah layar, j+ = ke kanan-atas layar. Pulau 13 x 13 petak.
+## Peta lebar penuh layar (52 x 52 petak isometrik, tepinya di luar layar) memakai
+## tileset baru assets/Tiles/tilesset_water_road.png untuk air alami, kanal, dan jalan.
+## Desain ditulis dalam koordinat LAYAR relatif pusat kamera (sx, sy) supaya mudah ditata:
+##   viewport 640 x 360, pusat (0, 0); panel menu ada di sx -220..-43.
+## Koordinat petak (i, j): i+ = kanan-bawah layar, j+ = kanan-atas layar.
 
-const N := 13
-const STEP := 4  # px per tingkat elevasi (sama dengan world.gd ELEV_STEP)
+const N := 52
+const C := 26                 # pusat peta (i = j = C)
+const STEP := 4               # px per tingkat elevasi (sama dengan world.gd ELEV_STEP)
 const SRC_TERRAIN := 0
-const SRC_WATER_ROAD := 1
-const SRC_FLOW := 2
-# baris tile arus di water_flow.png
-const TENANG := 0
-const PELAN := 1
-const DERAS := 5
-enum { TL, TR, BL, BR }
+const SRC_V2 := 3
+const V2_TOP_SHIFT := 0       # sama dengan world.gd v2_top_shift (tanah v3)
+const V2_TEX := "res://assets/Tiles/tilesset_water_road.png"
+enum { TL = 1, TR = 2, BL = 4, BR = 8 }
+const SIDES := [[Vector2i(-1, 0), TL], [Vector2i(0, 1), TR], [Vector2i(0, -1), BL], [Vector2i(1, 0), BR]]
+# kolom tile (sama dengan world.gd LINK_COL / LAKE_COL)
+const LINK_COL := {0: 2, 1: 2, 8: 2, 9: 2, 2: 3, 4: 3, 6: 3, 10: 0, 12: 1, 3: 4, 5: 5, 14: 6, 11: 7, 13: 8, 7: 9, 15: 10}
+const LAKE_COL := {0: 8, 1: 1, 2: 3, 4: 4, 8: 6, 3: 2, 12: 5, 5: 0, 10: 7, 9: 1, 6: 3, 7: 2, 11: 2, 13: 0, 14: 7, 15: 2}
 
 var ground: TileMapLayer
-var edge: TileMapLayer
 var base := Vector2.ZERO
-var water := {}    # Vector2i(i,j) -> baris tile arus
-var road := {}     # Vector2i(i,j) -> true
-var bridge := {}   # Vector2i(i,j) -> arah (0 / 1)
-var props := []    # [jenis, Vector2i(i,j)]
+var water := {}    # air alami (sungai, danau)
+var canal := {}    # kanal galian
+var road := {}
+var bridge := {}   # petak kanal yang dilintasi jalan
+var props := []    # [jenis, Vector2i]
 var rng := RandomNumberGenerator.new()
 
+# --- koordinat ---
+
+## Petak di posisi layar (sx, sy) relatif pusat kamera.
+func at(sx: float, sy: float) -> Vector2i:
+	return Vector2i(roundi(C + (sx / 16.0 + sy / 8.0) / 2.0), roundi(C + (sx / 16.0 - sy / 8.0) / 2.0))
+
+func screen(p: Vector2i) -> Vector2:
+	return Vector2((p.x + p.y - 2 * C) * 16, (p.x - p.y) * 8)
+
 func elev(p: Vector2i) -> int:
-	if p.x <= 0 or p.y <= 0 or p.x >= N - 1 or p.y >= N - 1:
-		return 0
-	var d := p.y - p.x
-	if d >= 5: return 3
-	if d >= 2: return 2
-	if d >= -2: return 1
+	var s := screen(p)
+	var t := s.y + 18.0 * sin((p.x + p.y) * 0.31) + 10.0 * sin(p.x * 0.7)
+	if t < -120.0: return 3
+	if t < -40.0: return 2
+	if t < 55.0: return 1
 	return 0
 
 func cell(p: Vector2i) -> Vector2i:
@@ -42,102 +54,159 @@ func cell(p: Vector2i) -> Vector2i:
 func pos(p: Vector2i) -> Vector2:
 	return ground.map_to_local(cell(p)) - Vector2(0, STEP * elev(p))
 
-func path(start: Vector2i, legs: Array) -> Array:
-	# legs: [[arah, jumlah, deras?], ...]  arah: BL = j-1, BR = i+1, TR = j+1, TL = i-1
-	var out := []
+## Jalur isometrik: legs = [[arah, jumlah], ...]; arah TL/TR/BL/BR.
+func walk(start: Vector2i, legs: Array) -> Array:
+	var out := [start]
 	var cur := start
 	for leg in legs:
 		for k in leg[1]:
-			out.append([cur, leg[0], leg[2] if leg.size() > 2 else false])
-			match leg[0]:
-				BL: cur += Vector2i(0, -1)
-				BR: cur += Vector2i(1, 0)
-				TR: cur += Vector2i(0, 1)
-				TL: cur += Vector2i(-1, 0)
-	out.append([cur, -1, false])
+			for sd in SIDES:
+				if sd[1] == leg[0]:
+					cur += sd[0]
+			out.append(cur)
 	return out
 
-func flow_row(dir: int, fast: bool) -> int:
-	# urutan arah di tile arus: 0 kiri-atas, 1 kanan-atas, 2 kiri-bawah, 3 kanan-bawah
-	var idx: int = {TL: 0, TR: 1, BL: 2, BR: 3}[dir]
-	return (DERAS if fast else PELAN) + idx
+func is_channel(p: Vector2i) -> bool:
+	return water.has(p) or canal.has(p)
+
+func is_building(p: Vector2i) -> bool:
+	for pr in props:
+		if (pr[0] == "rumah" or pr[0] == "ladang") and pr[1] == p:
+			return true
+	return false
+
+func mask(p: Vector2i, pred: Callable) -> int:
+	var m := 0
+	for sd in SIDES:
+		if pred.call(p + sd[0]):
+			m |= sd[1]
+	return m
+
+# --- desain ---
 
 func design() -> void:
-	# Laut tenang mengelilingi pulau
+	# Danau / laut di kiri-bawah layar, tepi bergelombang
 	for i in N:
 		for j in N:
-			if i == 0 or j == 0 or i == N - 1 or j == N - 1:
-				water[Vector2i(i, j)] = TENANG
-	# Danau di depan (dataran rendah), tersambung ke laut
-	for i in range(7, 12):
-		for j in range(1, 5):
 			var p := Vector2i(i, j)
-			if p.y - p.x <= -3 and Vector2(i - 8.8, j - 2.4).length() < 2.4:
-				water[p] = TENANG
-	water[Vector2i(11, 2)] = TENANG
-	# Sungai: mata air di dataran tinggi, berkelok turun ke danau (arus mengikuti arah)
-	water[Vector2i(1, 10)] = TENANG  # kolam mata air
-	water[Vector2i(2, 11)] = TENANG
-	water[Vector2i(1, 11)] = TENANG
-	var river := path(Vector2i(2, 10), [[BL, 2], [BR, 3, true], [BL, 2, true], [BR, 2], [BL, 2, true]])
-	for st in river:
-		if st[1] >= 0:
-			water[st[0]] = flow_row(st[1], st[2])
-	# Kanal galian dari sungai ke desa
-	for i in range(6, 10):
-		water[Vector2i(i, 7)] = flow_row(BR, false)
-	# Jalan desa: memanjang di sumbu j, menyeberang kanal dengan jembatan
-	for j in range(5, 12):
-		var p := Vector2i(8, j)
-		if not water.has(p) or j == 7:
-			road[p] = true
-	for i in range(9, 11):
-		road[Vector2i(i, 10)] = true
-	bridge[Vector2i(8, 7)] = 1
-	# Bangunan, ladang, fasilitas
-	for p in [Vector2i(9, 8), Vector2i(10, 9), Vector2i(7, 9), Vector2i(9, 11), Vector2i(10, 11)]:
-		props.append(["rumah", p])
-	for p in [Vector2i(9, 6), Vector2i(10, 6), Vector2i(10, 7), Vector2i(6, 4)]:
-		props.append(["ladang", p])
-	props.append(["kincir", Vector2i(7, 7)])
-	props.append(["kincir", Vector2i(3, 8)])
-	props.append(["bor", Vector2i(3, 3)])
-	props.append(["bendungan", Vector2i(10, 8)])
+			var s := screen(p)
+			if s.y > 120.0 + 14.0 * sin(s.x * 0.03) + maxf(0.0, s.x + 40.0) * 0.35:
+				water[p] = true
+	# Kolam mata air di dataran tinggi (kanan atas)
+	for i in N:
+		for j in N:
+			var p := Vector2i(i, j)
+			if screen(p).distance_to(Vector2(40, -150)) < 26.0:
+				water[p] = true
+	# Sungai 2 petak berkelok dari kolam turun ke danau
+	var river := walk(at(30, -140), [[BL, 4], [BR, 5], [BL, 4], [BR, 3], [BL, 6], [BR, 4], [BL, 8]])
+	for p in river:
+		water[p] = true
+		water[p + Vector2i(1, 0)] = true
+	# Sungai kedua di kiri (terlihat sedikit di sisi kiri panel)
+	for p in walk(at(-300, -150), [[BR, 5], [BL, 3], [BR, 8], [BL, 4], [BR, 6]]):
+		water[p] = true
+		water[p + Vector2i(0, 1)] = true
+
+	# Desa di kanan: jalan berbentuk tangga dengan rumah di sisinya
+	var v0 := at(150, -10)
+	var main_road := walk(v0, [[BR, 4], [TR, 5], [BR, 4], [TR, 4]])
+	for p in main_road:
+		road[p] = true
+	for p in walk(v0 + Vector2i(2, 0), [[BL, 4]]):
+		road[p] = true
+	for p in walk(v0 + Vector2i(4, 5), [[TL, 4]]):
+		road[p] = true
+	# Kanal galian dari sungai ke desa (melintas jalan dengan jembatan)
+	var river_pt: Vector2i = river[16]
+	var canal_path := walk(river_pt + Vector2i(2, 0), [[TR, 3], [BR, 1]])
+	var cur: Vector2i = canal_path[-1]
+	while screen(cur).x < 140.0 and canal_path.size() < 40:
+		cur += Vector2i(0, 1)
+		canal_path.append(cur)
+	for p in canal_path:
+		if not water.has(p):
+			canal[p] = true
+	for p in canal:
+		if road.has(p):
+			bridge[p] = true
+	for p in bridge:
+		road.erase(p)
+	# Rumah di sisi jalan, ladang dekat kanal
+	var spots := [Vector2i(1, -1), Vector2i(-1, 1)]
+	var houses := 0
+	for k in range(0, main_road.size(), 2):
+		for d in spots:
+			var h: Vector2i = main_road[k] + d
+			if houses < 9 and not road.has(h) and not is_channel(h) and not is_building(h) and rng.randf() < 0.7:
+				props.append(["rumah", h])
+				houses += 1
+	var farms := 0
+	for p in canal:
+		for d in [Vector2i(-1, 0), Vector2i(1, 0)]:
+			var f: Vector2i = p + d
+			if farms < 6 and not is_channel(f) and not road.has(f) and not is_building(f) and rng.randf() < 0.45:
+				props.append(["ladang", f])
+				farms += 1
+	# Fasilitas
+	props.append(["kincir", river[9]])
+	props.append(["kincir", river[22]])
+	props.append(["bor", at(250, -120)])
+	props.append(["bor", at(-90, -130)])
 
 func near_water(p: Vector2i, r: int) -> int:
 	var best := 99
-	for w in water:
-		var dd: int = absi(w.x - p.x) + absi(w.y - p.y)
-		if dd < best:
-			best = dd
+	for dx in range(-r, r + 1):
+		for dy in range(-r, r + 1):
+			if is_channel(p + Vector2i(dx, dy)):
+				best = mini(best, absi(dx) + absi(dy))
 	return best if best <= r else -1
 
 func land_tile(p: Vector2i) -> Vector2i:
-	var court := false
 	for pr in props:
 		if pr[0] == "rumah" and absi(pr[1].x - p.x) + absi(pr[1].y - p.y) <= 1:
-			court = true
-	if court:
-		return Vector2i([0, 1, 4][rng.randi() % 3], 3)
-	var d := near_water(p, 2)
+			return Vector2i([0, 1, 4][rng.randi() % 3], 3)
+	var d := near_water(p, 3)
 	if d == -1:
-		# daratan kering: sesekali retak / pohon mati
 		var r := rng.randf()
 		return Vector2i(4 if r < 0.08 else (1 if r < 0.3 else (2 if r < 0.5 else 0)), 0)
 	var row := 1 if d <= 1 else 2
 	var r2 := rng.randf()
 	var col := 0
-	if r2 < 0.18: col = 4        # pohon
-	elif r2 < 0.35: col = 3      # semak
+	if r2 < 0.18: col = 4
+	elif r2 < 0.35: col = 3
 	elif r2 < 0.6: col = 1
 	return Vector2i(col, row)
+
+## Atlas source tileset baru (sama seperti world.gd _build_v2_source), disimpan di scene menu.
+func add_v2_source(ts: TileSet) -> void:
+	var tex: Texture2D = load(V2_TEX)
+	var land: TileSetAtlasSource = ts.get_source(SRC_TERRAIN)
+	var src := TileSetAtlasSource.new()
+	src.texture = tex
+	src.texture_region_size = Vector2i(32, 32)
+	var rows: Array[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17]
+	for r in rows:
+		for c in (9 if r < 9 else 11):
+			var a := Vector2i(c, r)
+			src.create_tile(a)
+			for h in 4:
+				if h > 0:
+					src.create_alternative_tile(a, h)
+				var td: TileData = src.get_tile_data(a, h)
+				var ref: TileData = land.get_tile_data(Vector2i(0, 0), h)
+				td.texture_origin = ref.texture_origin + Vector2i(0, V2_TOP_SHIFT)
+				td.modulate = ref.modulate
+	ts.add_source(src, SRC_V2)
 
 func _initialize() -> void:
 	rng.seed = 2026
 	var world_scene = load("res://world.tscn").instantiate()
 	var tileset: TileSet = world_scene.get_node("World").tile_set.duplicate(true)
-	var edge_set: TileSet = load("res://assets/water/water_edge_tileset.tres")
 	world_scene.free()
+	if tileset.has_source(SRC_V2):
+		tileset.remove_source(SRC_V2)
+	add_v2_source(tileset)
 
 	var root_node := Node2D.new()
 	root_node.name = "MenuMap"
@@ -145,18 +214,9 @@ func _initialize() -> void:
 	bg_layer.name = "Background"
 	bg_layer.layer = -10
 	root_node.add_child(bg_layer)
-	var grad := Gradient.new()
-	grad.set_color(0, Color(0.80, 0.89, 0.92))
-	grad.set_color(1, Color(0.60, 0.75, 0.81))
-	var gtex := GradientTexture2D.new()
-	gtex.gradient = grad
-	gtex.fill_from = Vector2(0, 0)
-	gtex.fill_to = Vector2(0, 1)
-	var bg := TextureRect.new()
+	var bg := ColorRect.new()
 	bg.name = "Sky"
-	bg.texture = gtex
-	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.color = Color(0.35, 0.55, 0.62)
 	bg.anchor_right = 1.0
 	bg.anchor_bottom = 1.0
 	bg_layer.add_child(bg)
@@ -166,57 +226,34 @@ func _initialize() -> void:
 	ground.tile_set = tileset
 	ground.y_sort_enabled = true
 	root_node.add_child(ground)
-	edge = TileMapLayer.new()
-	edge.name = "WaterEdge"
-	edge.tile_set = edge_set
-	edge.y_sort_enabled = true
-	ground.add_child(edge)
 	var props_node := Node2D.new()
 	props_node.name = "Props"
 	props_node.z_index = 1
 	props_node.y_sort_enabled = true
 	root_node.add_child(props_node)
 
-	base = ground.map_to_local(Vector2i(2, 24))
+	base = ground.map_to_local(Vector2i(2, 2 * N + 4))
 	design()
 
-	# bayangan lembut di bawah pulau
-	var shadow := Polygon2D.new()
-	shadow.name = "Shadow"
-	shadow.z_index = -1
-	shadow.color = Color(0.1, 0.2, 0.25, 0.18)
-	var w := N * 16.0 + 2.0   # setengah lebar pulau
-	var hh := N * 8.0 + 1.0   # setengah tinggi pulau
-	var c0 := base + Vector2((N - 1) * 16, 14)  # pusat pulau, digeser ke bawah
-	shadow.polygon = PackedVector2Array([c0 + Vector2(-w, 0), c0 + Vector2(0, -hh), c0 + Vector2(w, 0), c0 + Vector2(0, hh)])
-	root_node.add_child(shadow)
-	root_node.move_child(shadow, 1)
-
-	# --- tile ---
+	var is_road_like := func(q: Vector2i) -> bool: return road.has(q) or bridge.has(q)
 	for i in N:
 		for j in N:
 			var p := Vector2i(i, j)
 			var h := elev(p)
 			if water.has(p):
-				ground.set_cell(cell(p), SRC_FLOW, Vector2i(0, water[p]), h)
-			elif road.has(p) and not bridge.has(p):
-				ground.set_cell(cell(p), SRC_WATER_ROAD, Vector2i(4, 0), h)
-			elif bridge.has(p):
-				ground.set_cell(cell(p), SRC_FLOW, Vector2i(0, flow_row(BR, false)), h)
+				var lm := mask(p, func(q): return not is_channel(q) and q.x >= 0 and q.y >= 0 and q.x < N and q.y < N)
+				ground.set_cell(cell(p), SRC_V2, Vector2i(LAKE_COL[lm], 3 + 2), h)
+			elif canal.has(p):
+				var cm := mask(p, is_channel)
+				cm |= mask(p, is_building)
+				ground.set_cell(cell(p), SRC_V2, Vector2i(LINK_COL[cm], 12), h)
+			elif road.has(p):
+				var rm: int = mask(p, is_road_like)
+				if rm in [0, 1, 2, 4, 8]:
+					rm |= mask(p, is_building)
+				ground.set_cell(cell(p), SRC_V2, Vector2i(LINK_COL[rm], 17), h)
 			else:
 				ground.set_cell(cell(p), SRC_TERRAIN, land_tile(p), h)
-	# --- buih tepi air (bit: 1 kiri-atas, 2 kanan-atas, 4 kanan-bawah, 8 kiri-bawah) ---
-	var dirs := [[Vector2i(-1, 0), 1], [Vector2i(0, 1), 2], [Vector2i(1, 0), 4], [Vector2i(0, -1), 8]]
-	for p in water:
-		var mask := 0
-		for dd in dirs:
-			var q: Vector2i = p + dd[0]
-			if q.x < 0 or q.y < 0 or q.x >= N or q.y >= N:
-				continue
-			if not water.has(q) and not bridge.has(q):
-				mask |= dd[1]
-		if mask != 0:
-			edge.set_cell(cell(p), 0, Vector2i(mask % 4, mask / 4), elev(p))
 
 	# --- objek ---
 	var tex_rumah: Texture2D = load("res://assets/placeholder/rumah.png")
@@ -224,7 +261,6 @@ func _initialize() -> void:
 	var scenes := {
 		"kincir": load("res://scenes/kincir.tscn"),
 		"bor": load("res://scenes/sumur_bor.tscn"),
-		"bendungan": load("res://scenes/bendungan.tscn"),
 		"jembatan": load("res://scenes/bridge.tscn"),
 	}
 	var n := 0
@@ -244,28 +280,27 @@ func _initialize() -> void:
 		props_node.add_child(node)
 	for b in bridge:
 		var br: Node2D = scenes["jembatan"].instantiate()
-		br.name = "Jembatan_%d" % n
 		n += 1
+		br.name = "Jembatan_%d" % n
 		br.position = pos(b)
-		br.get_node("Sprite").flip_h = bridge[b] == 1
+		br.get_node("Sprite").flip_h = road.has(b + Vector2i(-1, 0)) or road.has(b + Vector2i(1, 0))
 		props_node.add_child(br)
 
-	# --- kamera: pulau di tengah area kanan (kiri tertutup panel menu 215 px) ---
+	# --- kamera: pusat peta di tengah layar; peta menutupi seluruh layar ---
 	var cam := Camera2D.new()
 	cam.name = "Camera2D"
-	var center := base + Vector2((N - 1) * 16, 0)
-	cam.position = center - Vector2(107, -4)
+	cam.position = ground.map_to_local(cell(Vector2i(C, C)))
 	root_node.add_child(cam)
 
 	_own(root_node, root_node)
 	var packed := PackedScene.new()
 	packed.pack(root_node)
-	print(ResourceSaver.save(packed, "res://scenes/menu_map.tscn"))
+	print("simpan menu_map: ", ResourceSaver.save(packed, "res://scenes/menu_map.tscn"))
 	root_node.free()
 	quit()
 
-func _own(n: Node, owner_node: Node) -> void:
-	for c in n.get_children():
+func _own(nd: Node, owner_node: Node) -> void:
+	for c in nd.get_children():
 		c.owner = owner_node
 		if c.scene_file_path == "":
 			_own(c, owner_node)

@@ -48,7 +48,7 @@ var land_class: Dictionary = {}    # petak daratan -> LandClass (kering / dekat 
 var land_dist: Dictionary = {}     # petak dekat air -> jarak ke air (1..radius)
 
 # --- Tileset: dua sumber atlas ---
-# Sumber 0 = assets/Tiles/terrain_tiles.png (5 kolom x 4 baris), semuanya daratan:
+# Sumber 0 = assets/Tiles/terrain_tiles_v3.png (5 kolom x 4 baris), semuanya daratan:
 #   baris 0   = daratan kering yang jauh dari air
 #   baris 1-2 = tanah dekat air (rumput terang/gelap, semak, pohon)
 #   baris 3   = pelataran di sekitar bangunan yang dekat air
@@ -103,8 +103,9 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 @export_range(0, 1) var canal_style: int = 0
 ## Kedalaman air minimal agar tile tampil "penuh" (di bawahnya "dangkal"; di bawah wet_threshold "kering").
 @export var v2_full_depth: float = 0.3
-## Geser vertikal tile baru terhadap tile daratan (px). -7 = bibir tile sejajar permukaan tanah.
-@export var v2_top_shift: int = -7
+## Geser vertikal tile air/jalan terhadap tile daratan (px). 0 = sejajar (tanah v3 & tileset air/jalan
+## sama-sama bertepi atas di baris 6, sisi blok 10 px).
+@export var v2_top_shift: int = 0
 ## 0 = kanal rata dengan tanah seperti air alami & jalan (parit, dinding depan tertutup tanah).
 ## Nilai > 0 menggambar kanal setelah baris di depannya (dinding depan ikut terlihat, kesan menonjol).
 @export var v2_canal_sort_boost: int = 0

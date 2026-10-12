@@ -1,0 +1,46 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://ui/menu_item_dark.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/menu_arrow.png" id="2_arrow"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBox_empty"]
+content_margin_left = 54.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_hl"]
+content_margin_left = 54.0
+bg_color = Color(1, 1, 1, 0.2)
+
+[node name="MenuItemDark" type="Button"]
+custom_minimum_size = Vector2(163, 20)
+focus_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.93, 0.9, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(0.75, 0.88, 1, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.75, 0.88, 1, 1)
+theme_override_colors/font_disabled_color = Color(0.55, 0.53, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBox_empty")
+theme_override_styles/hover = SubResource("StyleBox_hl")
+theme_override_styles/pressed = SubResource("StyleBox_hl")
+theme_override_styles/hover_pressed = SubResource("StyleBox_hl")
+theme_override_styles/focus = SubResource("StyleBox_hl")
+theme_override_styles/disabled = SubResource("StyleBox_empty")
+alignment = 0
+text = "MENU"
+script = ExtResource("1_script")
+
+[node name="Arrow" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 27.0
+offset_top = -5.0
+offset_right = 33.0
+offset_bottom = 5.0
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_arrow")
+expand_mode = 1
+stretch_mode = 0

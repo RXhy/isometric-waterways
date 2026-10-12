@@ -2,28 +2,23 @@
 
 [ext_resource type="Script" uid="uid://cpdljr2xq1dbb" path="res://ui/main_menu.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/menu_map.tscn" id="2_world"]
-[ext_resource type="PackedScene" path="res://scenes/ui/menu_item.tscn" id="3_item"]
-[ext_resource type="Texture2D" uid="uid://dfn31p605l7sa" path="res://assets/placeholder/ui/menu_panel.png" id="4_panel"]
-[ext_resource type="Texture2D" uid="uid://d25heyeouaoxp" path="res://assets/placeholder/ui/menu_dialog.png" id="5_dialog"]
-[ext_resource type="Texture2D" uid="uid://djf255nqx3lgm" path="res://assets/placeholder/ui/menu_divider.png" id="6_divider"]
+[ext_resource type="PackedScene" path="res://scenes/ui/menu_item_dark.tscn" id="3_item"]
+[ext_resource type="Texture2D" path="res://assets/logo_fiks_hd.png" id="4_logo"]
 
-[sub_resource type="StyleBoxTexture" id="StyleBox_panel"]
-texture = ExtResource("4_panel")
-texture_margin_left = 4.0
-texture_margin_top = 4.0
-texture_margin_right = 5.0
-texture_margin_bottom = 4.0
+[sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
+bg_color = Color(0.17, 0.16, 0.15, 0.86)
 
-[sub_resource type="StyleBoxTexture" id="StyleBox_dialog"]
-content_margin_left = 16.0
+[sub_resource type="StyleBoxFlat" id="StyleBox_dialog"]
+content_margin_left = 14.0
 content_margin_top = 12.0
-content_margin_right = 16.0
+content_margin_right = 14.0
 content_margin_bottom = 10.0
-texture = ExtResource("5_dialog")
-texture_margin_left = 6.0
-texture_margin_top = 6.0
-texture_margin_right = 6.0
-texture_margin_bottom = 6.0
+bg_color = Color(0.17, 0.16, 0.15, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.18)
 
 [node name="MainMenu" type="Control" unique_id=47937475]
 layout_mode = 3
@@ -43,86 +38,64 @@ layer = 10
 [node name="LeftPanel" type="Panel" parent="UI" unique_id=1013220172]
 anchors_preset = 9
 anchor_bottom = 1.0
-offset_right = 215.0
+offset_left = 100.0
+offset_right = 278.0
 grow_vertical = 2
+mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBox_panel")
 
-[node name="Title" type="Label" parent="UI/LeftPanel" unique_id=2038094760]
-layout_mode = 0
-offset_left = 28.0
-offset_top = 34.0
-offset_right = 200.0
-offset_bottom = 70.0
-theme_override_colors/font_color = Color(0.16, 0.36, 0.6, 1)
-theme_override_font_sizes/font_size = 28
-text = "WATERWAYS"
-
-[node name="Subtitle" type="Label" parent="UI/LeftPanel" unique_id=417548186]
-layout_mode = 0
-offset_left = 30.0
-offset_top = 70.0
-offset_right = 205.0
-offset_bottom = 84.0
-theme_override_colors/font_color = Color(0.45, 0.42, 0.38, 1)
-theme_override_font_sizes/font_size = 9
-text = "Rancang aliran air, jaga kota tetap hidup."
-
-[node name="Divider" type="TextureRect" parent="UI/LeftPanel" unique_id=1511240487]
-layout_mode = 0
-offset_left = 30.0
-offset_top = 94.0
-offset_right = 190.0
-offset_bottom = 96.0
-texture = ExtResource("6_divider")
+[node name="Logo" type="TextureRect" parent="UI" unique_id=2038094760]
+texture_filter = 2
+offset_left = -2.0
+offset_top = 8.0
+offset_right = 377.0
+offset_bottom = 173.0
+mouse_filter = 2
+texture = ExtResource("4_logo")
 expand_mode = 1
+stretch_mode = 5
 
-[node name="Menu" type="VBoxContainer" parent="UI/LeftPanel" unique_id=880736554]
+[node name="Menu" type="VBoxContainer" parent="UI" unique_id=880736554]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 22.0
-offset_top = 112.0
-offset_right = 205.0
+offset_left = 107.0
+offset_top = 162.0
+offset_right = 270.0
 offset_bottom = 290.0
-theme_override_constants/separation = 10
+theme_override_constants/separation = 12
 
-[node name="NewGame" parent="UI/LeftPanel/Menu" unique_id=740879555 instance=ExtResource("3_item")]
+[node name="NewGame" parent="UI/Menu" unique_id=740879555 instance=ExtResource("3_item")]
 unique_name_in_owner = true
 layout_mode = 2
-text = "New Game"
-label = "New Game"
+text = "NEW GAME"
 
-[node name="LoadGame" parent="UI/LeftPanel/Menu" unique_id=1257861244 instance=ExtResource("3_item")]
+[node name="LoadGame" parent="UI/Menu" unique_id=1257861244 instance=ExtResource("3_item")]
 unique_name_in_owner = true
 layout_mode = 2
+tooltip_text = "Belum ada permainan tersimpan"
 disabled = true
-text = "Load Game"
-label = "Load Game"
-caption = "Belum ada permainan tersimpan"
+text = "LOAD GAME"
 
-[node name="Tutorial" parent="UI/LeftPanel/Menu" unique_id=1458045321 instance=ExtResource("3_item")]
+[node name="Tutorial" parent="UI/Menu" unique_id=1458045321 instance=ExtResource("3_item")]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Tutorial"
-label = "Tutorial"
+text = "TUTORIAL"
 
-[node name="Exit" parent="UI/LeftPanel/Menu" unique_id=1024870949 instance=ExtResource("3_item")]
+[node name="Exit" parent="UI/Menu" unique_id=1024870949 instance=ExtResource("3_item")]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Exit"
-label = "Exit"
+text = "EXIT"
 
-[node name="Footer" type="Label" parent="UI/LeftPanel" unique_id=1594169936]
-layout_mode = 1
+[node name="Footer" type="Label" parent="UI" unique_id=1594169936]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 30.0
-offset_top = -24.0
-offset_right = 205.0
-offset_bottom = -10.0
+offset_left = 112.0
+offset_top = -20.0
+offset_right = 270.0
+offset_bottom = -8.0
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.58, 0.55, 0.5, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(0.62, 0.6, 0.56, 1)
+theme_override_font_sizes/font_size = 7
 text = "v0.1  -  MAGE 12  -  Tim Waterways"
 
 [node name="TutorialPanel" type="PanelContainer" parent="UI" unique_id=1355039013]
@@ -132,10 +105,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -95.0
-offset_top = -150.0
-offset_right = 275.0
-offset_bottom = 150.0
+offset_left = -20.0
+offset_top = -140.0
+offset_right = 300.0
+offset_bottom = 140.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBox_dialog")
@@ -146,17 +119,16 @@ theme_override_constants/separation = 6
 
 [node name="Heading" type="Label" parent="UI/TutorialPanel/VBox" unique_id=994846074]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.16, 0.36, 0.6, 1)
-theme_override_font_sizes/font_size = 16
-text = "Cara Bermain"
+theme_override_colors/font_color = Color(0.62, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "CARA BERMAIN"
 
 [node name="Body" type="Label" parent="UI/TutorialPanel/VBox" unique_id=2124095736]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.24, 0.22, 0.2, 1)
+theme_override_colors/font_color = Color(0.92, 0.9, 0.86, 1)
 theme_override_font_sizes/font_size = 9
 text = "Alirkan air dari sumber ke setiap bangunan sebelum cadangan airnya habis.
-
 1 Gali  - buat kanal dari tanah.
 2 Ratakan - klik kiri turunkan, klik kanan naikkan tanah. Air tidak bisa naik!
 3 Timbun - tutup kanal, bongkar jembatan/fasilitas.
@@ -164,8 +136,9 @@ text = "Alirkan air dari sumber ke setiap bangunan sebelum cadangan airnya habis
 5 Mesin Bor - sumber air tanah saat kemarau.
 6 Bendungan - tembok penahan air.
 7 Spillway - cegah sumber air meluap saat hujan.
-
-Lihat prakiraan cuaca di kanan atas dan bersiaplah!
+8 Kincir Air - poin dari air yang mengalir.
+Scroll = zoom, tombol tengah / WASD = geser, H = sembunyikan UI.
+Lihat prakiraan cuaca dan bersiaplah!
 (Tutorial interaktif menyusul.)"
 autowrap_mode = 3
 
@@ -173,8 +146,7 @@ autowrap_mode = 3
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 8
-text = "Tutup"
-label = "Tutup"
+text = "TUTUP"
 
 [node name="ExitDialog" type="PanelContainer" parent="UI" unique_id=1563109066]
 unique_name_in_owner = true
@@ -185,7 +157,7 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -10.0
 offset_top = -45.0
-offset_right = 190.0
+offset_right = 230.0
 offset_bottom = 45.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -193,12 +165,12 @@ theme_override_styles/panel = SubResource("StyleBox_dialog")
 
 [node name="VBox" type="VBoxContainer" parent="UI/ExitDialog" unique_id=838173639]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="Question" type="Label" parent="UI/ExitDialog/VBox" unique_id=245221153]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.24, 0.22, 0.2, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.94, 0.93, 0.9, 1)
+theme_override_font_sizes/font_size = 12
 text = "Keluar dari game?"
 horizontal_alignment = 1
 
@@ -208,17 +180,15 @@ alignment = 1
 
 [node name="Yes" parent="UI/ExitDialog/VBox/Buttons" unique_id=1801165697 instance=ExtResource("3_item")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 28)
+custom_minimum_size = Vector2(100, 20)
 layout_mode = 2
-text = "Keluar"
-label = "Keluar"
+text = "KELUAR"
 
 [node name="No" parent="UI/ExitDialog/VBox/Buttons" unique_id=59487633 instance=ExtResource("3_item")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 28)
+custom_minimum_size = Vector2(100, 20)
 layout_mode = 2
-text = "Batal"
-label = "Batal"
+text = "BATAL"
 
 [node name="Fade" type="ColorRect" parent="UI" unique_id=1821457216]
 unique_name_in_owner = true

@@ -6,7 +6,7 @@ extends RefCounted
 ## Varian default (dipakai langsung di build release tanpa layar pilihan): DEFAULT_INDEX.
 
 const VARIANTS := [
-	{"key": "A", "name": "A - Panel kiri", "desc": "Panel krem di kiri, peta di kanan (Mini Motorways)",
+	{"key": "A", "name": "A - Panel gelap + logo", "desc": "Logo WATERWAYS, panel gelap di kiri, peta penuh layar (main UI.jpeg)",
 		"path": "res://scenes/main_menu.tscn", "thumb": "res://assets/placeholder/ui/debug/menu_opsi_a.png"},
 	{"key": "B", "name": "B - Diorama tengah", "desc": "Judul di atas, pulau di tengah, bar menu di bawah",
 		"path": "res://scenes/main_menu_b.tscn", "thumb": "res://assets/placeholder/ui/debug/menu_opsi_b.png"},
