@@ -138,12 +138,12 @@ Tanah v3 dan tileset air/jalan punya geometri yang sama, jadi keduanya sejajar t
 Yang diubah saat pindah ke v3:
 1. `world.tscn`: source 0 memakai `terrain_tiles_v3.png`. Nilai tiap alternative tile (= tingkat elevasi):
 
-| Alternative | Elevasi | `texture_origin` Y | Modulate (Intensity dari #ffffff) |
+| Alternative | Elevasi | `texture_origin` Y | Modulate (slider **I** dari #ffffff; Godot menghitung di ruang linear: warna = srgb(linear × 2^I)) |
 |---|---|---|---|
-| 0 | Garis pantai | -2 | -1,5 (≈ 0,354) |
-| 1 | Dataran rendah | 2 | -1 (0,5) |
-| 2 | Dataran menengah | 6 | -0,5 (≈ 0,707) |
-| 3 | Dataran tinggi | 10 | 0 (#ffffff) |
+| 0 | Garis pantai | -2 | I = -1,5 → #a0a0a0 (0,629) |
+| 1 | Dataran rendah | 2 | I = -1 → #bcbcbc (0,735) |
+| 2 | Dataran menengah | 6 | I = -0,5 → #dbdbdb (0,858) |
+| 3 | Dataran tinggi | 10 | I = 0 → #ffffff |
 
    Tile air, kanal, dan jalan (source 3) **menyalin otomatis** nilai ini dari tile tanah saat game mulai (`_build_v2_source`), jadi selalu sama dan teksturnya menyambung. Kalau nilai di atas diubah di editor, tile air/jalan ikut berubah.
 2. `world.gd`: `v2_top_shift` = **0**.
