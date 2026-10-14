@@ -10,7 +10,7 @@ const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway", "Kincir Air"]
 @export var spillway_scene: PackedScene
 @export var kincir_scene: PackedScene
 @export var start_stock: Array[int] = [1, 0, 0, 2]  ## stok awal [Bor, Bendungan, Spillway, Kincir]
-@export var stock_per_forecast: Array[int] = [1, 3, 1, 1]  ## tambahan stok [Bor, Bendungan, Spillway, Kincir]; Kincir bertambah saat besok Cerah
+@export var stock_per_forecast: Array[int] = [1, 0, 1, 1]  ## tambahan stok [Bor, Bendungan (dihapus, biarkan 0), Spillway, Kincir]; Kincir bertambah saat besok Cerah
 @export_group("Kincir Air")
 ## Fungsi utama kincir: POMPA. Air dari petak kincir diangkat ke kanal/sungai di sebelahnya
 ## (4 sisi) yang lebih tinggi, supaya aliran bisa naik ke dataran yang lebih tinggi.

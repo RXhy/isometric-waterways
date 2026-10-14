@@ -12,6 +12,7 @@ Dokumen ini menjelaskan cara game memilih tile air, kanal, dan jalan (versi terb
 | 1 | `assets/Tiles/tileset_iso_waterways.png` | Tile lama (dipakai hanya kalau `use_tileset_v2` dimatikan) |
 | 2 | `assets/water/water_flow_source.tres` | Air beranimasi lama (dipakai hanya kalau `use_tileset_v2` dimatikan) |
 | **3** | **`assets/Tiles/tilesset_water_road.png`** | Air alami, kanal galian, jalan (grid 32 px) |
+| **4** | **`assets/Tiles/waterflow.png`** | Animasi arus air (4 frame × 128 baris), digambar di atas tile air/kanal |
 
 Source 3 **tidak disimpan di `world.tscn`**. Saat game mulai, `world.gd` → `_build_v2_source()` mendaftarkannya ke TileSet, lengkap dengan 4 varian elevasi (alternative tile 0–3). Offset dan warna tiap elevasi meniru tile tanah. Artist cukup menimpa PNG-nya dengan ukuran dan susunan yang sama.
 
@@ -123,6 +124,32 @@ Tile tengah danau (kolom 8), tingkat dangkal.
 | `v2_canal_sort_boost` | 0 | 0 = kanal rata dengan tanah |
 
 ---
+
+## 2.9 Animasi arus air (`waterflow.png`)
+
+Sheet 128 × 4096 px: **4 kolom = 4 frame animasi**, **128 baris = bentuk**. Dibuat saat runtime oleh `world.gd` → `_build_flow_source()` sebagai source 4, lalu digambar di layer `WaterFlow` (anak `World`, ikut y-sort) tepat di atas tile air/kanal. Alternative 0–3 (elevasi) menyalin `texture_origin` dan modulate tile tanah, sama seperti source 3.
+
+| Baris (1–128) | Isi | Dipakai saat |
+|---|---|---|
+| 1–9 / 10–18 | Air alami tenang 3/4 / penuh, 9 bentuk (urutan kolom `LAKE_COL`) | Air diam |
+| 19–29 / 30–40 | Kanal tenang 3/4 / penuh, 11 bentuk (urutan kolom `LINK_COL`) | Air diam |
+| 41 | Kosong | — |
+| 42–61 / 62–81 | Air alami arus lurus 3/4 / penuh: 5 bentuk (kolom 1, 3, 4, 6, 8) × 4 arah | Air mengalir di tepi lurus / tengah danau |
+| 82–85 / 86–89 | Kanal lurus 3/4 / penuh: kiri-atas, kanan-bawah (kolom 2), kanan-atas, kiri-bawah (kolom 3) | Air mengalir di kanal lurus |
+| 90–97 | Pusaran sudut air alami (kolom 0, 2, 5, 7), selang-seling 3/4 lalu penuh | Air mengalir di sudut |
+| 98–105 | Pusaran belokan kanal (kolom 0, 1, 4, 5) | Air mengalir di belokan |
+| 106–113 | Pusaran pertigaan kanal (kolom 6–9) | Air mengalir di pertigaan |
+| 114–115 | Pusaran perempatan kanal (kolom 10) | Air mengalir di perempatan |
+| 116–128 | Cadangan (kosong) | — |
+
+Urutan 4 arah di tiap bentuk: **kiri-atas, kanan-bawah, kanan-atas, kiri-bawah**.
+
+Aturan pemilihan (`world.gd` → `flow_row()`):
+- Tingkat air **kering** → tanpa animasi. **Dangkal** → baris 3/4. **Penuh** → baris penuh.
+- Arah dan "mengalir atau tidak" dari `water_sim.flow_dir()` (aliran bersih di atas `still_flow`). Air di luar area main selalu tenang.
+- Kanal lurus memilih arah sepanjang sumbunya (kanal ↖↘ hanya pakai kiri-atas/kanan-bawah).
+
+Pengaturan (Node2D → grup *Tileset air & jalan*): `show_water_flow` (aktif/mati), `waterflow_texture`, `waterflow_fps` (4), `waterflow_random_start` (false = semua petak serempak, supaya garis arus menyambung antar petak).
 
 ## 3. Tekstur tanah v3 (sudah dipakai)
 

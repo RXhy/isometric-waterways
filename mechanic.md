@@ -39,7 +39,7 @@ flowchart LR
 |---|---|---|
 | Panjang satu hari | 30 detik | Node2D → `day_length` |
 | Jumlah hari | 45 | Node2D → `target_days` |
-| Kecepatan | Jeda / 1× / 2× (tombol kanan atas, Spasi = jeda) | — |
+| Kecepatan | Jeda / 1× / 2× (kolom tombol di ujung kanan atas, Spasi = jeda) | — |
 | Zoom | Scroll mouse (ke arah kursor), 0,75× – 2,5× | Node2D → grup **Kamera** (`zoom_out_limit`, `zoom_in_limit`, `zoom_step`, `zoom_smooth`) |
 | Geser kamera | Seret tombol tengah mouse, WASD / panah, atau trackpad | Node2D → `pan_speed` |
 
@@ -109,7 +109,7 @@ Atur di `building.gd` → `TYPE_DATA`.
 
 ## 4. Aksi pemain
 
-Toolbar di bawah layar berisi 8 alat (tombol 1–8). Angka di pojok kartu menunjukkan stok yang tersisa.
+Toolbar di kiri bawah layar berisi 7 alat (tombol 1–7), lalu tombol Lapisan dan tombol menu (roda gigi). Angka di pojok kartu menunjukkan stok yang tersisa.
 
 ### 4.1 Alat sekop: Gali, Ratakan, Timbun
 Ketiganya berbagi **jatah sekop harian**.
@@ -141,11 +141,10 @@ Elevasi punya 4 tingkat (0–3): Garis pantai, Dataran rendah, Dataran menengah,
 |---|---|---|---|---|
 | **Jembatan** (4) | Mengubah petak jalan jadi kanal yang bisa dialiri air (jalan tetap tersambung) | Di petak jalan | 2 | +1 tiap hari baru |
 | **Mesin Bor** (5) | Sumber air tanah permanen, **tidak terpengaruh kemarau** | Di tanah | 1 | +1 kalau besok **Kemarau** |
-| **Bendungan** (6) | Petak kedap air, menahan/membelokkan aliran | Di tanah atau melintang di kanal galian | 0 | +3 kalau besok **Hujan** |
-| **Spillway** (7) | Saluran pembuang. Badan air yang punya spillway **tidak meluap** saat hujan | Di tanah, **bersebelahan** dengan sumber air | 0 | +1 kalau besok **Hujan** |
-| **Kincir Air** (8) | **Pompa**: mengangkat air dari petaknya ke kanal/sungai di sebelahnya yang **1 tingkat lebih tinggi**, supaya aliran bisa naik ke dataran atas. Bonus kecil poin dari arus (§6) | Di kanal atau sungai/danau | 2 | +1 kalau besok **Cerah** |
+| **Spillway** (6) | Saluran pembuang. Badan air yang punya spillway **tidak meluap** saat hujan | Di tanah, **bersebelahan** dengan sumber air | 0 | +1 kalau besok **Hujan** |
+| **Kincir Air** (7) | **Pompa**: mengangkat air dari petaknya ke kanal/sungai di sebelahnya yang **1 tingkat lebih tinggi**, supaya aliran bisa naik ke dataran atas. Bonus kecil poin dari arus (§6) | Di kanal atau sungai/danau | 2 | +1 kalau besok **Cerah** |
 
-Atur stok di Facilities → `start_stock` dan `stock_per_forecast` (urutan: Bor, Bendungan, Spillway, Kincir). Untuk jembatan, atur di Roads → `bridges_start`, `bridges_per_day`.
+Atur stok di Facilities → `start_stock` dan `stock_per_forecast` (urutan: Bor, Bendungan, Spillway, Kincir; Bendungan sudah dihapus dari toolbar, biarkan nilainya 0). Untuk jembatan, atur di Roads → `bridges_start`, `bridges_per_day`.
 
 **Inti strateginya:** stok fasilitas diberikan **berdasarkan prakiraan besok**. Pemain mendapat alat yang tepat sehari sebelum cuacanya datang, dan harus memasangnya tepat waktu.
 
@@ -155,7 +154,7 @@ Atur stok di Facilities → `start_stock` dan `stock_per_forecast` (urutan: Bor,
 - **Tombol Lapisan** (ikon di kanan toolbar) berganti antara: Mati → **Ketinggian** (warna per elevasi) → **Kedalaman air**.
 
 ### 4.4 Menu in-game
-Menu dibuka lewat tombol **roda gigi** di kanan atas atau tombol **Esc**. Selama menu terbuka, game dijeda.
+Menu dibuka lewat tombol **roda gigi** di ujung toolbar (kiri bawah) atau tombol **Esc**. Selama menu terbuka, game dijeda.
 
 Isi menu: **Lanjutkan**, **Main Ulang**, **Pengaturan**, **Menu Utama**.
 
@@ -358,9 +357,9 @@ Patokan: satu bangunan yang dialiri penuh sehari = 0,2 × 30 + 4 = **10 poin**.
 | **Kalah** (kuota) | Bangunan hancur > 8 | Node2D → `damage_quota` |
 | **Kalah** (waktu) | Hari ke-45 selesai dan poin < 5000 | Node2D → `target_days` |
 
-Bar poin di kiri atas menunjukkan progres ke **bintang berikutnya**.
+Bar poin di panel kanan atas menunjukkan progres ke **bintang berikutnya**.
 
-Klik bar poin di kiri atas untuk melihat rincian poin per sumber.
+Klik bar poin di panel kanan atas untuk melihat rincian poin per sumber.
 
 ---
 
@@ -434,7 +433,7 @@ Ubah **satu kelompok knob per putaran playtest**, dan gunakan **seed yang sama**
 | `score_manager.gd` | Poin & target |
 | `overlay.gd` | Lapisan info (ketinggian / kedalaman air) |
 | `balance_log.gd` | Log playtest otomatis |
-| `ui/hud.gd` | HUD (poin, kecepatan, hari & cuaca, toolbar, tooltip) |
+| `ui/hud.gd` | HUD: kiri atas cuaca & hari, kanan atas poin/bangunan/hancur/jembatan + kecepatan, kiri bawah toolbar, kanan bawah Aliran Air, tooltip |
 | `scenes/*.tscn` | Tampilan bangunan, fasilitas, kincir, jembatan, kartu alat |
 | `scenes/menu_map.tscn` | Peta diorama khusus latar main menu (diedit langsung di editor) |
 | `tools/build_menu_map.gd` | Script pembuat awal `menu_map.tscn` (menjalankannya lagi akan menimpa hasil editan) |

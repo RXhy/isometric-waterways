@@ -45,6 +45,7 @@ var pump_targets: Dictionary = {}  # petak kincir -> daftar petak tujuan (lebih 
 var flux: Dictionary = {}        # petak -> debit keluar rata-rata (kedalaman/detik)
 var flow_vec: Dictionary = {}    # petak -> arah aliran bersih rata-rata (x: sumbu kiri-atas/kanan-bawah, y: kiri-bawah/kanan-atas)
 var _edge_vis: Dictionary = {}   # cache tile buih tepi yang sedang tampil
+var _flow_vis: Dictionary = {}   # cache baris animasi arus (waterflow.png) yang sedang tampil
 
 ## Arah sisi isometrik, urutannya sama dengan baris tile arus di assets/water/water_flow.png
 const SIDES := [TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE, TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE,
@@ -76,7 +77,9 @@ func setup(w) -> void:
 	for c in world.grid_data:
 		if world.grid_data[c] == world.TileState.WATER and not world.is_in_active_area(c):
 			if world.use_tileset_v2:
-				world.set_v2_cell(c, world.v2_atlas(c))
+				var va: Vector2i = world.v2_atlas(c)
+				world.set_v2_cell(c, va)
+				_update_flow(c, V2_KEY + va.y * 100 + va.x)
 			else:
 				world.show_tile(c, world.TileState.WATER, WaterRow.TENANG)
 	refresh_all()
@@ -375,6 +378,7 @@ func refresh_cell(c: Vector2i) -> void:
 		var k := _vis_key(c)
 		_vis[c] = k
 		_show(c, k)
+		_update_flow(c, k)
 		_refresh_edge(c)
 		for nb in world.world.get_surrounding_cells(c):
 			_refresh_edge(nb)
@@ -394,11 +398,13 @@ func _reshow(c: Vector2i) -> void:
 	if k != _vis[c]:
 		_vis[c] = k
 		_show(c, k)
+	_update_flow(c, k)
 
 func refresh_all() -> void:
 	var changed: Array[Vector2i] = []
 	for c in cells:
 		var k := _vis_key(c)
+		_update_flow(c, k)  # arah arus bisa berubah walau bentuk tile sama
 		if _vis.get(c, -1) != k:
 			var was_water: bool = _vis.get(c, -1) / 100 == world.TileState.WATER
 			_vis[c] = k
@@ -410,6 +416,18 @@ func refresh_all() -> void:
 		_refresh_edge(c)
 		for nb in world.world.get_surrounding_cells(c):
 			_refresh_edge(nb)
+
+## Animasi arus (waterflow.png) di atas tile air/kanal v2: tenang / berarah / pusaran.
+func _update_flow(c: Vector2i, key: int) -> void:
+	var row := -1
+	if key >= V2_KEY:
+		var k: int = key - V2_KEY
+		row = world.flow_row(c, Vector2i(k % 100, k / 100))
+	var fk: int = row * 4 + world.get_elev(c) if row >= 0 else -1
+	if _flow_vis.get(c, -1) == fk:
+		return
+	_flow_vis[c] = fk
+	world.set_flow_cell(c, row)
 
 func _shows_water(c: Vector2i) -> bool:
 	if not _vis.has(c):

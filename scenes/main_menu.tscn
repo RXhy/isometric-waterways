@@ -41,7 +41,7 @@ script = ExtResource("1_script")
 layer = 10
 
 [node name="LeftPanel" type="TextureRect" parent="UI" unique_id=1013220172]
-texture_filter = 2
+texture_filter = 1
 anchors_preset = 9
 anchor_bottom = 1.0
 offset_left = 100.0
@@ -52,7 +52,7 @@ texture = ExtResource("5_panel")
 expand_mode = 1
 
 [node name="Logo" type="TextureRect" parent="UI" unique_id=2038094760]
-texture_filter = 2
+texture_filter = 1
 offset_left = -2.0
 offset_top = 8.0
 offset_right = 377.0
@@ -145,9 +145,8 @@ text = "Alirkan air dari sumber ke setiap bangunan sebelum cadangan airnya habis
 3 Timbun - tutup kanal, bongkar jembatan/fasilitas.
 4 Jembatan - pasang di jalan agar kanal bisa lewat.
 5 Mesin Bor - sumber air tanah saat kemarau.
-6 Bendungan - tembok penahan air.
-7 Spillway - cegah sumber air meluap saat hujan.
-8 Kincir Air - poin dari air yang mengalir.
+6 Spillway - cegah sumber air meluap saat hujan.
+7 Kincir Air - pompa air ke tanah 1 tingkat lebih tinggi + poin.
 Scroll = zoom, tombol tengah / WASD = geser, H = sembunyikan UI.
 Lihat prakiraan cuaca dan bersiaplah!
 (Tutorial interaktif menyusul.)"

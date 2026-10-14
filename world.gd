@@ -58,6 +58,7 @@ const SRC_TERRAIN := 0
 const SRC_WATER_ROAD := 1
 const SRC_WATER_FLOW := 2  ## assets/water/water_flow_source.tres: air beranimasi (tenang, arus 4 arah pelan/deras, dangkal)
 const SRC_V2 := 3          ## assets/Tiles/tilesset_water_road.png (dibuat saat runtime, lihat _build_v2_source)
+const SRC_FLOW := 4        ## assets/Tiles/waterflow.png (dibuat saat runtime, lihat _build_flow_source)
 const ATLAS_CANAL_DRY := Vector2i(1, 0)   ## (sumber 1) parit kanal / dasar sungai kering
 const ATLAS_WATER := Vector2i(3, 0)       ## (sumber 1) air: sumber alami, kanal berair, banjir
 const ATLAS_ROAD := Vector2i(4, 0)        ## (sumber 1) jalan
@@ -113,6 +114,12 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 @export var dig_step_delay: float = 0.05
 @export var dig_drop_time: float = 0.2
 @export var dig_drop_height: float = 8.0
+## Animasi arus air (assets/Tiles/waterflow.png, 4 frame x 128 baris): kilau/arus digambar di atas
+## tile air & kanal. Tenang kalau air diam, berarah kalau mengalir lurus, pusaran di belokan/simpangan.
+@export var show_water_flow: bool = true
+@export var waterflow_texture: Texture2D
+@export var waterflow_fps: float = 4.0          ## kecepatan animasi arus (frame per detik); kecil = lebih pelan & tenang
+@export var waterflow_random_start: bool = false ## true = tiap petak mulai di frame acak (tidak serempak)
 
 @export_group("Lahan & ekspansi")
 ## Pusat area main di peta. (-1, -1) = acak tiap main: dipilih yang berisi air dan jauh dari tepi peta,
@@ -128,7 +135,7 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 @export var expand_every_days: int = 9      ## lahan melebar tiap sekian hari (default: hari 10, 19, 28, 37)
 ## Porsi layar yang tertutup UI (atas = bar poin, bawah = tab hari + toolbar). Lahan & bangunan tidak di sini.
 @export_range(0.0, 0.4, 0.01) var ui_margin_top: float = 0.12
-@export_range(0.0, 0.4, 0.01) var ui_margin_bottom: float = 0.26
+@export_range(0.0, 0.4, 0.01) var ui_margin_bottom: float = 0.13
 @export_range(0.0, 0.4, 0.01) var ui_margin_side: float = 0.05
 @export var locked_shade: Color = Color(0.12, 0.08, 0.05, 0.5)  ## warna gelap lahan yang belum terbuka
 @export var border_color: Color = Color(1.0, 0.95, 0.8, 0.9)    ## garis batas lahan aktif
@@ -167,6 +174,7 @@ func _ready() -> void:
 		elevation[cell] = world.get_cell_alternative_tile(cell)
 
 	_build_v2_source()
+	_build_flow_source()
 
 	if map_seed == 0:
 		randomize()
@@ -360,14 +368,14 @@ func action_preview(cell: Vector2i) -> Array:
 			if roads.bridge_stock <= 0: return [-1, "Stok jembatan habis"]
 			if t == TileState.ROAD and not roads.bridges.has(cell): return [1, "Klik: pasang jembatan"]
 			return [-1, "Hanya di jalan"]
-		Tool.BOR, Tool.BENDUNGAN, Tool.SPILLWAY, Tool.KINCIR:
-			var why: String = facilities.why_not(current_tool - Tool.BOR, cell)
+		Tool.BOR, Tool.SPILLWAY, Tool.KINCIR:
+			var why: String = facilities.why_not(tool_kind(current_tool), cell)
 			if why == "":
 				if current_tool == Tool.KINCIR:
 					var n: int = water.lift_targets(cell).size()
 					return [1, "Klik: pasang Kincir - pompa naik ke %d kanal" % n] if n > 0 \
 						else [1, "Klik: pasang Kincir (belum ada kanal lebih tinggi di sebelahnya)"]
-				return [1, "Klik: pasang %s" % facilities.KIND_NAMES[current_tool - Tool.BOR]]
+				return [1, "Klik: pasang %s" % facilities.KIND_NAMES[tool_kind(current_tool)]]
 			return [-1, why]
 	return [0, ""]
 
@@ -824,8 +832,16 @@ func pick_cell(global_pos: Vector2) -> Vector2i:
 
 # --- Bulldoze: Gali / Ratakan / Timbun ---
 
-enum Tool { GALI, RATAKAN, TIMBUN, JEMBATAN, BOR, BENDUNGAN, SPILLWAY, KINCIR }
-const TOOL_NAMES := ["Gali", "Ratakan", "Timbun", "Jembatan", "Mesin Bor", "Bendungan", "Spillway", "Kincir Air"]
+enum Tool { GALI, RATAKAN, TIMBUN, JEMBATAN, BOR, SPILLWAY, KINCIR }
+const TOOL_NAMES := ["Gali", "Ratakan", "Timbun", "Jembatan", "Mesin Bor", "Spillway", "Kincir Air"]
+
+## Alat fasilitas -> FacilityManager.Kind (Bendungan sudah dihapus dari toolbar).
+func tool_kind(t: int) -> int:
+	match t:
+		Tool.BOR: return facilities.Kind.BOR
+		Tool.SPILLWAY: return facilities.Kind.SPILLWAY
+		Tool.KINCIR: return facilities.Kind.KINCIR
+	return -1
 var current_tool: int = Tool.GALI
 
 func set_tool(t: int) -> void:
@@ -875,9 +891,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_3: set_tool(Tool.TIMBUN)
 			KEY_4: set_tool(Tool.JEMBATAN)
 			KEY_5: set_tool(Tool.BOR)
-			KEY_6: set_tool(Tool.BENDUNGAN)
-			KEY_7: set_tool(Tool.SPILLWAY)
-			KEY_8: set_tool(Tool.KINCIR)
+			KEY_6: set_tool(Tool.SPILLWAY)
+			KEY_7: set_tool(Tool.KINCIR)
 			KEY_H: hud.toggle_ui()
 		return
 
@@ -904,8 +919,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				if not right and roads.build_bridge(cell):
 					balance_log.count("pasang_jembatan")
 					update_hud()
-			Tool.BOR, Tool.BENDUNGAN, Tool.SPILLWAY, Tool.KINCIR:
-				var kind: int = current_tool - Tool.BOR  # urutan sama dengan FacilityManager.Kind
+			Tool.BOR, Tool.SPILLWAY, Tool.KINCIR:
+				var kind: int = tool_kind(current_tool)
 				if not right and facilities.place(kind, cell):
 					balance_log.count("pasang_fasilitas")
 					update_hud()
@@ -1327,6 +1342,111 @@ func _build_v2_source() -> void:
 				if r >= V2_CANAL_ROW and r < V2_CANAL_ROW + 6:
 					td.y_sort_origin = v2_canal_sort_boost
 	ts.add_source(src, SRC_V2)
+
+# --- Animasi arus air (assets/Tiles/waterflow.png) ---
+## Sheet 4 kolom (frame animasi) x 128 baris. Indeks baris di bawah dihitung dari 0 (= baris panduan - 1).
+##   0-8    air alami 3/4, 9 bentuk (urutan kolom LAKE_COL)   |  9-17   air alami penuh
+##   18-28  kanal 3/4, 11 bentuk (urutan kolom LINK_COL)      |  29-39  kanal penuh
+##   41-60  air alami arus lurus 3/4: 5 bentuk (kolom 1,3,4,6,8) x 4 arah  |  61-80 penuh
+##   81-84  kanal lurus 3/4: arah kiri-atas, kanan-bawah (kolom 2), kanan-atas, kiri-bawah (kolom 3) | 85-88 penuh
+##   89-96  pusaran sudut air alami (kolom 0,2,5,7), selang-seling 3/4 lalu penuh
+##   97-104 pusaran belokan kanal (kolom 0,1,4,5) | 105-112 pertigaan (kolom 6-9) | 113-114 perempatan
+const FLOW_NAT_CALM := [0, 9]
+const FLOW_CANAL_CALM := [18, 29]
+const FLOW_NAT_DIR := [41, 61]
+const FLOW_CANAL_DIR := [81, 85]
+const FLOW_NAT_TURB := 89
+const FLOW_CANAL_TURB := 97
+const FLOW_NAT_SHAPES := [1, 3, 4, 6, 8]     ## bentuk air alami yang punya arus lurus
+const FLOW_NAT_CORNERS := [0, 2, 5, 7]       ## sudut air alami -> pusaran
+const FLOW_CANAL_BENDS := [0, 1, 4, 5]       ## belokan kanal -> pusaran
+## arah water_sim.flow_dir (0 kiri-atas, 1 kanan-atas, 2 kiri-bawah, 3 kanan-bawah) -> urutan di sheet
+## (kiri-atas, kanan-bawah, kanan-atas, kiri-bawah)
+const FLOW_DIR_ORDER := [0, 2, 3, 1]
+
+var water_flow: TileMapLayer  ## layer animasi arus, anak World (ikut y-sort seperti tile air)
+
+func _build_flow_source() -> void:
+	if not use_tileset_v2 or not show_water_flow:
+		return
+	if waterflow_texture == null:
+		waterflow_texture = load("res://assets/Tiles/waterflow.png")
+	if waterflow_texture == null:
+		return
+	var ts: TileSet = world.tile_set
+	if not ts.has_source(SRC_FLOW):
+		var land: TileSetAtlasSource = ts.get_source(SRC_TERRAIN) as TileSetAtlasSource
+		var src := TileSetAtlasSource.new()
+		src.texture = waterflow_texture
+		src.texture_region_size = Vector2i(32, 32)
+		var frames: int = mini(4, waterflow_texture.get_width() / 32)
+		for r in waterflow_texture.get_height() / 32:
+			var a := Vector2i(0, r)
+			src.create_tile(a)
+			src.set_tile_animation_columns(a, frames)
+			src.set_tile_animation_frames_count(a, frames)
+			src.set_tile_animation_speed(a, waterflow_fps)
+			if waterflow_random_start:
+				src.set_tile_animation_mode(a, TileSetAtlasSource.TILE_ANIMATION_MODE_RANDOM_START_TIMES)
+			var canal_row: bool = (r >= 18 and r <= 39) or (r >= 81 and r <= 88) or r >= 97
+			for h in MAX_ELEV + 1:
+				if h > 0:
+					src.create_alternative_tile(a, h)
+				var td: TileData = src.get_tile_data(a, h)
+				# offset & warna sama persis dengan tile tanah/air di elevasi yang sama (alternative 0-3)
+				var ref: TileData = land.get_tile_data(Vector2i(0, 0), h) if land and land.has_alternative_tile(Vector2i(0, 0), h) else null
+				td.texture_origin = (ref.texture_origin if ref else Vector2i(0, 4 * h - 2)) + Vector2i(0, v2_top_shift)
+				td.modulate = ref.modulate if ref else Color.WHITE
+				if canal_row:
+					td.y_sort_origin = v2_canal_sort_boost
+		ts.add_source(src, SRC_FLOW)
+	water_flow = TileMapLayer.new()
+	water_flow.name = "WaterFlow"
+	water_flow.y_sort_enabled = true
+	water_flow.tile_set = ts
+	world.add_child(water_flow)
+
+## Baris waterflow.png untuk petak berair dengan tile v2 `a`, atau -1 (tanpa animasi arus).
+func flow_row(c: Vector2i, a: Vector2i) -> int:
+	if water_flow == null or a.x < 0 or a.y == V2_ROAD_ROW:
+		return -1
+	var canal: bool = a.y >= V2_CANAL_ROW
+	var lvl: int = (a.y - V2_CANAL_ROW) % 3 if canal else a.y % 3
+	if lvl <= 0:
+		return -1  # kering
+	var full: int = 1 if lvl == 2 else 0
+	var col: int = a.x
+	var d: int = water.flow_dir(c) if is_in_active_area(c) else -1
+	if not canal:
+		if d < 0:
+			return FLOW_NAT_CALM[full] + col
+		var si: int = FLOW_NAT_SHAPES.find(col)
+		if si >= 0:
+			return FLOW_NAT_DIR[full] + si * 4 + FLOW_DIR_ORDER[d]
+		return FLOW_NAT_TURB + FLOW_NAT_CORNERS.find(col) * 2 + full
+	if d < 0:
+		return FLOW_CANAL_CALM[full] + col
+	var v: Vector2 = water.flow_vec.get(c, Vector2.ZERO)
+	match col:
+		2:  # lurus kiri-atas <-> kanan-bawah
+			return FLOW_CANAL_DIR[full] + (0 if v.x < 0.0 else 1)
+		3:  # lurus kanan-atas <-> kiri-bawah
+			return FLOW_CANAL_DIR[full] + (2 if v.y > 0.0 else 3)
+		10:
+			return FLOW_CANAL_TURB + 16 + full
+	var bi: int = FLOW_CANAL_BENDS.find(col)
+	if bi >= 0:
+		return FLOW_CANAL_TURB + bi * 2 + full
+	return FLOW_CANAL_TURB + 8 + (col - 6) * 2 + full
+
+## Pasang / hapus animasi arus di petak ini.
+func set_flow_cell(c: Vector2i, row: int) -> void:
+	if water_flow == null:
+		return
+	if row < 0:
+		water_flow.erase_cell(c)
+	else:
+		water_flow.set_cell(c, SRC_FLOW, Vector2i(0, row), get_elev(c))
 
 ## Pasang tile v2 di peta.
 func set_v2_cell(c: Vector2i, a: Vector2i) -> void:

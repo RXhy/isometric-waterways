@@ -31,6 +31,7 @@ var max_water: float = 40.0
 var water: float = 40.0
 var flood_time: float = 0.0
 var state: int = State.HIDUP
+var has_water: bool = false  ## hasil tick terakhir: sedang mendapat air? (untuk panel Aliran Air)
 var _time := 0.0
 
 func setup(c: Vector2i, t: int) -> void:
@@ -47,6 +48,7 @@ func tick(delta: float, supplied: bool, flooded: bool = false) -> bool:
 	if state == State.HANCUR:
 		return false
 	_time += delta
+	has_water = supplied
 	if supplied:
 		water = min(max_water, water + delta * REFILL_RATE)
 	else:

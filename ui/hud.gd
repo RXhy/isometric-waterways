@@ -1,33 +1,44 @@
 extends CanvasLayer
 ## HUD permainan (node HUD di world.tscn). Tampilan diatur di scene + ui/hud_theme.tres;
 ## script ini hanya mengisi angka dan menanggapi tombol.
-##   Kiri atas    : poin (klik = rincian) + bangunan hancur   |  Kanan atas: kecepatan
-##   Tab bawah    : hari + prakiraan cuaca 3 hari (di atas toolbar, gaya Terra Nil)
-##   Bawah        : kartu alat + tombol Lapisan (overlay) dengan legenda
+##   Kiri atas    : cuaca hari ini (ikon besar) + Hari X/45 + prakiraan hari ini | besok
+##   Kanan atas   : poin (klik = rincian) | bangunan (terancam) | hancur/batas | jembatan, lalu kolom kecepatan
+##   Kiri bawah   : kartu alat 1..7 + tombol Lapisan (overlay) + tombol menu (gerigi)
+##   Kanan bawah  : Aliran Air = % bangunan yang sedang mendapat air
 ##   Dekat kursor : tooltip info petak + pratinjau aksi alat
 
-const TIP_OK := Color(0.18, 0.5, 0.2)
-const TIP_BAD := Color(0.75, 0.2, 0.15)
-const TIP_INFO := Color(0.45, 0.42, 0.38)
+const TIP_OK := Color(0.55, 0.9, 0.55)
+const TIP_BAD := Color(1, 0.55, 0.5)
+const TIP_INFO := Color(0.75, 0.76, 0.73)
 
-@onready var btn_pause: Button = $Root/TopRight/HBox/Pause
-@onready var btn_play: Button = $Root/TopRight/HBox/Play
-@onready var btn_fast: Button = $Root/TopRight/HBox/Fast
-@onready var day_label: Label = $Root/Tabs/DayTab/HBox/Day
-@onready var day_bar: ProgressBar = $Root/Tabs/DayTab/HBox/DayBar
-@onready var weather_slots: Array = [$Root/Tabs/WeatherTab/Weather/D0, $Root/Tabs/WeatherTab/Weather/D1, $Root/Tabs/WeatherTab/Weather/D2]
-@onready var weather_arrows: Array = [$Root/Tabs/WeatherTab/Weather/A1, $Root/Tabs/WeatherTab/Weather/A2]
-@onready var points_button: Button = $Root/TopLeft/HBox/Points
-@onready var points_bar: ProgressBar = $Root/TopLeft/HBox/Points/HBox/Bar
-@onready var points_label: Label = $Root/TopLeft/HBox/Points/HBox/Value
-@onready var ruin_label: Label = $Root/TopLeft/HBox/Ruin
+@onready var btn_pause: Button = $Root/TopRight/Speed/VBox/Pause
+@onready var btn_play: Button = $Root/TopRight/Speed/VBox/Play
+@onready var btn_fast: Button = $Root/TopRight/Speed/VBox/Fast
+@onready var weather_panel: PanelContainer = $Root/TopLeft
+@onready var weather_icon: TextureRect = $Root/TopLeft/HBox/WIcon
+@onready var day_label: Label = $Root/TopLeft/HBox/VBox/DayRow/Day
+@onready var day_bar: ProgressBar = $Root/TopLeft/HBox/VBox/DayRow/DayBar
+@onready var fc_icons: Array = [$Root/TopLeft/HBox/VBox/Forecast/T0Icon, $Root/TopLeft/HBox/VBox/Forecast/T1Icon]
+@onready var fc_labels: Array = [$Root/TopLeft/HBox/VBox/Forecast/T0, $Root/TopLeft/HBox/VBox/Forecast/T1]
+@onready var fc_tomorrow: Array = [$Root/TopLeft/HBox/VBox/Forecast/Sep, $Root/TopLeft/HBox/VBox/Forecast/T1Cap,
+	$Root/TopLeft/HBox/VBox/Forecast/T1Icon, $Root/TopLeft/HBox/VBox/Forecast/T1]
+@onready var points_button: Button = $Root/TopRight/Stats/HBox/Points
+@onready var points_bar: ProgressBar = $Root/TopRight/Stats/HBox/Points/HBox/VBox/Bar
+@onready var points_label: Label = $Root/TopRight/Stats/HBox/Points/HBox/VBox/Value
+@onready var bld_label: Label = $Root/TopRight/Stats/HBox/Bld/VBox/Value
+@onready var bld_sub: Label = $Root/TopRight/Stats/HBox/Bld/VBox/Sub
+@onready var ruin_label: Label = $Root/TopRight/Stats/HBox/Ruin/VBox/Value
+@onready var bridge_label: Label = $Root/TopRight/Stats/HBox/Bridge/VBox/Value
+@onready var bridge_sub: Label = $Root/TopRight/Stats/HBox/Bridge/VBox/Sub
+@onready var water_bar: ProgressBar = $Root/WaterPanel/HBox/VBox/Row/Bar
+@onready var water_pct: Label = $Root/WaterPanel/HBox/VBox/Row/Pct
 @onready var points_popup: PanelContainer = $Root/PointsPopup
 @onready var popup_lines: Label = $Root/PointsPopup/VBox/Lines
 @onready var tooltip: PanelContainer = $Root/Tooltip
 @onready var tip_title: Label = $Root/Tooltip/VBox/Title
 @onready var tip_detail: Label = $Root/Tooltip/VBox/Detail
 @onready var tip_action: Label = $Root/Tooltip/VBox/Action
-@onready var layer_button: Button = $Root/LayerButton
+@onready var layer_button: Button = $Root/ActionMenu/Tools/LayerButton
 @onready var legend: PanelContainer = $Root/Legend
 @onready var legend_title: Label = $Root/Legend/VBox/Title
 @onready var legend_height: Control = $Root/Legend/VBox/Height
@@ -35,11 +46,15 @@ const TIP_INFO := Color(0.45, 0.42, 0.38)
 @onready var end_overlay: ColorRect = $Overlay
 @onready var pause_menu = $Root/PauseMenu
 @onready var end_message: Label = $Overlay/Message
+## Urutan sama dengan world.Tool (tombol 1..7). Bendungan sudah dihapus.
 @onready var cards: Array = [
 	$Root/ActionMenu/Tools/Gali, $Root/ActionMenu/Tools/Ratakan, $Root/ActionMenu/Tools/Timbun,
-	$Root/ActionMenu/Tools/Jembatan, $Root/ActionMenu/Tools/Bor, $Root/ActionMenu/Tools/Bendungan,
+	$Root/ActionMenu/Tools/Jembatan, $Root/ActionMenu/Tools/Bor,
 	$Root/ActionMenu/Tools/Spillway, $Root/ActionMenu/Tools/Kincir,
 ]
+
+## Skala seluruh UI in-game (1 = ukuran desain). 0.72 = ringkas tapi tetap terbaca di layar desktop 1080p.
+@export_range(0.5, 1.2, 0.01) var ui_scale: float = 0.72
 
 var world
 var ui_hidden: bool = false  ## H: sembunyikan semua UI (untuk screenshot/trailer atau melihat peta penuh)
@@ -52,7 +67,7 @@ func setup(w) -> void:
 	for i in cards.size():
 		cards[i].pressed.connect(world.set_tool.bind(i))
 	pause_menu.setup(world)
-	$Root/TopRight/HBox/Menu.pressed.connect(pause_menu.open)
+	$Root/ActionMenu/Tools/Menu.pressed.connect(pause_menu.open)
 	btn_pause.pressed.connect(set_speed.bind(0.0))
 	btn_play.pressed.connect(set_speed.bind(1.0))
 	btn_fast.pressed.connect(set_speed.bind(2.0))
@@ -64,11 +79,27 @@ func setup(w) -> void:
 	_update_legend()
 	$Root/DebugHint.visible = world.debug_enabled()
 	_make_toast()
+	_apply_ui_scale()
+	get_viewport().size_changed.connect(_apply_ui_scale)
+
+## Perkecil/perbesar UI tanpa mengubah tata letak: Root diskalakan dan diberi ukuran viewport / skala,
+## jadi elemen yang menempel ke kanan/bawah tetap menempel di tepi layar.
+func _apply_ui_scale() -> void:
+	var root: Control = $Root
+	var vs: Vector2 = get_viewport().get_visible_rect().size
+	root.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	root.position = Vector2.ZERO
+	root.scale = Vector2(ui_scale, ui_scale)
+	root.size = vs / ui_scale
+
+## Posisi layar (viewport) -> koordinat di dalam Root yang diskalakan.
+func _to_root(p: Vector2) -> Vector2:
+	return p / ui_scale
 
 # --- Sembunyikan UI (tombol H / menu jeda) ---
 
 func _hideable() -> Array:
-	return [$Root/TopLeft, $Root/TopRight, $Root/Tabs, $Root/ActionMenu, $Root/LayerButton,
+	return [$Root/TopLeft, $Root/TopRight, $Root/ActionMenu, $Root/WaterPanel,
 		$Root/Legend, $Root/DebugHint, $Root/PointsPopup, tooltip]
 
 func toggle_ui() -> void:
@@ -81,7 +112,7 @@ func set_ui_hidden(on: bool) -> void:
 			n.hide()
 		toast("UI disembunyikan - tekan H untuk menampilkan")
 	else:
-		for n in [$Root/TopLeft, $Root/TopRight, $Root/Tabs, $Root/ActionMenu, $Root/LayerButton]:
+		for n in [$Root/TopLeft, $Root/TopRight, $Root/ActionMenu, $Root/WaterPanel]:
 			n.show()
 		$Root/DebugHint.visible = world.debug_enabled()
 		_update_legend()
@@ -108,7 +139,7 @@ func toast(text: String, seconds: float = 2.5) -> void:
 	_toast_label.text = text
 	_toast.show()
 	_toast.reset_size()
-	_toast.position.x = (get_viewport().get_visible_rect().size.x - _toast.size.x) / 2.0
+	_toast.position.x = (_to_root(get_viewport().get_visible_rect().size).x - _toast.size.x) / 2.0
 	if _toast_tw:
 		_toast_tw.kill()
 	_toast_tw = create_tween().set_ignore_time_scale(true)
@@ -162,7 +193,7 @@ func show_end(text: String) -> void:
 	end_overlay.show()
 	tooltip.hide()
 	# layar akhir bersih: sembunyikan toolbar & tab supaya survei tidak tertumpuk
-	for n in [$Root/ActionMenu, $Root/Tabs, $Root/LayerButton, $Root/Legend, $Root/DebugHint, $Root/PointsPopup]:
+	for n in [$Root/ActionMenu, $Root/WaterPanel, $Root/Legend, $Root/DebugHint, $Root/PointsPopup]:
 		n.hide()
 
 # --- Pembaruan tiap frame ---
@@ -174,23 +205,48 @@ func refresh() -> void:
 	var day: int = mini(W.current_day(), W.target_days)
 	day_label.text = "Hari %d/%d" % [day, W.target_days]
 	day_bar.value = fmod(W.elapsed, W.day_length) / W.day_length
-	for i in 3:
-		var d: int = W.current_day() + i
-		var slot: Control = weather_slots[i]
-		var show_slot: bool = d <= W.target_days
-		slot.visible = show_slot
-		if i > 0:
-			weather_arrows[i - 1].visible = show_slot
-		if show_slot:
-			var wt: int = W.weather.weather_for(d)
-			slot.get_node("Icon").texture = W.weather.icon_for(wt)
-			slot.get_node("Label").text = "H%d" % d
-			slot.tooltip_text = "Hari %d: %s" % [d, W.weather.describe(d)]
+	var today: int = W.current_day()
+	var wt0: int = W.weather.weather_for(today)
+	weather_icon.texture = W.weather.icon_for(wt0)
+	fc_icons[0].texture = weather_icon.texture
+	fc_labels[0].text = W.weather.NAMES[wt0]
+	var has_tomorrow: bool = today + 1 <= W.target_days
+	for n in fc_tomorrow:
+		n.visible = has_tomorrow
+	var tip := "Hari ini: %s" % W.weather.describe(today)
+	if has_tomorrow:
+		var wt1: int = W.weather.weather_for(today + 1)
+		fc_icons[1].texture = W.weather.icon_for(wt1)
+		fc_labels[1].text = W.weather.NAMES[wt1]
+		tip += "\nBesok: %s" % W.weather.describe(today + 1)
+	if today + 2 <= W.target_days:
+		tip += "\nLusa: %s" % W.weather.describe(today + 2)
+	weather_panel.tooltip_text = tip
 	var S = W.score
 	points_bar.value = S.progress()
 	points_label.text = "%d/%d" % [int(S.total), S.next_threshold()]
 	points_button.tooltip_text = "Bintang %d/3  |  1: %d  2: %d  3: %d poin" % [S.stars(), S.target_points, S.star2_points, S.star3_points]
-	ruin_label.text = "%d/%d" % [W.buildings.destroyed_count, W.damage_quota]
+	ruin_label.text = "Hancur %d/%d" % [W.buildings.destroyed_count, W.damage_quota]
+	var alive := 0
+	var threatened := 0
+	var watered := 0
+	for c in W.buildings.buildings:
+		var b = W.buildings.buildings[c]
+		if b.state == b.State.HANCUR:
+			continue
+		alive += 1
+		if b.state == b.State.TERANCAM:
+			threatened += 1
+		if b.has_water:
+			watered += 1
+	bld_label.text = "Bangunan %d" % alive
+	bld_sub.text = "(terancam %d)" % threatened
+	bld_sub.add_theme_color_override("font_color", TIP_BAD if threatened > 0 else TIP_INFO)
+	bridge_label.text = "Jembatan %d" % W.roads.bridge_stock
+	bridge_sub.text = "(aktif %d)" % S.working_bridges()
+	var flow: float = float(watered) / alive if alive > 0 else 0.0
+	water_bar.value = flow
+	water_pct.text = "%d%%" % roundi(flow * 100.0)
 	if points_popup.visible:
 		var lines := ""
 		for src in S.SOURCES:
@@ -204,9 +260,8 @@ func refresh() -> void:
 		cards[i].set_stock(W.shovel)
 	cards[3].set_stock(W.roads.bridge_stock)
 	cards[4].set_stock(W.facilities.stock[W.facilities.Kind.BOR])
-	cards[5].set_stock(W.facilities.stock[W.facilities.Kind.BENDUNGAN])
-	cards[6].set_stock(W.facilities.stock[W.facilities.Kind.SPILLWAY])
-	cards[7].set_stock(W.facilities.stock[W.facilities.Kind.KINCIR])
+	cards[5].set_stock(W.facilities.stock[W.facilities.Kind.SPILLWAY])
+	cards[6].set_stock(W.facilities.stock[W.facilities.Kind.KINCIR])
 	_update_tooltip()
 
 func _mouse_over_ui() -> bool:
@@ -227,8 +282,8 @@ func _update_tooltip() -> void:
 	tip_action.add_theme_color_override("font_color", TIP_OK if info["ok"] > 0 else (TIP_BAD if info["ok"] < 0 else TIP_INFO))
 	tooltip.show()
 	tooltip.reset_size()
-	var mp := get_viewport().get_mouse_position()
-	var vs := get_viewport().get_visible_rect().size
+	var mp := _to_root(get_viewport().get_mouse_position())
+	var vs := _to_root(get_viewport().get_visible_rect().size)
 	var pos := mp + Vector2(12, 14)
 	if pos.x + tooltip.size.x > vs.x - 4:
 		pos.x = mp.x - tooltip.size.x - 8

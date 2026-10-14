@@ -1,18 +1,23 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/pause_menu.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/ui/card.png" id="2_card"]
 
-[sub_resource type="StyleBoxTexture" id="StyleBox_btn"]
+[sub_resource type="StyleBoxFlat" id="StyleBox_btn"]
 content_margin_left = 6.0
 content_margin_top = 2.0
 content_margin_right = 6.0
 content_margin_bottom = 2.0
-texture = ExtResource("2_card")
-texture_margin_left = 4.0
-texture_margin_top = 4.0
-texture_margin_right = 4.0
-texture_margin_bottom = 4.0
+bg_color = Color(0.161, 0.169, 0.157, 0.0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+corner_detail = 6
 
 [node name="PauseMenu" type="Control"]
 layout_mode = 3
@@ -52,7 +57,7 @@ theme_override_constants/separation = 5
 
 [node name="Title" type="Label" parent="Panel/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.16, 0.36, 0.6, 1)
+theme_override_colors/font_color = Color(0.62, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 12
 text = "Jeda"
 horizontal_alignment = 1
@@ -95,7 +100,7 @@ text = "Menu Utama"
 
 [node name="Hint" type="Label" parent="Panel/VBox/Main"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.45, 0.42, 0.38, 1)
+theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
 text = "Esc: tutup menu"
 horizontal_alignment = 1

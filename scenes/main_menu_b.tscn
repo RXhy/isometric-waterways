@@ -157,7 +157,7 @@ text = "Cara Bermain"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.24, 0.22, 0.2, 1)
 theme_override_font_sizes/font_size = 9
-text = "Alirkan air dari sumber ke setiap bangunan sebelum cadangan airnya habis.\n\n1 Gali  - buat kanal dari tanah.\n2 Ratakan - klik kiri turunkan, klik kanan naikkan tanah. Air tidak bisa naik!\n3 Timbun - tutup kanal, bongkar jembatan/fasilitas.\n4 Jembatan - pasang di jalan agar kanal bisa lewat.\n5 Mesin Bor - sumber air tanah saat kemarau.\n6 Bendungan - tembok penahan air.\n7 Spillway - cegah sumber air meluap saat hujan.\n\nLihat prakiraan cuaca di kanan atas dan bersiaplah!\n(Tutorial interaktif menyusul.)"
+text = "Alirkan air dari sumber ke setiap bangunan sebelum cadangan airnya habis.\n\n1 Gali  - buat kanal dari tanah.\n2 Ratakan - klik kiri turunkan, klik kanan naikkan tanah. Air tidak bisa naik!\n3 Timbun - tutup kanal, bongkar jembatan/fasilitas.\n4 Jembatan - pasang di jalan agar kanal bisa lewat.\n5 Mesin Bor - sumber air tanah saat kemarau.\n6 Spillway - cegah sumber air meluap saat hujan.\n\nLihat prakiraan cuaca di kanan atas dan bersiaplah!\n(Tutorial interaktif menyusul.)"
 autowrap_mode = 3
 size_flags_vertical = 3
 

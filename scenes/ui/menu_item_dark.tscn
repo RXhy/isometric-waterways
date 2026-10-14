@@ -16,7 +16,7 @@ texture_margin_right = 2.0
 texture_margin_bottom = 2.0
 
 [node name="MenuItemDark" type="Button"]
-texture_filter = 2
+texture_filter = 1
 custom_minimum_size = Vector2(148, 18)
 focus_mode = 2
 theme_override_colors/font_color = Color(0.91, 0.925, 0.914, 1)

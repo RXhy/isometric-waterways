@@ -32,6 +32,9 @@ func _apply() -> void:
 	if not is_node_ready():
 		return
 	$Icon.texture = icon_texture
+	# ikon resolusi besar (mis. kincir.png 1254 px) diperkecil halus pakai mipmap; ikon pixel art tetap tajam
+	var big: bool = icon_texture != null and icon_texture.get_width() > 128
+	$Icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS if big else CanvasItem.TEXTURE_FILTER_PARENT_NODE
 	$Title.text = title
 	$Title.visible = show_title
 	$Hotkey.text = hotkey

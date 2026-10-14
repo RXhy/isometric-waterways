@@ -1,19 +1,24 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://ui/end_survey.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/hud_theme.tres" id="2_theme"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/ui/card.png" id="3_card"]
 
-[sub_resource type="StyleBoxTexture" id="StyleBox_btn"]
+[sub_resource type="StyleBoxFlat" id="StyleBox_btn"]
 content_margin_left = 4.0
 content_margin_top = 2.0
 content_margin_right = 4.0
 content_margin_bottom = 2.0
-texture = ExtResource("3_card")
-texture_margin_left = 4.0
-texture_margin_top = 4.0
-texture_margin_right = 4.0
-texture_margin_bottom = 4.0
+bg_color = Color(0.161, 0.169, 0.157, 0.0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+corner_detail = 6
 
 [sub_resource type="ButtonGroup" id="Group_Tegang"]
 
@@ -40,7 +45,7 @@ theme_override_constants/separation = 3
 
 [node name="Title" type="Label" parent="VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.16, 0.36, 0.6, 1)
+theme_override_colors/font_color = Color(0.62, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 9
 text = "Survei singkat (untuk tim pengembang)"
 horizontal_alignment = 1
@@ -189,9 +194,9 @@ autowrap_mode = 3
 [node name="Text" type="TextEdit" parent="VBox/Saran"]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.24, 0.22, 0.2, 1)
-theme_override_colors/font_placeholder_color = Color(0.55, 0.52, 0.48, 1)
-theme_override_colors/caret_color = Color(0.16, 0.36, 0.6, 1)
+theme_override_colors/font_color = Color(0.91, 0.925, 0.914, 1)
+theme_override_colors/font_placeholder_color = Color(0.62, 0.62, 0.6, 1)
+theme_override_colors/caret_color = Color(0.62, 0.82, 1, 1)
 theme_override_styles/normal = SubResource("StyleBox_btn")
 theme_override_styles/focus = SubResource("StyleBox_btn")
 theme_override_font_sizes/font_size = 8
