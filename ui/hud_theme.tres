@@ -1,6 +1,5 @@
 [gd_resource type="Theme" format=3 uid="uid://des7o3gqpg0bx"]
 
-
 [sub_resource type="StyleBoxEmpty" id="StyleBox_empty"]
 content_margin_left = 3.0
 content_margin_top = 2.0

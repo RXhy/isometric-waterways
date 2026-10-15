@@ -3,15 +3,12 @@
 [ext_resource type="Script" uid="uid://cpdljr2xq1dbb" path="res://ui/main_menu.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/menu_map.tscn" id="2_world"]
 [ext_resource type="PackedScene" path="res://scenes/ui/menu_item_dark.tscn" id="3_item"]
-[ext_resource type="Texture2D" path="res://assets/ui/logo_fiks_hd.png" id="4_logo"]
-[ext_resource type="Texture2D" path="res://assets/ui/Rectangle 2.png" id="5_panel"]
-[ext_resource type="Texture2D" path="res://assets/ui/NEW GAME.png" id="6_t_new"]
-[ext_resource type="Texture2D" path="res://assets/ui/LOAD GAME.png" id="7_t_load"]
-[ext_resource type="Texture2D" path="res://assets/ui/TUTORIAL.png" id="8_t_tut"]
-[ext_resource type="Texture2D" path="res://assets/ui/EXIT.png" id="9_t_exit"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
-bg_color = Color(0.17, 0.16, 0.15, 0.86)
+[ext_resource type="Texture2D" uid="uid://cjim8w32kaf88" path="res://assets/ui/logo_fiks_hd-export-export.png" id="4_jk1qb"]
+[ext_resource type="Texture2D" uid="uid://cry1lioutqedc" path="res://assets/ui/Rectangle 2.png" id="5_panel"]
+[ext_resource type="Texture2D" uid="uid://bsg2for40rqev" path="res://assets/ui/NEW GAME.png" id="6_t_new"]
+[ext_resource type="Texture2D" uid="uid://dmlpcbyd8khyx" path="res://assets/ui/LOAD GAME.png" id="7_t_load"]
+[ext_resource type="Texture2D" uid="uid://fvp1cwuiu55j" path="res://assets/ui/TUTORIAL.png" id="8_t_tut"]
+[ext_resource type="Texture2D" uid="uid://bdw21iuiolvaw" path="res://assets/ui/EXIT.png" id="9_t_exit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_dialog"]
 content_margin_left = 14.0
@@ -58,7 +55,7 @@ offset_top = 8.0
 offset_right = 377.0
 offset_bottom = 173.0
 mouse_filter = 2
-texture = ExtResource("4_logo")
+texture = ExtResource("4_jk1qb")
 expand_mode = 1
 stretch_mode = 5
 
@@ -202,6 +199,7 @@ text = "BATAL"
 
 [node name="Fade" type="ColorRect" parent="UI" unique_id=1821457216]
 unique_name_in_owner = true
+texture_filter = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

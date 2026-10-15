@@ -19,7 +19,7 @@
 [ext_resource type="Texture2D" uid="uid://x7mqia2hiwd6" path="res://assets/Icon/gali.png" id="15_ic_gali"]
 [ext_resource type="Texture2D" uid="uid://hd1ptlohbdbx" path="res://assets/Icon/ratakan.png" id="16_ic_ratakan"]
 [ext_resource type="Texture2D" uid="uid://tylnya23pc5m" path="res://assets/Icon/timbun.png" id="17_ic_timbun"]
-[ext_resource type="Texture2D" path="res://assets/Icon/kincir.png" id="21b_ic_kincir"]
+[ext_resource type="Texture2D" uid="uid://cd7edl75otv1" path="res://assets/Icon/kincir.png" id="21b_ic_kincir"]
 [ext_resource type="Texture2D" uid="uid://cwp54afce1tw0" path="res://assets/Icon/cerah.png" id="22_ic_cerah"]
 [ext_resource type="Texture2D" uid="uid://cbihcema4bpi" path="res://assets/Icon/kemarau.png" id="23_ic_kemarau"]
 [ext_resource type="Texture2D" uid="uid://bti15r4o2l87s" path="res://assets/Icon/rain.png" id="24_ic_hujan"]
@@ -34,25 +34,21 @@
 [ext_resource type="Texture2D" uid="uid://c03eenm81nckh" path="res://assets/placeholder/ui/ic_fast.png" id="33_fast"]
 [ext_resource type="Texture2D" uid="uid://c5y4qg1cvvwkg" path="res://assets/placeholder/ui/ic_layers.png" id="34_layers"]
 [ext_resource type="Texture2D" uid="uid://d0pj0koms5s5x" path="res://assets/placeholder/ui/ic_star.png" id="35_star"]
-[ext_resource type="Texture2D" uid="uid://dgm6amfvmhp3v" path="res://assets/placeholder/ui/ic_ruin.png" id="36_ruin"]
-[ext_resource type="Texture2D" uid="uid://dljyljn8gnnxn" path="res://assets/placeholder/ui/ic_arrow.png" id="37_arrow"]
 [ext_resource type="TileSetAtlasSource" path="res://assets/water/water_flow_source.tres" id="39_flow"]
 [ext_resource type="TileSet" uid="uid://bk35s4yt7qclm" path="res://assets/water/water_edge_tileset.tres" id="40_edge"]
 [ext_resource type="Texture2D" uid="uid://bq3jvn0cimhh5" path="res://assets/Icon/bridges.png" id="42_55kwu"]
 [ext_resource type="Script" uid="uid://d17eff6j22jie" path="res://balance_log.gd" id="42_log"]
 [ext_resource type="Texture2D" uid="uid://7dnipfsr3l7i" path="res://assets/Icon/drill.png" id="43_f3o6s"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="43_pause"]
-[ext_resource type="Texture2D" uid="uid://cxlmukpb6bnkc" path="res://assets/placeholder/ui/ic_menu.png" id="44_ic_menu"]
 [ext_resource type="Texture2D" uid="uid://d3clkpcv8e3fd" path="res://assets/Icon/spillway.png" id="44_w4lh7"]
 [ext_resource type="TileSet" uid="uid://cw8lsnrnlwrsh" path="res://assets/ui/drag_preview_tileset.tres" id="45_drag"]
 [ext_resource type="PackedScene" path="res://scenes/ui/end_survey.tscn" id="46_survey"]
 [ext_resource type="Texture2D" uid="uid://bwxgwtwwq25gj" path="res://assets/Tiles/tilesset_water_road.png" id="60_water_road"]
-[ext_resource type="Texture2D" path="res://assets/Tiles/waterflow.png" id="61_waterflow"]
-
-[ext_resource type="Texture2D" path="res://assets/Icon/buildings.png" id="70_ic_bld"]
-[ext_resource type="Texture2D" path="res://assets/Icon/destroyed.png" id="71_ic_destroyed"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/ui/ic_drop.png" id="72_ic_drop"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/ui/ic_gear.png" id="73_ic_gear"]
+[ext_resource type="Texture2D" uid="uid://c0xx6semeqki4" path="res://assets/Tiles/waterflow.png" id="61_waterflow"]
+[ext_resource type="Texture2D" uid="uid://c30bai0e4a1xy" path="res://assets/Icon/buildings.png" id="70_ic_bld"]
+[ext_resource type="Texture2D" uid="uid://5fabj78lbsve" path="res://assets/Icon/destroyed.png" id="71_ic_destroyed"]
+[ext_resource type="Texture2D" uid="uid://cwr17xtskiykv" path="res://assets/placeholder/ui/ic_drop.png" id="72_ic_drop"]
+[ext_resource type="Texture2D" uid="uid://dftvr7vfjxyso" path="res://assets/placeholder/ui/ic_gear.png" id="73_ic_gear"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fj7yv"]
 texture = ExtResource("1_f3sb7")
@@ -444,24 +440,12 @@ sources/0 = SubResource("TileSetAtlasSource_overlay")
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_speed"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBox_daytab"]
-content_margin_left = 5.0
-content_margin_top = 2.0
-content_margin_right = 5.0
-content_margin_bottom = 2.0
-bg_color = Color(0.427, 0.427, 0.427, 0.7)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-corner_detail = 6
-
 [sub_resource type="StyleBoxFlat" id="StyleBox_layer"]
 content_margin_left = 3.0
 content_margin_top = 2.0
 content_margin_right = 3.0
 content_margin_bottom = 2.0
-bg_color = Color(0.161, 0.169, 0.157, 0.0)
+bg_color = Color(0.161, 0.169, 0.157, 0)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
@@ -624,12 +608,12 @@ offset_right = 4.0
 offset_bottom = 48.0
 tooltip_text = "Hari & prakiraan cuaca"
 
-[node name="HBox" type="HBoxContainer" parent="HUD/Root/TopLeft"]
+[node name="HBox" type="HBoxContainer" parent="HUD/Root/TopLeft" unique_id=582363301]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="WIcon" type="TextureRect" parent="HUD/Root/TopLeft/HBox"]
+[node name="WIcon" type="TextureRect" parent="HUD/Root/TopLeft/HBox" unique_id=220624750]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 size_flags_vertical = 4
@@ -637,23 +621,23 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopLeft/HBox"]
+[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopLeft/HBox" unique_id=863175766]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 1
 alignment = 1
 
-[node name="DayRow" type="HBoxContainer" parent="HUD/Root/TopLeft/HBox/VBox"]
+[node name="DayRow" type="HBoxContainer" parent="HUD/Root/TopLeft/HBox/VBox" unique_id=1955215117]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 5
 
-[node name="Day" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/DayRow"]
+[node name="Day" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/DayRow" unique_id=218291494]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Hari 1/45"
 
-[node name="DayBar" type="ProgressBar" parent="HUD/Root/TopLeft/HBox/VBox/DayRow"]
+[node name="DayBar" type="ProgressBar" parent="HUD/Root/TopLeft/HBox/VBox/DayRow" unique_id=1812707742]
 custom_minimum_size = Vector2(36, 4)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -663,18 +647,18 @@ max_value = 1.0
 step = 0.001
 show_percentage = false
 
-[node name="Forecast" type="HBoxContainer" parent="HUD/Root/TopLeft/HBox/VBox"]
+[node name="Forecast" type="HBoxContainer" parent="HUD/Root/TopLeft/HBox/VBox" unique_id=562840143]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 3
 
-[node name="T0Cap" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast"]
+[node name="T0Cap" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=349813867]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
 text = "Hari ini"
 
-[node name="T0Icon" type="TextureRect" parent="HUD/Root/TopLeft/HBox/VBox/Forecast"]
+[node name="T0Icon" type="TextureRect" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=283251687]
 custom_minimum_size = Vector2(10, 10)
 layout_mode = 2
 size_flags_vertical = 4
@@ -682,24 +666,24 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="T0" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast"]
+[node name="T0" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=64784941]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
 text = "Cerah"
 
-[node name="Sep" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast"]
+[node name="Sep" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=1037077601]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.56, 0.54, 1)
 theme_override_font_sizes/font_size = 8
 text = "|"
 
-[node name="T1Cap" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast"]
+[node name="T1Cap" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=1430436161]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
 text = "Besok"
 
-[node name="T1Icon" type="TextureRect" parent="HUD/Root/TopLeft/HBox/VBox/Forecast"]
+[node name="T1Icon" type="TextureRect" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=1251289564]
 custom_minimum_size = Vector2(10, 10)
 layout_mode = 2
 size_flags_vertical = 4
@@ -707,12 +691,12 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="T1" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast"]
+[node name="T1" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=327685897]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
 text = "Cerah"
 
-[node name="TopRight" type="HBoxContainer" parent="HUD/Root"]
+[node name="TopRight" type="HBoxContainer" parent="HUD/Root" unique_id=2033396050]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -725,11 +709,11 @@ grow_horizontal = 0
 mouse_filter = 2
 theme_override_constants/separation = 3
 
-[node name="Stats" type="PanelContainer" parent="HUD/Root/TopRight"]
+[node name="Stats" type="PanelContainer" parent="HUD/Root/TopRight" unique_id=153144291]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 
-[node name="HBox" type="HBoxContainer" parent="HUD/Root/TopRight/Stats"]
+[node name="HBox" type="HBoxContainer" parent="HUD/Root/TopRight/Stats" unique_id=1958844650]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
@@ -741,7 +725,7 @@ size_flags_vertical = 4
 tooltip_text = "Poin / target bintang berikutnya (klik untuk rincian)"
 focus_mode = 0
 
-[node name="HBox" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Points"]
+[node name="HBox" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Points" unique_id=1485468907]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -753,7 +737,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Star" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Points/HBox"]
+[node name="Star" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Points/HBox" unique_id=876715105]
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
 size_flags_vertical = 4
@@ -762,19 +746,19 @@ texture = ExtResource("35_star")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Points/HBox"]
+[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Points/HBox" unique_id=1092111470]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 1
 alignment = 1
 
-[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Points/HBox/VBox"]
+[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Points/HBox/VBox" unique_id=2137851434]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "0/5000"
 
-[node name="Bar" type="ProgressBar" parent="HUD/Root/TopRight/Stats/HBox/Points/HBox/VBox"]
+[node name="Bar" type="ProgressBar" parent="HUD/Root/TopRight/Stats/HBox/Points/HBox/VBox" unique_id=1554536181]
 custom_minimum_size = Vector2(40, 4)
 layout_mode = 2
 mouse_filter = 2
@@ -782,15 +766,15 @@ max_value = 1.0
 step = 0.001
 show_percentage = false
 
-[node name="SepBld" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox"]
+[node name="SepBld" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox" unique_id=1906435260]
 layout_mode = 2
 
-[node name="Bld" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox"]
+[node name="Bld" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox" unique_id=324713300]
 layout_mode = 2
 tooltip_text = "Bangunan berdiri (terancam = kekurangan air / kebanjiran)"
 theme_override_constants/separation = 3
 
-[node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Bld"]
+[node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Bld" unique_id=790242768]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 size_flags_vertical = 4
@@ -799,32 +783,32 @@ texture = ExtResource("70_ic_bld")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Bld"]
+[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Bld" unique_id=670416469]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bld/VBox"]
+[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bld/VBox" unique_id=1236114693]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "Bangunan 0"
 
-[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bld/VBox"]
+[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bld/VBox" unique_id=1588015]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
 text = "(terancam 0)"
 
-[node name="SepRuin" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox"]
+[node name="SepRuin" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox" unique_id=424809538]
 layout_mode = 2
 
-[node name="Ruin" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox"]
+[node name="Ruin" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox" unique_id=814447850]
 layout_mode = 2
 tooltip_text = "Bangunan hancur / batas kalah"
 theme_override_constants/separation = 3
 
-[node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Ruin"]
+[node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Ruin" unique_id=1909098738]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 size_flags_vertical = 4
@@ -833,32 +817,32 @@ texture = ExtResource("71_ic_destroyed")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Ruin"]
+[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Ruin" unique_id=2017513526]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Ruin/VBox"]
+[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Ruin/VBox" unique_id=30053687]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "Hancur 0/8"
 
-[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Ruin/VBox"]
+[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Ruin/VBox" unique_id=572357887]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
 text = "batas kalah"
 
-[node name="SepBridge" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox"]
+[node name="SepBridge" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox" unique_id=380358716]
 layout_mode = 2
 
-[node name="Bridge" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox"]
+[node name="Bridge" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox" unique_id=815880901]
 layout_mode = 2
 tooltip_text = "Stok jembatan (aktif = jembatan terpasang yang dilewati air)"
 theme_override_constants/separation = 3
 
-[node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Bridge"]
+[node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Bridge" unique_id=1560529095]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 size_flags_vertical = 4
@@ -867,28 +851,28 @@ texture = ExtResource("42_55kwu")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Bridge"]
+[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Bridge" unique_id=2043628875]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bridge/VBox"]
+[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bridge/VBox" unique_id=142056120]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "Jembatan 0"
 
-[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bridge/VBox"]
+[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bridge/VBox" unique_id=1981956202]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
 text = "(aktif 0)"
 
-[node name="Speed" type="PanelContainer" parent="HUD/Root/TopRight"]
+[node name="Speed" type="PanelContainer" parent="HUD/Root/TopRight" unique_id=1512758546]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 
-[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Speed"]
+[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Speed" unique_id=1587520615]
 layout_mode = 2
 theme_override_constants/separation = 1
 alignment = 1
@@ -997,12 +981,14 @@ theme_override_constants/separation = 3
 
 [node name="Gali" parent="HUD/Root/ActionMenu/Tools" unique_id=48896415 instance=ExtResource("13_card")]
 layout_mode = 2
+tooltip_text = "Gali  [1]"
 icon_texture = ExtResource("15_ic_gali")
 title = "Gali"
 show_stock = true
 
 [node name="Ratakan" parent="HUD/Root/ActionMenu/Tools" unique_id=1508969270 instance=ExtResource("13_card")]
 layout_mode = 2
+tooltip_text = "Ratakan  [2]"
 icon_texture = ExtResource("16_ic_ratakan")
 title = "Ratakan"
 hotkey = "2"
@@ -1010,6 +996,7 @@ show_stock = true
 
 [node name="Timbun" parent="HUD/Root/ActionMenu/Tools" unique_id=601562977 instance=ExtResource("13_card")]
 layout_mode = 2
+tooltip_text = "Timbun  [3]"
 icon_texture = ExtResource("17_ic_timbun")
 title = "Timbun"
 hotkey = "3"
@@ -1017,6 +1004,7 @@ show_stock = true
 
 [node name="Jembatan" parent="HUD/Root/ActionMenu/Tools" unique_id=238417109 instance=ExtResource("13_card")]
 layout_mode = 2
+tooltip_text = "Jembatan  [4]"
 icon_texture = ExtResource("42_55kwu")
 title = "Jembatan"
 hotkey = "4"
@@ -1024,6 +1012,7 @@ show_stock = true
 
 [node name="Bor" parent="HUD/Root/ActionMenu/Tools" unique_id=1020001115 instance=ExtResource("13_card")]
 layout_mode = 2
+tooltip_text = "Mesin Bor  [5]"
 icon_texture = ExtResource("43_f3o6s")
 title = "Mesin Bor"
 hotkey = "5"
@@ -1031,6 +1020,7 @@ show_stock = true
 
 [node name="Spillway" parent="HUD/Root/ActionMenu/Tools" unique_id=488392271 instance=ExtResource("13_card")]
 layout_mode = 2
+tooltip_text = "Spillway  [6]"
 icon_texture = ExtResource("44_w4lh7")
 title = "Spillway"
 hotkey = "6"
@@ -1038,12 +1028,13 @@ show_stock = true
 
 [node name="Kincir" parent="HUD/Root/ActionMenu/Tools" unique_id=332329664 instance=ExtResource("13_card")]
 layout_mode = 2
+tooltip_text = "Kincir  [7]"
 icon_texture = ExtResource("21b_ic_kincir")
 title = "Kincir"
 hotkey = "7"
 show_stock = true
 
-[node name="SepTools" type="VSeparator" parent="HUD/Root/ActionMenu/Tools"]
+[node name="SepTools" type="VSeparator" parent="HUD/Root/ActionMenu/Tools" unique_id=127262855]
 layout_mode = 2
 
 [node name="LayerButton" type="Button" parent="HUD/Root/ActionMenu/Tools" unique_id=742912708]
@@ -1055,7 +1046,7 @@ toggle_mode = true
 icon = ExtResource("34_layers")
 icon_alignment = 1
 
-[node name="Menu" type="Button" parent="HUD/Root/ActionMenu/Tools"]
+[node name="Menu" type="Button" parent="HUD/Root/ActionMenu/Tools" unique_id=1717655030]
 custom_minimum_size = Vector2(38, 38)
 layout_mode = 2
 tooltip_text = "Menu & pengaturan (Esc)"
@@ -1064,7 +1055,7 @@ theme_override_styles/normal = SubResource("StyleBox_layer")
 icon = ExtResource("73_ic_gear")
 icon_alignment = 1
 
-[node name="WaterPanel" type="PanelContainer" parent="HUD/Root"]
+[node name="WaterPanel" type="PanelContainer" parent="HUD/Root" unique_id=1663232128]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 1
 anchors_preset = 3
@@ -1080,12 +1071,12 @@ grow_horizontal = 0
 grow_vertical = 0
 tooltip_text = "Aliran Air: persentase bangunan yang sedang mendapat air"
 
-[node name="HBox" type="HBoxContainer" parent="HUD/Root/WaterPanel"]
+[node name="HBox" type="HBoxContainer" parent="HUD/Root/WaterPanel" unique_id=1420738335]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="Drop" type="TextureRect" parent="HUD/Root/WaterPanel/HBox"]
+[node name="Drop" type="TextureRect" parent="HUD/Root/WaterPanel/HBox" unique_id=111542325]
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
 size_flags_vertical = 4
@@ -1094,23 +1085,23 @@ texture = ExtResource("72_ic_drop")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="HUD/Root/WaterPanel/HBox"]
+[node name="VBox" type="VBoxContainer" parent="HUD/Root/WaterPanel/HBox" unique_id=711963755]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 alignment = 1
 
-[node name="Title" type="Label" parent="HUD/Root/WaterPanel/HBox/VBox"]
+[node name="Title" type="Label" parent="HUD/Root/WaterPanel/HBox/VBox" unique_id=706049594]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "Aliran Air"
 
-[node name="Row" type="HBoxContainer" parent="HUD/Root/WaterPanel/HBox/VBox"]
+[node name="Row" type="HBoxContainer" parent="HUD/Root/WaterPanel/HBox/VBox" unique_id=946349973]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 5
 
-[node name="Bar" type="ProgressBar" parent="HUD/Root/WaterPanel/HBox/VBox/Row"]
+[node name="Bar" type="ProgressBar" parent="HUD/Root/WaterPanel/HBox/VBox/Row" unique_id=2046681875]
 custom_minimum_size = Vector2(80, 6)
 layout_mode = 2
 size_flags_vertical = 4
@@ -1119,7 +1110,7 @@ max_value = 1.0
 step = 0.001
 show_percentage = false
 
-[node name="Pct" type="Label" parent="HUD/Root/WaterPanel/HBox/VBox/Row"]
+[node name="Pct" type="Label" parent="HUD/Root/WaterPanel/HBox/VBox/Row" unique_id=1617669591]
 custom_minimum_size = Vector2(24, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
