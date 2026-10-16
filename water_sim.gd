@@ -19,7 +19,7 @@ extends Node
 @export var source_rate: float = 1.5        ## kecepatan sumber mengisi ulang ke targetnya (per detik)
 @export var wet_threshold: float = 0.06     ## kedalaman minimal agar petak terlihat/terhitung berair
 @export var flood_threshold: float = 0.1    ## kedalaman air di daratan yang dihitung banjir
-@export var canal_evaporation: float = 0.02 ## penguapan kanal galian per detik
+@export var canal_evaporation: float = 0.01 ## penguapan kanal galian per detik
 @export var land_absorb: float = 0.08       ## air di daratan meresap per detik (membatasi luas banjir)
 @export var spillway_drain: float = 1.0     ## laju spillway membuang air per detik
 @export var near_water_radius: int = 2      ## daratan sejauh ini dari air berair tampil hijau (baris 2-3 tileset)

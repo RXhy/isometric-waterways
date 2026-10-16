@@ -132,16 +132,38 @@ func _place(cell: Vector2i) -> void:
 func build_bridge(cell: Vector2i) -> bool:
 	if bridge_stock <= 0 or bridges.has(cell) or world.grid_data.get(cell, -1) != world.TileState.ROAD:
 		return false
+
+	var tl = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE)
+	var tr = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE)
+	var bl = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE)
+	var br = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE)
+
+	# Bangunan juga dihitung sebagai sambungan yang valid
+	var valid_conn = func(c: Vector2i):
+		return is_road(c) or world.buildings.has_building(c)
+
+	var mask = 0
+	if valid_conn.call(tl): mask |= 1
+	if valid_conn.call(tr): mask |= 2
+	if valid_conn.call(bl): mask |= 4
+	if valid_conn.call(br): mask |= 8
+
+	# Mask 9 = Kiri-Atas ke Kanan-Bawah. Mask 6 = Kanan-Atas ke Kiri-Bawah
+	if mask != 9 and mask != 6:
+		return false
+
 	bridge_stock -= 1
-	var tl: Vector2i = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE)
-	var br: Vector2i = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE)
-	bridges[cell] = 0 if (is_road(tl) or is_road(br)) else 1
+	bridges[cell] = 0 if mask == 9 else 1
 	world.dug[cell] = true
 	world.set_base(cell, world.TileState.CANAL)
+
 	var node: Node2D = bridge_scene.instantiate()
 	node.position = to_local(world.cell_to_global(cell))
-	# gambar asli searah kiri-atas -> kanan-bawah; dibalik untuk arah satunya
-	node.get_node("Sprite").flip_h = bridges[cell] == 1
+
+	var spr = node.get_node("Sprite")
+	spr.hframes = 2
+	spr.frame = bridges[cell]
+
 	add_child(node)
 	bridge_nodes[cell] = node
 	return true

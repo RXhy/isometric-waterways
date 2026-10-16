@@ -1,9 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bpn58thlq0p5o"]
 
-[ext_resource type="Texture2D" path="res://assets/placeholder/spillway.png" id="1_tex"]
+[ext_resource type="Texture2D" uid="uid://cgsrgvaw2j7eb" path="res://assets/placeholder/spillway_baru.png" id="1_jsncy"]
 
-[node name="Spillway" type="Node2D"]
+[node name="Spillway" type="Node2D" unique_id=1465905987]
 
-[node name="Sprite" type="Sprite2D" parent="."]
-texture = ExtResource("1_tex")
+[node name="Sprite" type="Sprite2D" parent="." unique_id=251305226]
+position = Vector2(0, -3)
+texture = ExtResource("1_jsncy")
 offset = Vector2(0, -2.5)
+hframes = 2

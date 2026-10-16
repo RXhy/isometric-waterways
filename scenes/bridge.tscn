@@ -1,9 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://du047v17jd64n"]
 
-[ext_resource type="Texture2D" path="res://assets/placeholder/jembatan.png" id="1_tex"]
+[ext_resource type="Texture2D" uid="uid://bumfhro0m3jp2" path="res://assets/placeholder/bridge.png" id="1_7ct4w"]
 
-[node name="Bridge" type="Node2D"]
+[node name="Bridge" type="Node2D" unique_id=479483459]
 
-[node name="Sprite" type="Sprite2D" parent="."]
-texture = ExtResource("1_tex")
+[node name="Sprite" type="Sprite2D" parent="." unique_id=1252776626]
+position = Vector2(0, 5)
+texture = ExtResource("1_7ct4w")
 offset = Vector2(0, -3)
+hframes = 2

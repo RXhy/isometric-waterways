@@ -1,49 +1,13 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene format=3 uid="uid://fol1je303u0a"]
 
-[ext_resource type="Script" path="res://kincir.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/kincir.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://mn7cblr4npj3" path="res://kincir.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bsg736dni50hm" path="res://assets/placeholder/kincir_baru.png" id="2_pwdht"]
 
-[sub_resource type="AtlasTexture" id="Atlas_0"]
-atlas = ExtResource("2_tex")
-region = Rect2(0, 0, 28, 30)
-
-[sub_resource type="AtlasTexture" id="Atlas_1"]
-atlas = ExtResource("2_tex")
-region = Rect2(28, 0, 28, 30)
-
-[sub_resource type="AtlasTexture" id="Atlas_2"]
-atlas = ExtResource("2_tex")
-region = Rect2(56, 0, 28, 30)
-
-[sub_resource type="AtlasTexture" id="Atlas_3"]
-atlas = ExtResource("2_tex")
-region = Rect2(84, 0, 28, 30)
-
-[sub_resource type="SpriteFrames" id="Frames_kincir"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("Atlas_0")
-}, {
-"duration": 1.0,
-"texture": SubResource("Atlas_1")
-}, {
-"duration": 1.0,
-"texture": SubResource("Atlas_2")
-}, {
-"duration": 1.0,
-"texture": SubResource("Atlas_3")
-}],
-"loop": true,
-"name": &"putar",
-"speed": 8.0
-}]
-
-[node name="Kincir" type="Node2D"]
+[node name="Kincir" type="Node2D" unique_id=335271687]
 script = ExtResource("1_script")
 
-[node name="Wheel" type="AnimatedSprite2D" parent="."]
-sprite_frames = SubResource("Frames_kincir")
-animation = &"putar"
-autoplay = "putar"
-offset = Vector2(0, -12)
+[node name="Wheel" type="Sprite2D" parent="." unique_id=1085854005]
+position = Vector2(0, -10)
+texture = ExtResource("2_pwdht")
+hframes = 4
+vframes = 8

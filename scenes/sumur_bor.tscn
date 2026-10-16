@@ -1,9 +1,48 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://dq2scu0hoq5hy"]
 
-[ext_resource type="Texture2D" path="res://assets/placeholder/sumur_bor.png" id="1_tex"]
+[ext_resource type="Texture2D" uid="uid://yi4dolanej1r" path="res://assets/placeholder/waterdrill.png" id="1_3oy7t"]
 
-[node name="SumurBor" type="Node2D"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_s01rr"]
+atlas = ExtResource("1_3oy7t")
+region = Rect2(0, 0, 32, 32)
 
-[node name="Sprite" type="Sprite2D" parent="."]
-texture = ExtResource("1_tex")
-offset = Vector2(0, -11)
+[sub_resource type="AtlasTexture" id="AtlasTexture_1tuiq"]
+atlas = ExtResource("1_3oy7t")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ripks"]
+atlas = ExtResource("1_3oy7t")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v653e"]
+atlas = ExtResource("1_3oy7t")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_7hwqk"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s01rr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1tuiq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ripks")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v653e")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="SumurBor" type="Node2D" unique_id=1068300185]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2010103040]
+texture_filter = 1
+position = Vector2(0, -9)
+sprite_frames = SubResource("SpriteFrames_7hwqk")
+autoplay = "default"
+frame_progress = 0.4063417

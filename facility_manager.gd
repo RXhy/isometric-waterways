@@ -43,6 +43,19 @@ func on_forecast(weather: int) -> void:
 	else:
 		stock[Kind.KINCIR] += stock_per_forecast[Kind.KINCIR]
 
+func _get_water_mask(cell: Vector2i) -> int:
+	var tl = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE)
+	var tr = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE)
+	var bl = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE)
+	var br = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE)
+	
+	var mask = 0
+	if world.water.is_channel(tl): mask |= 1
+	if world.water.is_channel(tr): mask |= 2
+	if world.water.is_channel(bl): mask |= 4
+	if world.water.is_channel(br): mask |= 8
+	return mask
+
 ## Alasan fasilitas tidak bisa dipasang di petak ini ("" kalau bisa). Dipakai tooltip HUD.
 func why_not(kind: int, cell: Vector2i) -> String:
 	if stock[kind] <= 0:
@@ -65,10 +78,11 @@ func why_not(kind: int, cell: Vector2i) -> String:
 			if not (land or world.dug.has(cell)):
 				return "Hanya di tanah atau melintang kanal"
 		Kind.SPILLWAY:
-			if not land:
-				return "Hanya di tanah"
-			if world.water.bodies_touching(cell).is_empty():
-				return "Harus di tepi sumber air"
+			if not world.water.is_channel(cell):
+				return "Hanya di kanal atau sungai"
+			var mask = _get_water_mask(cell)
+			if mask != 9 and mask != 6:
+				return "Hanya di jalur air lurus"
 		_:
 			if not land:
 				return "Hanya di tanah"
@@ -89,7 +103,10 @@ func can_place(kind: int, cell: Vector2i) -> bool:
 			# tanggul/bendungan boleh di tanah atau melintang di kanal galian
 			return land or world.dug.has(cell)
 		Kind.SPILLWAY:
-			return land and not world.water.bodies_touching(cell).is_empty()
+			if not world.water.is_channel(cell):
+				return false
+			var mask = _get_water_mask(cell)
+			return mask == 9 or mask == 6
 	return land
 
 func place(kind: int, cell: Vector2i) -> bool:
@@ -98,6 +115,23 @@ func place(kind: int, cell: Vector2i) -> bool:
 	stock[kind] -= 1
 	var scene: PackedScene = [bor_scene, bendungan_scene, spillway_scene, kincir_scene][kind]
 	var node: Node2D = scene.instantiate()
+	
+	# --- PENYESUAIAN WARNA KINCIR BERDASARKAN ELEVASI TILE ---
+	if kind == Kind.KINCIR:
+		var elev = world.get_elev(cell)
+		if elev == 0:
+			node.modulate = Color(0.8, 0.8, 0.8) # Paling gelap untuk elevasi bawah
+		elif elev == 1:
+			node.modulate = Color(0.9, 0.9, 0.9)
+		else:
+			node.modulate = Color(1.0, 1.0, 1.0) # Warna asli untuk dataran tinggi
+	elif kind == Kind.SPILLWAY:
+		var mask = _get_water_mask(cell)
+		var spr = node.get_node("Sprite")
+		spr.hframes = 2
+		spr.frame = 0 if mask == 9 else 1
+	# ---------------------------------------------------------
+	
 	node.position = to_local(world.cell_to_global(cell))
 	add_child(node)
 	facilities[cell] = {"kind": kind, "node": node, "prev": world.grid_data[cell]}
@@ -110,7 +144,6 @@ func place(kind: int, cell: Vector2i) -> bool:
 			world.water.set_wall(cell, true)
 		Kind.SPILLWAY:
 			# saluran buang di tepi badan air: badan air itu tidak meluap saat hujan
-			world.set_base(cell, world.TileState.CANAL)
 			world.water.set_drain(cell, true)
 			world.weather.apply_targets()
 		Kind.KINCIR:
@@ -132,7 +165,6 @@ func remove(cell: Vector2i) -> void:
 		Kind.SPILLWAY:
 			world.water.set_drain(cell, false)
 			world.set_base(cell, f["prev"])
-			world.water.clear_water(cell)
 			world.weather.apply_targets()
 		Kind.KINCIR:
 			world.water.watch_flux(cell, false)
@@ -159,5 +191,6 @@ func _process(_delta: float) -> void:
 		return
 	for c in facilities:
 		if facilities[c]["kind"] == Kind.KINCIR:
-			# berputar saat dialiri air ATAU saat sedang memompa
-			facilities[c]["node"].set_power(maxf(kincir_power(c), world.water.pump_power(c)))
+			# berputar saat dialiri air ATAU saat sedang memompa.
+			# Parameter kedua mengirimkan arah aliran dari water_sim.
+			facilities[c]["node"].set_power(maxf(kincir_power(c), world.water.pump_power(c)), world.water.flow_dir(c))

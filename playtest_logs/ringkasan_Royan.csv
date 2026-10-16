@@ -1,2 +1,2 @@
-sesi,penguji,seed,hasil,sebab,hari,detik_game,poin,target,hancur,kincir_terpasang,file_log
-2026-10-06_10-58-43,Royan,641877,MENANG,target tercapai,8,210.0,780,600,0,0,sesi_2026-10-06_10-58-43_Royan.csv
+sesi,penguji,versi,param_id,seed,hasil,sebab,hari,detik_game,poin,target,hancur,kincir_terpasang,detik_aksi_pertama,hari_terancam_pertama,detik_terancam_pertama,detik_hancur_pertama,detik_target_tercapai,total_gali,total_ratakan,total_timbun,total_pasang_fasilitas,total_drag,jeda_total_detik,cepat2x_total_detik,menu_total_detik,gagal_spawn_total,survei_tegang,survei_adil,saran,file_log
+2026-10-16_09-23-45,Royan,core-gameplay@3cabc73,082443b1,525182,KALAH,waktu,45,1350.0,0,5000,0,0,3.8,2,30.7,,,8,5,0,0,2,0.0,0.0,0.0,0,,,,sesi_2026-10-16_09-23-45_Royan.csv

@@ -1,14 +1,12 @@
-[gd_scene format=4]
+[gd_scene format=4 uid="uid://v1fkb3yaffxs"]
 
-[ext_resource type="Texture2D" path="res://assets/Tiles/terrain_tiles_v3.png" id="1_4v1jg"]
-[ext_resource type="Texture2D" path="res://assets/Tiles/tileset_iso_waterways.png" id="2_do5im"]
-[ext_resource type="Texture2D" path="res://assets/water/water_flow.png" id="3_dxeoi"]
-[ext_resource type="Texture2D" path="res://assets/Tiles/tilesset_water_road.png" id="4_xb00i"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/rumah.png" id="5_mip5h"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/ladang.png" id="6_x0bsj"]
-[ext_resource type="PackedScene" path="res://scenes/kincir.tscn" id="7_5kjn3"]
-[ext_resource type="Script" path="res://kincir.gd" id="8_016om"]
-[ext_resource type="PackedScene" path="res://scenes/sumur_bor.tscn" id="9_v7deu"]
+[ext_resource type="Texture2D" uid="uid://gp0bsvcsi2ke" path="res://assets/Tiles/terrain_tiles_v3.png" id="1_4v1jg"]
+[ext_resource type="Texture2D" uid="uid://lki6jk3inie1" path="res://assets/Tiles/tileset_iso_waterways.png" id="2_do5im"]
+[ext_resource type="Texture2D" uid="uid://boummja1fktey" path="res://assets/water/water_flow.png" id="3_dxeoi"]
+[ext_resource type="Texture2D" uid="uid://bwxgwtwwq25gj" path="res://assets/Tiles/tilesset_water_road.png" id="4_xb00i"]
+[ext_resource type="Texture2D" uid="uid://cbvympxuiaoyd" path="res://assets/placeholder/rumah.png" id="5_mip5h"]
+[ext_resource type="Texture2D" uid="uid://bv3v1xvh1752d" path="res://assets/placeholder/ladang.png" id="6_x0bsj"]
+[ext_resource type="PackedScene" uid="uid://dq2scu0hoq5hy" path="res://scenes/sumur_bor.tscn" id="9_v7deu"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6l3yo"]
 texture = ExtResource("1_4v1jg")
@@ -2480,18 +2478,10 @@ position = Vector2(1040, 836)
 texture = ExtResource("6_x0bsj")
 offset = Vector2(0, -1.5)
 
-[node name="Kincir_13" type="Node2D" parent="Props" unique_id=788670801 instance=ExtResource("7_5kjn3")]
-position = Vector2(960, 792)
-script = ExtResource("8_016om")
-
-[node name="Kincir_14" type="Node2D" parent="Props" unique_id=873634133 instance=ExtResource("7_5kjn3")]
-position = Vector2(848, 900)
-script = ExtResource("8_016om")
-
-[node name="Bor_15" type="Node2D" parent="Props" unique_id=263453655 instance=ExtResource("9_v7deu")]
+[node name="Bor_15" parent="Props" unique_id=263453655 instance=ExtResource("9_v7deu")]
 position = Vector2(1152, 744)
 
-[node name="Bor_16" type="Node2D" parent="Props" unique_id=1330526214 instance=ExtResource("9_v7deu")]
+[node name="Bor_16" parent="Props" unique_id=1330526214 instance=ExtResource("9_v7deu")]
 position = Vector2(816, 736)
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=2105473674]
