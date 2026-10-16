@@ -21,7 +21,7 @@ extends Node
 @export var flood_threshold: float = 0.1    ## kedalaman air di daratan yang dihitung banjir
 @export var canal_evaporation: float = 0.01 ## penguapan kanal galian per detik
 @export var land_absorb: float = 0.08       ## air di daratan meresap per detik (membatasi luas banjir)
-@export var spillway_drain: float = 1.0     ## laju spillway membuang air per detik
+@export var spillway_drain: float = 1.0	
 @export var near_water_radius: int = 2      ## daratan sejauh ini dari air berair tampil hijau (baris 2-3 tileset)
 @export var flux_smoothing: float = 1.5     ## seberapa cepat pembacaan debit mengikuti perubahan (per detik)
 @export_group("Tampilan arus")
@@ -244,13 +244,18 @@ func step_sim(dt: float) -> void:
 			var nb: Vector2i = world.world.get_neighbor_cell(c, SIDES[si])
 			if not _open(nb):
 				continue
-			# kincir = pompa satu arah: air yang sudah dinaikkan tidak mengalir balik ke petak kincir
+			
 			if watched.has(nb) and world.get_elev(c) > world.get_elev(nb):
 				continue
 			var level := surface(nb)
 			if channel and not is_channel(nb):
-				level = max(level, bank)  # air hanya tumpah ke daratan kalau melewati tepi kanal
-			var head := s - level
+				level = max(level, bank)
+			# --- LOGIKA SPILLWAY: MENAHAN AIR SEBAGAI BENDUNG ---
+			var crest_c: float = ground(c) + 0.3 if drains.has(c) else -999.0
+			var crest_nb: float = ground(nb) + 0.3 if drains.has(nb) else -999.0
+			var effective_level: float = maxf(level, maxf(crest_c, crest_nb))
+			var head: float = s - effective_level
+			# ----------------------------------------------------	
 			if head > 0.0005:
 				var f := head * flow_k
 				outs.append([nb, f, si])
@@ -284,15 +289,14 @@ func step_sim(dt: float) -> void:
 	# 2b) Kincir air: angkat air dari petaknya ke kanal/sungai di sebelahnya yang lebih tinggi
 	_pump(dt)
 
-	# 3) Penguapan, resapan, spillway
+	# 3) Penguapan, resapan
 	for c in depth.keys():
 		var d: float = depth[c]
-		if drains.has(c):
-			d -= spillway_drain * dt
-		elif not is_channel(c):
+		if not is_channel(c):
 			d -= land_absorb * dt
 		elif not body_of.has(c) and not wells.has(c):
-			d -= canal_evaporation * dt
+			d -= canal_evaporation * dt # Spillway dan kanal biasa mengalami penguapan alami
+			
 		if d <= 0.0001:
 			depth.erase(c)
 		else:

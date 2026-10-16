@@ -366,8 +366,28 @@ func action_preview(cell: Vector2i) -> Array:
 			return [0, "Tidak ada yang bisa ditimbun"]
 		Tool.JEMBATAN:
 			if roads.bridge_stock <= 0: return [-1, "Stok jembatan habis"]
-			if t == TileState.ROAD and not roads.bridges.has(cell): return [1, "Klik: pasang jembatan"]
-			return [-1, "Hanya di jalan"]
+			if t != TileState.ROAD or roads.bridges.has(cell): return [-1, "Hanya di jalan"]
+			
+			# Validasi visual kursor untuk jembatan (cek mask jalan lurus)
+			var tl = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE)
+			var tr = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE)
+			var bl = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE)
+			var br = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE)
+			
+			var valid_conn = func(c: Vector2i):
+				return roads.is_road(c) or buildings.has_building(c)
+			
+			var mask = 0
+			if valid_conn.call(tl): mask |= 1
+			if valid_conn.call(tr): mask |= 2
+			if valid_conn.call(bl): mask |= 4
+			if valid_conn.call(br): mask |= 8
+			
+			if mask != 9 and mask != 6:
+				return [-1, "Hanya di jalan lurus"]
+				
+			return [1, "Klik: pasang jembatan"]
+			
 		Tool.BOR, Tool.SPILLWAY, Tool.KINCIR:
 			var why: String = facilities.why_not(tool_kind(current_tool), cell)
 			if why == "":
