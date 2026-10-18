@@ -4,8 +4,8 @@
 [ext_resource type="Texture2D" uid="uid://lki6jk3inie1" path="res://assets/Tiles/tileset_iso_waterways.png" id="2_do5im"]
 [ext_resource type="Texture2D" uid="uid://boummja1fktey" path="res://assets/water/water_flow.png" id="3_dxeoi"]
 [ext_resource type="Texture2D" uid="uid://bwxgwtwwq25gj" path="res://assets/Tiles/tilesset_water_road.png" id="4_xb00i"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/building.png" id="5_mip5h"]
-[ext_resource type="Texture2D" path="res://assets/placeholder/farm.png" id="6_x0bsj"]
+[ext_resource type="Texture2D" uid="uid://csv2jthqs8edf" path="res://assets/placeholder/building.png" id="5_mip5h"]
+[ext_resource type="Texture2D" uid="uid://d2ripb2rbmitf" path="res://assets/placeholder/farm.png" id="6_x0bsj"]
 [ext_resource type="PackedScene" uid="uid://dq2scu0hoq5hy" path="res://scenes/sumur_bor.tscn" id="9_v7deu"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6l3yo"]
@@ -2423,7 +2423,7 @@ position = Vector2(1088, 892)
 texture = ExtResource("5_mip5h")
 offset = Vector2(0, -15)
 hframes = 8
-frame = 1
+frame = 4
 
 [node name="Rumah_2" type="Sprite2D" parent="Props" unique_id=158726760]
 position = Vector2(1088, 860)
@@ -2437,7 +2437,7 @@ position = Vector2(1120, 908)
 texture = ExtResource("5_mip5h")
 offset = Vector2(0, -15)
 hframes = 8
-frame = 1
+frame = 6
 
 [node name="Rumah_4" type="Sprite2D" parent="Props" unique_id=1174976648]
 position = Vector2(1120, 876)
@@ -2451,56 +2451,54 @@ position = Vector2(1152, 892)
 texture = ExtResource("5_mip5h")
 offset = Vector2(0, -15)
 hframes = 8
-frame = 1
 
 [node name="Rumah_6" type="Sprite2D" parent="Props" unique_id=932693588]
 position = Vector2(1152, 860)
 texture = ExtResource("5_mip5h")
 offset = Vector2(0, -15)
 hframes = 8
-frame = 1
+frame = 7
 
 [node name="Rumah_7" type="Sprite2D" parent="Props" unique_id=1063526207]
 position = Vector2(1184, 876)
 texture = ExtResource("5_mip5h")
 offset = Vector2(0, -15)
 hframes = 8
-frame = 1
+frame = 5
 
 [node name="Rumah_8" type="Sprite2D" parent="Props" unique_id=1048733501]
 position = Vector2(1216, 876)
 texture = ExtResource("5_mip5h")
 offset = Vector2(0, -15)
 hframes = 8
-frame = 1
 
 [node name="Rumah_9" type="Sprite2D" parent="Props" unique_id=1953860731]
 position = Vector2(1216, 844)
 texture = ExtResource("5_mip5h")
 offset = Vector2(0, -15)
 hframes = 8
-frame = 1
+frame = 2
 
 [node name="Ladang_10" type="Sprite2D" parent="Props" unique_id=440428494]
-position = Vector2(992, 876)
+position = Vector2(992, 870)
 texture = ExtResource("6_x0bsj")
 offset = Vector2(0, -3)
 hframes = 8
-frame = 4
+frame = 3
 
 [node name="Ladang_11" type="Sprite2D" parent="Props" unique_id=895340872]
-position = Vector2(1024, 860)
+position = Vector2(1024, 854)
 texture = ExtResource("6_x0bsj")
 offset = Vector2(0, -3)
 hframes = 8
-frame = 4
+frame = 2
 
 [node name="Ladang_12" type="Sprite2D" parent="Props" unique_id=507121547]
-position = Vector2(1040, 836)
+position = Vector2(1040, 830)
 texture = ExtResource("6_x0bsj")
 offset = Vector2(0, -3)
 hframes = 8
-frame = 4
+frame = 2
 
 [node name="Bor_15" parent="Props" unique_id=263453655 instance=ExtResource("9_v7deu")]
 position = Vector2(1152, 744)
