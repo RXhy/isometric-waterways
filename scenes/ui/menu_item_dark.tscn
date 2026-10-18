@@ -1,8 +1,8 @@
 [gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://ui/menu_item_dark.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/ui/Polygon 1.png" id="2_arrow"]
-[ext_resource type="Texture2D" path="res://assets/ui/Rectangle 3.png" id="3_bar"]
+[ext_resource type="Texture2D" path="res://assets/ui/Main Menu/Polygon 1.png" id="2_arrow"]
+[ext_resource type="Texture2D" path="res://assets/ui/Main Menu/Rectangle 3.png" id="3_bar"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBox_empty"]
 content_margin_left = 54.0

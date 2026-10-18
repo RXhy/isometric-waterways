@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dmlpcbyd8khyx"
-path="res://.godot/imported/LOAD GAME.png-a272f31ea0d934ca601d43aa6566d48c.ctex"
+uid="uid://dsxrlvhr2yjj6"
+path="res://.godot/imported/play again_non_hover.png-a73cbec73f0ab999071aac4750446a55.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/LOAD GAME.png"
-dest_files=["res://.godot/imported/LOAD GAME.png-a272f31ea0d934ca601d43aa6566d48c.ctex"]
+source_file="res://assets/ui/Win & Lose/play again_non_hover.png"
+dest_files=["res://.godot/imported/play again_non_hover.png-a73cbec73f0ab999071aac4750446a55.ctex"]
 
 [params]
 

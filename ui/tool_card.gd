@@ -8,7 +8,7 @@ extends Button
 	set(value):
 		icon_texture = value
 		_apply()
-@export var title: String = "Alat":
+@export var title: String = "Tool":
 	set(value):
 		title = value
 		_apply()

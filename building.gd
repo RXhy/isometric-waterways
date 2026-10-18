@@ -6,8 +6,8 @@ enum Type { RUMAH, LADANG }
 enum State { HIDUP, TERANCAM, HANCUR }
 
 const TYPE_DATA := {
-	Type.RUMAH: {"name": "Rumah", "max_water": 40.0},
-	Type.LADANG: {"name": "Ladang", "max_water": 28.0},
+	Type.RUMAH: {"name": "House", "max_water": 40.0},
+	Type.LADANG: {"name": "Farm", "max_water": 28.0},
 }
 const THREAT_RATIO := 0.4   # di bawah 40% cadangan air -> Terancam
 const REFILL_RATE := 4.0    # isi ulang 4x lebih cepat daripada berkurangnya

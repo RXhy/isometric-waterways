@@ -66,7 +66,7 @@ func start_day(d: int) -> void:
 		if try_spawn():
 			spawned += 1
 	if spawned < n:
-		push_warning("Hari %d: hanya %d dari %d bangunan dapat tempat." % [d, spawned, n])
+		push_warning("Day %d: only %d of %d buildings found a spot." % [d, spawned, n])
 		world.balance_log.count("gagal_spawn", n - spawned)
 
 func _process(delta: float) -> void:

@@ -22,7 +22,7 @@ extends Node
 @export_range(0.0, 1.0, 0.05) var day_bonus_min_supplied: float = 0.5
 @export var bridge_bonus_per_day: int = 1     ## bonus akhir hari per jembatan yang BERFUNGSI (ada air mengalir di bawahnya)
 
-const SOURCES := ["Bangunan teraliri", "Kincir air", "Bonus akhir hari", "Jembatan"]
+const SOURCES := ["Watered buildings", "Water wheels", "End-of-day bonus", "Bridge"]
 
 var world
 var by_source: Dictionary = {}  # sumber -> poin
@@ -50,15 +50,15 @@ func _process(delta: float) -> void:
 			n += 1
 			supplied_time[c] = supplied_time.get(c, 0.0) + delta
 	if n > 0:
-		add("Bangunan teraliri", n * supplied_per_second * delta)
+		add("Watered buildings", n * supplied_per_second * delta)
 	var k: float = world.facilities.kincir_points_rate()
 	if k > 0.0:
-		add("Kincir air", k * delta)
+		add("Water wheels", k * delta)
 
 ## Dipanggil di akhir setiap hari.
 func end_of_day() -> void:
-	add("Bonus akhir hari", bonus_buildings() * day_bonus_per_building)
-	add("Jembatan", working_bridges() * bridge_bonus_per_day)
+	add("End-of-day bonus", bonus_buildings() * day_bonus_per_building)
+	add("Bridge", working_bridges() * bridge_bonus_per_day)
 
 ## Jembatan yang benar-benar dilewati air. Jembatan di jalan tanpa kanal tidak dihitung,
 ## supaya pemain tidak menimbun poin dengan memasang semua stok jembatan.

@@ -3,7 +3,7 @@ extends Node2D
 ## Tampilan tiap fasilitas ada di scenes/*.tscn (diatur lewat Inspector).
 
 enum Kind { BOR, BENDUNGAN, SPILLWAY, KINCIR }
-const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway", "Kincir Air"]
+const KIND_NAMES := ["Drill Well", "Dam", "Spillway", "Water Wheel"]
 
 @export var bor_scene: PackedScene
 @export var bendungan_scene: PackedScene
@@ -11,10 +11,11 @@ const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway", "Kincir Air"]
 @export var kincir_scene: PackedScene
 @export var start_stock: Array[int] = [1, 0, 1, 1]  ## stok awal [Bor, Bendungan, Spillway, Kincir]
 @export var stock_every_days: Array[int] = [3, 0, 5, 3]  ## stok +1 tiap N hari [Bor, Bendungan, Spillway, Kincir]; 0 = tidak bertambah
-@export var kincir_face_invert: bool = false  ## balik arah kincir kalau sprite terlihat terbalik
+@export var facilities_sort_with_buildings: bool = true  ## urutan gambar fasilitas digabung dengan bangunan (yang di depan menutupi yang di belakang)
+@export var kincir_face_invert: bool = true  ## balik arah kincir kalau sprite terlihat terbalik
 ## (lama, tidak dipakai lagi)
 @export var stock_per_forecast: Array[int] = [1, 0, 1, 1]  ## tambahan stok [Bor, Bendungan (dihapus, biarkan 0), Spillway, Kincir]; Kincir bertambah saat besok Cerah
-@export_group("Kincir Air")
+@export_group("Water Wheel")
 ## Fungsi utama kincir: POMPA. Air dari petak kincir diangkat ke kanal/sungai di sebelahnya
 ## (4 sisi) yang lebih tinggi, supaya aliran bisa naik ke dataran yang lebih tinggi.
 @export var kincir_lift_rate: float = 0.8   ## air yang diangkat per detik (kedalaman/detik)
@@ -74,33 +75,33 @@ func _get_water_mask(cell: Vector2i) -> int:
 ## Alasan fasilitas tidak bisa dipasang di petak ini ("" kalau bisa). Dipakai tooltip HUD.
 func why_not(kind: int, cell: Vector2i) -> String:
 	if stock[kind] <= 0:
-		return "Stok %s habis" % KIND_NAMES[kind]
+		return "Out of %s" % KIND_NAMES[kind]
 	if facilities.has(cell) or world.buildings.has_building(cell):
-		return "Petak sudah terisi"
+		return "Tile is occupied"
 	if world.dig_pending.has(cell):
-		return "Sedang digali"
+		return "Digging..."
 	if world.roads.is_road(cell):
-		return "Tidak bisa di jalan"
+		return "Can't be placed on roads"
 	var t: int = world.grid_data.get(cell, -1)
 	var land: bool = t == world.TileState.DIRT or t == world.TileState.GRASS
 	match kind:
 		Kind.KINCIR:
 			if not world.water.is_channel(cell):
-				return "Hanya di kanal atau sungai"
+				return "Canals or rivers only"
 			if world.water.wells.has(cell):
-				return "Petak sudah terisi"
+				return "Tile is occupied"
 		Kind.BENDUNGAN:
 			if not (land or world.dug.has(cell)):
-				return "Hanya di tanah atau melintang kanal"
+				return "On land or across a canal only"
 		Kind.SPILLWAY:
 			if not world.water.is_channel(cell):
-				return "Hanya di kanal atau sungai"
+				return "Canals or rivers only"
 			var mask = _get_water_mask(cell)
 			if mask != 9 and mask != 6:
-				return "Hanya di jalur air lurus"
+				return "Straight waterways only"
 		_:
 			if not land:
-				return "Hanya di tanah"
+				return "Land only"
 	return ""
 
 func can_place(kind: int, cell: Vector2i) -> bool:
@@ -147,8 +148,10 @@ func place(kind: int, cell: Vector2i) -> bool:
 		spr.frame = 0 if mask == 9 else 1
 	# ---------------------------------------------------------
 	
-	node.position = to_local(world.cell_to_global(cell))
-	add_child(node)
+	# fasilitas ditaruh di node Buildings supaya urutan gambarnya (y-sort) menyatu dengan bangunan
+	var host: Node2D = world.buildings if facilities_sort_with_buildings else self
+	node.position = host.to_local(world.cell_to_global(cell))
+	host.add_child(node)
 	facilities[cell] = {"kind": kind, "node": node, "prev": world.grid_data[cell]}
 	match kind:
 		Kind.BOR:

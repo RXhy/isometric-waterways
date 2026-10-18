@@ -3,7 +3,7 @@ extends Control
 ## Node penting dicari lewat nama unik (%NewGame, %Menu, ...).
 ## Latar: scenes/menu_map.tscn (peta diorama khusus menu).
 
-const GAME_SCENE := "res://world.tscn"
+const GAME_SCENE := "res://scenes/loading.tscn"  
 const TUTORIAL_SCENE := preload("res://scenes/ui/tutorial.tscn")
 
 ## Geser pandangan kamera (px, + = pulau bergeser ke kiri) supaya pulau tidak tertutup UI varian ini.

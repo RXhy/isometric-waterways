@@ -73,6 +73,11 @@ func setup(w) -> void:
 	layer_button.pressed.connect(_cycle_layer)
 	points_popup.hide()
 	end_overlay.hide()
+	# panel Jembatan di kanan atas tidak dipakai lagi
+	$Root/TopRight/Stats/HBox/Bridge.hide()
+	end_panel = preload("res://scenes/ui/end_panel.tscn").instantiate()
+	end_overlay.add_child(end_panel)
+	$Root/TopRight/Stats/HBox/SepBridge.hide()
 	set_speed(1.0)
 	_update_legend()
 	_make_toast()
@@ -107,7 +112,7 @@ func set_ui_hidden(on: bool) -> void:
 	if on:
 		for n in _hideable():
 			n.hide()
-		toast("UI disembunyikan - tekan H untuk menampilkan")
+		toast("UI hidden - press H to show")
 	else:
 		for n in [$Root/TopLeft, $Root/TopRight, $Root/ActionMenu, $Root/WaterPanel]:
 			n.show()
@@ -171,7 +176,7 @@ func _update_legend() -> void:
 		return
 	var m: int = world.overlay_layer.mode if world else 0
 	layer_button.set_pressed_no_signal(m != 0)
-	layer_button.tooltip_text = "Lapisan info: %s (klik untuk ganti)" % (world.overlay_layer.NAMES[m] if world else "")
+	layer_button.tooltip_text = "Info layer: %s (click to switch)" % (world.overlay_layer.NAMES[m] if world else "")
 	legend.visible = m != 0
 	legend_height.visible = m == 1
 	legend_water.visible = m == 2
@@ -179,12 +184,15 @@ func _update_legend() -> void:
 
 # --- Akhir permainan ---
 
-func show_end(text: String) -> void:
+var end_panel  # scenes/ui/end_panel.tscn (panel menang/kalah)
+
+func show_end(won: bool, stars: int, destroyed: int) -> void:
 	if ui_hidden:
 		ui_hidden = false
 		$Root/TopLeft.show()
 		$Root/TopRight.show()
-	end_message.text = text
+	end_message.hide()
+	end_panel.open(won, stars, destroyed)
 	end_overlay.show()
 	tooltip.hide()
 	# layar akhir bersih: sembunyikan toolbar & tab supaya survei tidak tertumpuk
@@ -198,7 +206,7 @@ func refresh() -> void:
 		return
 	var W = world
 	var day: int = mini(W.current_day(), W.target_days)
-	day_label.text = "Hari %d/%d" % [day, W.target_days]
+	day_label.text = "Day %d/%d" % [day, W.target_days]
 	day_bar.value = fmod(W.elapsed, W.day_length) / W.day_length
 	var today: int = W.current_day()
 	var wt0: int = W.weather.weather_for(today)
@@ -208,20 +216,20 @@ func refresh() -> void:
 	var has_tomorrow: bool = today + 1 <= W.target_days
 	for n in fc_tomorrow:
 		n.visible = has_tomorrow
-	var tip := "Hari ini: %s" % W.weather.describe(today)
+	var tip := "Today: %s" % W.weather.describe(today)
 	if has_tomorrow:
 		var wt1: int = W.weather.weather_for(today + 1)
 		fc_icons[1].texture = W.weather.icon_for(wt1)
 		fc_labels[1].text = W.weather.NAMES[wt1]
-		tip += "\nBesok: %s" % W.weather.describe(today + 1)
+		tip += "\nTomorrow: %s" % W.weather.describe(today + 1)
 	if today + 2 <= W.target_days:
-		tip += "\nLusa: %s" % W.weather.describe(today + 2)
+		tip += "\nNext day: %s" % W.weather.describe(today + 2)
 	weather_panel.tooltip_text = tip
 	var S = W.score
 	points_bar.value = S.progress()
 	points_label.text = "%d/%d" % [int(S.total), S.next_threshold()]
-	points_button.tooltip_text = "Bintang %d/3  |  1: %d  2: %d  3: %d poin" % [S.stars(), S.target_points, S.star2_points, S.star3_points]
-	ruin_label.text = "Hancur %d/%d" % [W.buildings.destroyed_count, W.damage_quota]
+	points_button.tooltip_text = "Stars %d/3  |  1: %d  2: %d  3: %d pts" % [S.stars(), S.target_points, S.star2_points, S.star3_points]
+	ruin_label.text = "Destroyed %d/%d" % [W.buildings.destroyed_count, W.damage_quota]
 	var alive := 0
 	var threatened := 0
 	var watered := 0
@@ -234,11 +242,11 @@ func refresh() -> void:
 			threatened += 1
 		if b.has_water:
 			watered += 1
-	bld_label.text = "Bangunan %d" % alive
-	bld_sub.text = "(terancam %d)" % threatened
+	bld_label.text = "Buildings %d" % alive
+	bld_sub.text = "(at risk %d)" % threatened
 	bld_sub.add_theme_color_override("font_color", TIP_BAD if threatened > 0 else TIP_INFO)
-	bridge_label.text = "Jembatan %d" % W.roads.bridge_stock
-	bridge_sub.text = "(aktif %d)" % S.working_bridges()
+	bridge_label.text = "Bridges %d" % W.roads.bridge_stock
+	bridge_sub.text = "(active %d)" % S.working_bridges()
 	var flow: float = float(watered) / alive if alive > 0 else 0.0
 	water_bar.value = flow
 	water_pct.text = "%d%%" % roundi(flow * 100.0)
@@ -248,10 +256,10 @@ func refresh() -> void:
 		var lines := ""
 		for src in S.SOURCES:
 			lines += "%s: %d\n" % [src, int(S.by_source.get(src, 0.0))]
-		lines += "Hari ini: +%d\n" % int(S.today)
-		lines += "Calon bonus malam ini: %d bangunan\n" % S.bonus_buildings()
-		lines += "Total: %d  |  Bintang %d/3\n" % [int(S.total), S.stars()]
-		lines += "Bintang 1/2/3: %d / %d / %d" % [S.target_points, S.star2_points, S.star3_points]
+		lines += "Today: +%d\n" % int(S.today)
+		lines += "Tonight's bonus: %d buildings\n" % S.bonus_buildings()
+		lines += "Total: %d  |  Stars %d/3\n" % [int(S.total), S.stars()]
+		lines += "Stars 1/2/3: %d / %d / %d" % [S.target_points, S.star2_points, S.star3_points]
 		popup_lines.text = lines
 	for i in 3:
 		cards[i].set_stock(W.shovel_left.get(i, 0))

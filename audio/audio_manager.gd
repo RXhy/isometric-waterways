@@ -38,8 +38,11 @@ extends Node
 @export var sfx_volume_db: float = 0.0
 @export var click_volume_db: float = -4.0
 ## Jeda minimal (detik) antar bunyi yang sama, supaya drag panjang / banyak bangunan tidak berisik.
-@export var master_volume_db: float = -5.0  ## volume keseluruhan (musik + ambience + sfx)
-@export var mute_on_pause: bool = true      ## semua suara mati saat game di-pause
+@export var master_volume_db: float = 4.0  ## volume keseluruhan (musik + ambience + sfx)
+@export var zoom_db_per_double: float = 5.0  ## suara dunia (air, sfx alat) +dB tiap zoom in 2x, -dB tiap zoom out 2x
+@export var zoom_db_min: float = -10.0
+@export var zoom_db_max: float = 5.0
+@export var mute_on_pause: bool = false      ## semua suara mati saat game di-pause
 @export var min_interval := {"tool_dirt": 0.07, "bld_warning": 1.2, "ui_click": 0.04, "ui_error": 0.25, "place_stone": 0.05}
 
 const POOL_SIZE := 8
@@ -53,6 +56,12 @@ var _amb_target := {}     # nama -> volume target (db)
 var _amb_on := false
 var _water_level := 0.0
 var _weather := 0
+var _zoom_db := 0.0  # penyesuaian volume dari zoom kamera (diatur world.gd lewat set_zoom)
+const UI_SOUNDS := ["ui_click", "ui_error", "jingle_win", "jingle_lose", "day_new"]
+
+## Dipanggil world.gd tiap frame: rel = zoom kamera / zoom awal (1 = normal, 2 = zoom in 2x).
+func set_zoom(rel: float) -> void:
+	_zoom_db = clampf(log(maxf(rel, 0.01)) / log(2.0) * zoom_db_per_double, zoom_db_min, zoom_db_max)
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -100,7 +109,7 @@ func play(sound: String, pitch: float = 1.0, pitch_jitter: float = 0.0, volume_d
 	_next = (_next + 1) % POOL_SIZE
 	p.stream = s
 	p.pitch_scale = pitch * (1.0 + randf_range(-pitch_jitter, pitch_jitter))
-	p.volume_db = sfx_volume_db + volume_db + (click_volume_db if sound == "ui_click" else 0.0)
+	p.volume_db = sfx_volume_db + volume_db + (click_volume_db if sound == "ui_click" else 0.0) + (0.0 if sound in UI_SOUNDS else _zoom_db)
 	p.play()
 
 # --- Musik ---
@@ -155,10 +164,10 @@ func set_weather(w: int) -> void:
 
 func _process(delta: float) -> void:
 	AudioServer.set_bus_volume_db(0, master_volume_db)
-	AudioServer.set_bus_mute(0, mute_on_pause and get_tree().paused)
+	AudioServer.set_bus_mute(0, mute_on_pause and (get_tree().paused or Engine.time_scale == 0.0))
 	if _amb_on:
 		# air: tetap terdengar pelan walau belum ada yang teraliri (ada sungai/danau)
-		_amb_target["water"] = lerpf(water_volume_db - 14.0, water_volume_db, _water_level)
+		_amb_target["water"] = lerpf(water_volume_db - 14.0, water_volume_db, _water_level) + _zoom_db
 		_amb_target["rain"] = rain_volume_db if _weather == 2 else -80.0
 		_amb_target["wind"] = wind_drought_volume_db if _weather == 1 else wind_calm_volume_db
 		_amb["wind"].pitch_scale = move_toward(_amb["wind"].pitch_scale, wind_drought_pitch if _weather == 1 else 1.0, delta * 0.3)

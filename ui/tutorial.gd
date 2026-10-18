@@ -7,20 +7,20 @@ extends Control
 signal closed
 
 const PAGES := [
-	{"title": "1. Misi Utama", "icons": ["res://assets/Icon/buildings.png", "res://assets/Icon/warning.png", "res://assets/Icon/destroyed.png"],
-	 "body": "Selamat datang di Waterways! Tugas utamamu di sini adalah memastikan pasokan air terus mengalir ke pemukiman dan ladang warga. Saat sebuah bangunan muncul, perhatikan indikator di atasnya dan segera penuhi kebutuhan air mereka. Jangan biarkan tanda peringatan muncul atau membiarkan bangunan tersebut hancur karena kekeringan."},
-	{"title": "2. Menggali Kanal & Mengatur Daratan", "icons": ["res://assets/Icon/gali.png", "res://assets/Icon/ratakan.png", "res://assets/Icon/timbun.png"],
-	 "body": "Bagaimana cara mengalirkan air? Gunakan alat Buldoser untuk menggali kanal dari sumber air terdekat menuju bangunan warga. Ingat, air tidak bisa mengalir dari tempat rendah ke tempat tinggi. Jika daratan menghalangi, gunakan fitur Ratakan untuk menurunkan tanah sebanyak satu tingkat. Sebaliknya, gunakan fitur Timbun jika kamu ingin menutup kembali kanal yang salah gali."},
-	{"title": "3. Melewati Jalan Raya", "icons": ["res://assets/Icon/bridges.png"],
-	 "body": "Seiring berkembangnya pemukiman, jalan raya akan muncul. Kamu tidak bisa menggali kanal yang memotong jalan raya begitu saja. Sebagai solusinya, kamu bisa membangun Jembatan pada area jalan yang lurus. Ini memungkinkan kanalmu mengalir tepat di bawah jalan raya warga."},
-	{"title": "4. Mengelola Jarak & Debit Air", "icons": ["res://assets/Icon/spillway.png", "res://assets/Icon/drill.png"],
-	 "body": "Jarak yang terlalu jauh bisa membuat aliran air di ujung kanal menjadi dangkal. Gunakan Spillway untuk menampung volume air sementara waktu sebelum dialirkan ke area selanjutnya, sehingga debit air tetap terjaga. Jika sumber air terlalu jauh untuk dijangkau, kamu bisa membangun Sumur Bor untuk menciptakan mata airmu sendiri."},
-	{"title": "5. Mengalirkan Air ke Tempat Tinggi", "icons": ["res://assets/Icon/kincir.png"],
-	 "body": "Ada kalanya bangunan berada di dataran yang lebih tinggi. Karena air tidak bisa naik dengan sendirinya, gunakan fasilitas Kincir Air untuk memompa dan memindahkan air dari tempat rendah ke tempat tinggi. Pastikan ada arus air yang mengalir agar kincir dapat berfungsi!"},
-	{"title": "6. Cuaca & Bencana", "icons": ["res://assets/Icon/berawan.png", "res://assets/Icon/kemarau.png", "res://assets/Icon/rain.png"],
-	 "body": "Selalu pantau indikator cuaca di pojok kiri layar untuk melihat kondisi hari ini dan esok.\n\nCerah: Aliran air berjalan normal.\nKemarau: Air dari sumber alami akan menguap dan mengering dengan cepat. Di saat kritis ini, Sumur Bor akan menjadi penyelamatmu.\nHujan: Hati-hati! Curah hujan dapat menambah volume air secara drastis. Jika tidak dikelola dengan baik, air akan meluap dari kanal dan menyebabkan banjir."},
-	{"title": "7. Bertahan Hidup!", "icons": ["res://assets/Icon/stars1.png", "res://assets/Icon/buildings.png"],
-	 "body": "Misi utamamu adalah bertahan selama 45 hari. Kelola aliran airmu sebaik mungkin dan jangan sampai jumlah bangunan yang hancur melewati batas maksimal, atau kamu akan kalah. Selamat mengelola air!"},
+	{"title": "1. Your Mission", "icons": ["res://assets/Icon/buildings.png", "res://assets/Icon/warning.png", "res://assets/Icon/destroyed.png"],
+	 "body": "Welcome to Waterways! Your job is to keep water flowing to the town's houses and farms. When a new building appears, watch the indicator above it and get water to it quickly. Don't let warning signs pile up, and don't let any building fall to drought."},
+	{"title": "2. Digging Canals & Shaping the Land", "icons": ["res://assets/Icon/gali.png", "res://assets/Icon/ratakan.png", "res://assets/Icon/timbun.png"],
+	 "body": "How do you move water? Use the Dig tool to carve a canal from the nearest water source to the buildings. Remember: water can't flow from low ground to high ground. If the terrain is in the way, use Level to lower the land by one step. Made a mistake? Use Fill to close a canal you dug."},
+	{"title": "3. Crossing Roads", "icons": ["res://assets/Icon/bridges.png"],
+	 "body": "As the town grows, roads will appear. You can't dig a canal straight through a road. Instead, build a Bridge on a straight section of road so your canal can flow right underneath it."},
+	{"title": "4. Distance & Water Flow", "icons": ["res://assets/Icon/spillway.png", "res://assets/Icon/drill.png"],
+	 "body": "Long canals can leave the far end too shallow. Use a Spillway to hold water back for a while before it flows on, keeping the flow steady. If a water source is too far away, build a Drill Well to create your own spring."},
+	{"title": "5. Lifting Water to High Ground", "icons": ["res://assets/Icon/kincir.png"],
+	 "body": "Some buildings sit on higher ground. Water can't climb on its own, so use a Water Wheel to pump it from low ground up to high ground. Make sure water is flowing through it, or the wheel won't turn!"},
+	{"title": "6. Weather & Disasters", "icons": ["res://assets/Icon/berawan.png", "res://assets/Icon/kemarau.png", "res://assets/Icon/rain.png"],
+	 "body": "Keep an eye on the weather panel in the top-left corner to see today's and tomorrow's conditions.\n\nCloudy: Water flows normally.\nDrought: Natural water sources evaporate and dry up fast. In times like this, Drill Wells will save you.\nHeavy Rain: Careful! Rain can raise water levels dramatically. If you don't manage it, canals will overflow and cause floods."},
+	{"title": "7. Survive!", "icons": ["res://assets/Icon/stars1.png", "res://assets/Icon/buildings.png"],
+	 "body": "Your goal is to survive for 45 days. Manage your water wisely and don't let the number of destroyed buildings pass the limit, or you'll lose. Good luck!"},
 ]
 
 @export var icon_size: float = 34.0
@@ -61,7 +61,7 @@ func _ready() -> void:
 	var head := HBoxContainer.new()
 	v.add_child(head)
 	var tt := Label.new()
-	tt.text = "TUTORIAL WATERWAYS"
+	tt.text = "WATERWAYS TUTORIAL"
 	tt.add_theme_color_override("font_color", Color(0.62, 0.82, 1))
 	tt.add_theme_font_size_override("font_size", 9)
 	tt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -73,7 +73,7 @@ func _ready() -> void:
 	var close := Button.new()
 	close.text = "X"
 	close.focus_mode = Control.FOCUS_NONE
-	close.tooltip_text = "Tutup (Esc)"
+	close.tooltip_text = "Close (Esc)"
 	close.pressed.connect(_close)
 	head.add_child(close)
 	_icons = HBoxContainer.new()
@@ -94,7 +94,7 @@ func _ready() -> void:
 	nav.add_theme_constant_override("separation", 6)
 	v.add_child(nav)
 	_prev = Button.new()
-	_prev.text = "< Sebelumnya"
+	_prev.text = "< Previous"
 	_prev.focus_mode = Control.FOCUS_NONE
 	_prev.pressed.connect(func(): show_page(page - 1))
 	nav.add_child(_prev)
@@ -146,7 +146,7 @@ func show_page(i: int) -> void:
 	for k in _dots.get_child_count():
 		(_dots.get_child(k) as Button).set_pressed_no_signal(k == page)
 	_prev.disabled = page == 0
-	_next.text = "Mulai Main!" if page == PAGES.size() - 1 else "Berikutnya >"
+	_next.text = "Let's Play!" if page == PAGES.size() - 1 else "Next >"
 
 func _close() -> void:
 	hide()

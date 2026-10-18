@@ -34,14 +34,13 @@
 [ext_resource type="Texture2D" uid="uid://c5y4qg1cvvwkg" path="res://assets/placeholder/ui/ic_layers.png" id="34_layers"]
 [ext_resource type="Texture2D" uid="uid://hcrmqt8tcmsg" path="res://assets/Icon/stars1.png" id="35_star"]
 [ext_resource type="TileSetAtlasSource" path="res://assets/water/water_flow_source.tres" id="39_flow"]
-[ext_resource type="TileSet" uid="uid://bk35s4yt7qclm" path="res://assets/water/water_edge_tileset.tres" id="40_edge"]
+[ext_resource type="TileSet" path="res://assets/water/water_edge_tileset.tres" id="40_edge"]
 [ext_resource type="Texture2D" uid="uid://bq3jvn0cimhh5" path="res://assets/Icon/bridges.png" id="42_55kwu"]
 [ext_resource type="Script" uid="uid://d17eff6j22jie" path="res://balance_log.gd" id="42_log"]
 [ext_resource type="Texture2D" uid="uid://7dnipfsr3l7i" path="res://assets/Icon/drill.png" id="43_f3o6s"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="43_pause"]
 [ext_resource type="Texture2D" uid="uid://d3clkpcv8e3fd" path="res://assets/Icon/spillway.png" id="44_w4lh7"]
 [ext_resource type="TileSet" uid="uid://cw8lsnrnlwrsh" path="res://assets/ui/drag_preview_tileset.tres" id="45_drag"]
-[ext_resource type="PackedScene" path="res://scenes/ui/end_survey.tscn" id="46_survey"]
 [ext_resource type="Texture2D" uid="uid://bwxgwtwwq25gj" path="res://assets/Tiles/tilesset_water_road.png" id="60_water_road"]
 [ext_resource type="Texture2D" uid="uid://c0xx6semeqki4" path="res://assets/Tiles/waterflow.png" id="61_waterflow"]
 [ext_resource type="Texture2D" uid="uid://c30bai0e4a1xy" path="res://assets/Icon/buildings.png" id="70_ic_bld"]
@@ -605,7 +604,7 @@ offset_left = 4.0
 offset_top = 4.0
 offset_right = 4.0
 offset_bottom = 48.0
-tooltip_text = "Hari & prakiraan cuaca"
+tooltip_text = "Day & weather forecast"
 
 [node name="HBox" type="HBoxContainer" parent="HUD/Root/TopLeft" unique_id=582363301]
 layout_mode = 2
@@ -634,7 +633,7 @@ theme_override_constants/separation = 5
 [node name="Day" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/DayRow" unique_id=218291494]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
-text = "Hari 1/45"
+text = "Day 1/45"
 
 [node name="DayBar" type="ProgressBar" parent="HUD/Root/TopLeft/HBox/VBox/DayRow" unique_id=1812707742]
 custom_minimum_size = Vector2(36, 4)
@@ -655,7 +654,7 @@ theme_override_constants/separation = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
-text = "Hari ini"
+text = "Today"
 
 [node name="T0Icon" type="TextureRect" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=283251687]
 custom_minimum_size = Vector2(10, 10)
@@ -668,7 +667,7 @@ stretch_mode = 5
 [node name="T0" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=64784941]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "Cerah"
+text = "Cloudy"
 
 [node name="Sep" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=1037077601]
 layout_mode = 2
@@ -680,7 +679,7 @@ text = "|"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
-text = "Besok"
+text = "Tomorrow"
 
 [node name="T1Icon" type="TextureRect" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=1251289564]
 custom_minimum_size = Vector2(10, 10)
@@ -693,7 +692,7 @@ stretch_mode = 5
 [node name="T1" type="Label" parent="HUD/Root/TopLeft/HBox/VBox/Forecast" unique_id=327685897]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "Cerah"
+text = "Cloudy"
 
 [node name="TopRight" type="HBoxContainer" parent="HUD/Root" unique_id=2033396050]
 layout_mode = 1
@@ -721,7 +720,7 @@ theme_override_constants/separation = 6
 custom_minimum_size = Vector2(78, 30)
 layout_mode = 2
 size_flags_vertical = 4
-tooltip_text = "Poin / target bintang berikutnya (klik untuk rincian)"
+tooltip_text = "Points / next star target (click for details)"
 focus_mode = 0
 
 [node name="HBox" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Points" unique_id=1485468907]
@@ -770,7 +769,7 @@ layout_mode = 2
 
 [node name="Bld" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox" unique_id=324713300]
 layout_mode = 2
-tooltip_text = "Bangunan berdiri (terancam = kekurangan air / kebanjiran)"
+tooltip_text = "Standing buildings (at risk = no water or flooded)"
 theme_override_constants/separation = 3
 
 [node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Bld" unique_id=790242768]
@@ -791,20 +790,20 @@ alignment = 1
 [node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bld/VBox" unique_id=1236114693]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
-text = "Bangunan 0"
+text = "Buildings 0"
 
 [node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bld/VBox" unique_id=1588015]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
-text = "(terancam 0)"
+text = "(at risk 0)"
 
 [node name="SepRuin" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox" unique_id=424809538]
 layout_mode = 2
 
 [node name="Ruin" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox" unique_id=814447850]
 layout_mode = 2
-tooltip_text = "Bangunan hancur / batas kalah"
+tooltip_text = "Destroyed buildings / loss limit"
 theme_override_constants/separation = 3
 
 [node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Ruin" unique_id=1909098738]
@@ -825,20 +824,20 @@ alignment = 1
 [node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Ruin/VBox" unique_id=30053687]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
-text = "Hancur 0/8"
+text = "Destroyed 0/8"
 
 [node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Ruin/VBox" unique_id=572357887]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
-text = "batas kalah"
+text = "loss limit"
 
 [node name="SepBridge" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox" unique_id=380358716]
 layout_mode = 2
 
 [node name="Bridge" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox" unique_id=815880901]
 layout_mode = 2
-tooltip_text = "Stok jembatan (aktif = jembatan terpasang yang dilewati air)"
+tooltip_text = "Bridges in stock (active = built bridges with water under them)"
 theme_override_constants/separation = 3
 
 [node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Bridge" unique_id=1560529095]
@@ -859,13 +858,13 @@ alignment = 1
 [node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bridge/VBox" unique_id=142056120]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
-text = "Jembatan 0"
+text = "Bridges 0"
 
 [node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bridge/VBox" unique_id=1981956202]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
-text = "(aktif 0)"
+text = "(active 0)"
 
 [node name="Speed" type="PanelContainer" parent="HUD/Root/TopRight" unique_id=1512758546]
 custom_minimum_size = Vector2(0, 44)
@@ -879,7 +878,7 @@ alignment = 1
 [node name="Pause" type="Button" parent="HUD/Root/TopRight/Speed/VBox" unique_id=1348359503]
 custom_minimum_size = Vector2(18, 12)
 layout_mode = 2
-tooltip_text = "Jeda (Spasi)"
+tooltip_text = "Pause (Space)"
 focus_mode = 0
 toggle_mode = true
 button_group = SubResource("ButtonGroup_speed")
@@ -890,7 +889,7 @@ expand_icon = true
 [node name="Play" type="Button" parent="HUD/Root/TopRight/Speed/VBox" unique_id=1141873737]
 custom_minimum_size = Vector2(18, 12)
 layout_mode = 2
-tooltip_text = "Kecepatan normal"
+tooltip_text = "Normal speed"
 focus_mode = 0
 toggle_mode = true
 button_pressed = true
@@ -919,7 +918,7 @@ theme_override_constants/separation = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 9
-text = "Rincian Poin"
+text = "Points Breakdown"
 
 [node name="Lines" type="Label" parent="HUD/Root/PointsPopup/VBox" unique_id=1436815378]
 layout_mode = 2
@@ -941,7 +940,7 @@ theme_override_constants/separation = 0
 [node name="Title" type="Label" parent="HUD/Root/Tooltip/VBox" unique_id=1994253280]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
-text = "Tanah"
+text = "Land"
 
 [node name="Detail" type="Label" parent="HUD/Root/Tooltip/VBox" unique_id=470734790]
 layout_mode = 2
@@ -969,40 +968,40 @@ theme_override_constants/separation = 3
 
 [node name="Gali" parent="HUD/Root/ActionMenu/Tools" unique_id=48896415 instance=ExtResource("13_card")]
 layout_mode = 2
-tooltip_text = "Gali  [1]"
+tooltip_text = "Dig  [1]"
 icon_texture = ExtResource("15_ic_gali")
-title = "Gali"
+title = "Dig"
 show_stock = true
 
 [node name="Ratakan" parent="HUD/Root/ActionMenu/Tools" unique_id=1508969270 instance=ExtResource("13_card")]
 layout_mode = 2
-tooltip_text = "Ratakan  [2]"
+tooltip_text = "Level  [2]"
 icon_texture = ExtResource("16_ic_ratakan")
-title = "Ratakan"
+title = "Level"
 hotkey = "2"
 show_stock = true
 
 [node name="Timbun" parent="HUD/Root/ActionMenu/Tools" unique_id=601562977 instance=ExtResource("13_card")]
 layout_mode = 2
-tooltip_text = "Timbun  [3]"
+tooltip_text = "Fill  [3]"
 icon_texture = ExtResource("17_ic_timbun")
-title = "Timbun"
+title = "Fill"
 hotkey = "3"
 show_stock = true
 
 [node name="Jembatan" parent="HUD/Root/ActionMenu/Tools" unique_id=238417109 instance=ExtResource("13_card")]
 layout_mode = 2
-tooltip_text = "Jembatan  [4]"
+tooltip_text = "Bridge  [4]"
 icon_texture = ExtResource("42_55kwu")
-title = "Jembatan"
+title = "Bridge"
 hotkey = "4"
 show_stock = true
 
 [node name="Bor" parent="HUD/Root/ActionMenu/Tools" unique_id=1020001115 instance=ExtResource("13_card")]
 layout_mode = 2
-tooltip_text = "Mesin Bor  [5]"
+tooltip_text = "Drill Well  [5]"
 icon_texture = ExtResource("43_f3o6s")
-title = "Mesin Bor"
+title = "Drill Well"
 hotkey = "5"
 show_stock = true
 
@@ -1016,9 +1015,9 @@ show_stock = true
 
 [node name="Kincir" parent="HUD/Root/ActionMenu/Tools" unique_id=332329664 instance=ExtResource("13_card")]
 layout_mode = 2
-tooltip_text = "Kincir  [7]"
+tooltip_text = "Water Wheel  [7]"
 icon_texture = ExtResource("21b_ic_kincir")
-title = "Kincir"
+title = "Water Wheel"
 hotkey = "7"
 show_stock = true
 
@@ -1037,7 +1036,7 @@ icon_alignment = 1
 [node name="Menu" type="Button" parent="HUD/Root/ActionMenu/Tools" unique_id=1717655030]
 custom_minimum_size = Vector2(38, 38)
 layout_mode = 2
-tooltip_text = "Menu & pengaturan (Esc)"
+tooltip_text = "Menu & settings (Esc)"
 focus_mode = 0
 theme_override_styles/normal = SubResource("StyleBox_layer")
 icon = ExtResource("73_ic_gear")
@@ -1057,7 +1056,7 @@ offset_right = -4.0
 offset_bottom = -4.0
 grow_horizontal = 0
 grow_vertical = 0
-tooltip_text = "Aliran Air: persentase bangunan yang sedang mendapat air"
+tooltip_text = "Water Flow: share of buildings currently receiving water"
 
 [node name="HBox" type="HBoxContainer" parent="HUD/Root/WaterPanel" unique_id=1420738335]
 layout_mode = 2
@@ -1087,7 +1086,7 @@ alignment = 1
 [node name="Title" type="Label" parent="HUD/Root/WaterPanel/HBox/VBox" unique_id=706049594]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
-text = "Aliran Air"
+text = "Water Flow"
 
 [node name="Row" type="HBoxContainer" parent="HUD/Root/WaterPanel/HBox/VBox" unique_id=946349973]
 layout_mode = 2
@@ -1134,7 +1133,7 @@ theme_override_constants/separation = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 10
-text = "Ketinggian"
+text = "Elevation"
 
 [node name="Height" type="VBoxContainer" parent="HUD/Root/Legend/VBox" unique_id=1623166304]
 layout_mode = 2
@@ -1156,7 +1155,7 @@ stretch_mode = 5
 [node name="Text" type="Label" parent="HUD/Root/Legend/VBox/Height/R0" unique_id=1624387807]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "3 Dataran tinggi"
+text = "3 Highland"
 
 [node name="R1" type="HBoxContainer" parent="HUD/Root/Legend/VBox/Height" unique_id=147127305]
 layout_mode = 2
@@ -1174,7 +1173,7 @@ stretch_mode = 5
 [node name="Text" type="Label" parent="HUD/Root/Legend/VBox/Height/R1" unique_id=1691381850]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "2 Dataran menengah"
+text = "2 Midland"
 
 [node name="R2" type="HBoxContainer" parent="HUD/Root/Legend/VBox/Height" unique_id=1205514163]
 layout_mode = 2
@@ -1192,7 +1191,7 @@ stretch_mode = 5
 [node name="Text" type="Label" parent="HUD/Root/Legend/VBox/Height/R2" unique_id=1617505555]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "1 Dataran rendah"
+text = "1 Lowland"
 
 [node name="R3" type="HBoxContainer" parent="HUD/Root/Legend/VBox/Height" unique_id=991677169]
 layout_mode = 2
@@ -1210,7 +1209,7 @@ stretch_mode = 5
 [node name="Text" type="Label" parent="HUD/Root/Legend/VBox/Height/R3" unique_id=791990744]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "0 Garis pantai"
+text = "0 Shoreline"
 
 [node name="Water" type="VBoxContainer" parent="HUD/Root/Legend/VBox" unique_id=1960624649]
 visible = false
@@ -1233,7 +1232,7 @@ stretch_mode = 5
 [node name="Text" type="Label" parent="HUD/Root/Legend/VBox/Water/R0" unique_id=1098657959]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "Dalam (> 0.6)"
+text = "Deep (> 0.6)"
 
 [node name="R1" type="HBoxContainer" parent="HUD/Root/Legend/VBox/Water" unique_id=1382671866]
 layout_mode = 2
@@ -1287,7 +1286,7 @@ stretch_mode = 5
 [node name="Text" type="Label" parent="HUD/Root/Legend/VBox/Water/R3" unique_id=2016716445]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "Dangkal (< 0.2)"
+text = "Shallow (< 0.2)"
 
 [node name="PauseMenu" parent="HUD/Root" unique_id=1079321652 instance=ExtResource("43_pause")]
 layout_mode = 1
@@ -1313,10 +1312,7 @@ theme_override_colors/font_color = Color(0.97, 0.95, 0.9, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 20
-text = "KOTA RUNTUH"
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="EndSurvey" parent="HUD/Overlay" unique_id=1153503008 instance=ExtResource("46_survey")]
-visible = false
-layout_mode = 1

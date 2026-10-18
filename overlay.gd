@@ -5,7 +5,7 @@ extends TileMapLayer
 ## Warna ada di assets/placeholder/overlay_tiles.png (indeks 0-3 ketinggian, 4-7 air).
 
 enum Mode { MATI, KETINGGIAN, AIR }
-const NAMES := ["Mati", "Ketinggian", "Kedalaman air"]
+const NAMES := ["Off", "Elevation", "Water Depth"]
 
 @export var refresh_interval: float = 0.25  ## detik antar pembaruan mode kedalaman air
 

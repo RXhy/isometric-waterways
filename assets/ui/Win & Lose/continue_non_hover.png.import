@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cry1lioutqedc"
-path="res://.godot/imported/Rectangle 2.png-1f4539900422b2daa7d2b1dbc7f9cb99.ctex"
+uid="uid://bvuw2apj08btu"
+path="res://.godot/imported/continue_non_hover.png-4c270840ec2a6318eb5a39e77f6d9b49.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/Rectangle 2.png"
-dest_files=["res://.godot/imported/Rectangle 2.png-1f4539900422b2daa7d2b1dbc7f9cb99.ctex"]
+source_file="res://assets/ui/Win & Lose/continue_non_hover.png"
+dest_files=["res://.godot/imported/continue_non_hover.png-4c270840ec2a6318eb5a39e77f6d9b49.ctex"]
 
 [params]
 

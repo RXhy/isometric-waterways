@@ -225,6 +225,8 @@ func current_day() -> int:
 
 func _process(delta: float) -> void:
 	_update_camera()
+	if base_zoom > 0.0:
+		Audio.set_zoom(camera.zoom.x / base_zoom)
 	_process_dig_queue(delta)
 	_update_cursor()
 	if game_over:
@@ -277,22 +279,25 @@ func end_game(won: bool, reason: String = "") -> void:
 	Engine.time_scale = 1.0
 	Audio.play_jingle(won)
 	update_hud()
-	var pts := "Poin %d  |  Bintang %d/3" % [int(score.total), score.stars()]
-	var text: String
-	if won and reason == "waktu":
-		text = "%d HARI SELESAI!\n%s\n(bintang 2: %d, bintang 3: %d)\n\nR: main lagi   |   Esc: menu utama" % [target_days, pts, score.star2_points, score.star3_points]
-	elif won:
-		text = "TARGET TERCAPAI!\n%s pada hari ke-%d.\n\nR: main lagi   |   Esc: menu utama" % [pts, mini(current_day(), target_days)]
-	elif reason == "waktu":
-		text = "WAKTU HABIS\nPoin %d. Butuh %d untuk 1 bintang.\n\nR: coba lagi   |   Esc: menu utama" % [int(score.total), score.target_points]
-	else:
-		text = "KOTA RUNTUH\n%d bangunan hancur (batas %d).\n\nR: coba lagi   |   Esc: menu utama" % [buildings.destroyed_count, damage_quota]
-	hud.show_end(text)
+	if not hud.end_panel.play_again.is_connected(_restart):
+		hud.end_panel.play_again.connect(_restart)
+		hud.end_panel.main_menu.connect(_to_menu)
+	hud.show_end(won, score.stars() if won else 0, buildings.destroyed_count)
+
+func _restart() -> void:
+	balance_log.log_end("DITINGGALKAN", "main ulang")
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
+
+func _to_menu() -> void:
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file(MENU_SCENE)
+
 
 func update_hud() -> void:
 	hud.refresh()
 
-const TILE_NAMES := ["Tanah", "Kanal kering", "Rumput", "Air", "Jalan"]
+const TILE_NAMES := ["Land", "Dry Canal", "Grass", "Water", "Road"]
 
 ## Sorotan petak di bawah kursor, berwarna sesuai bisa/tidaknya alat dipakai di sana.
 func _update_cursor() -> void:
@@ -317,33 +322,33 @@ func tile_info(cell: Vector2i) -> Dictionary:
 	var tname: String = TILE_NAMES[t]
 	var wet: bool = water.is_wet(cell)
 	if t == TileState.CANAL:
-		tname = "Kanal berair" if wet else "Kanal kering"
+		tname = "Canal" if wet else "Dry Canal"
 	if t == TileState.WATER:
-		tname = "Sumber air" if wet else "Sumber air (kering)"
+		tname = "Water Source" if wet else "Water Source (dry)"
 	if roads.bridges.has(cell):
-		tname = "Jembatan (berair)" if wet else "Jembatan (kering)"
+		tname = "Bridge (wet)" if wet else "Bridge (dry)"
 	if water.is_flooded(cell):
-		tname = "Banjir"
+		tname = "Flooded"
 	if facilities.has_facility(cell):
 		tname = facilities.KIND_NAMES[facilities.kind_at(cell)]
 	var detail := ""
 	if buildings.has_building(cell):
 		var b = buildings.buildings[cell]
 		tname = b.TYPE_DATA[b.type]["name"]
-		detail = "Air %d%%  -  %s" % [int(100.0 * b.water / b.max_water), ["Hidup", "Terancam", "Hancur"][b.state]]
+		detail = "Water %d%%  -  %s" % [int(100.0 * b.water / b.max_water), ["Healthy", "At Risk", "Destroyed"][b.state]]
 	elif facilities.kind_at(cell) == facilities.Kind.KINCIR:
 		var targets: Array = water.pump_targets.get(cell, [])
 		if water.pumped.has(cell):
-			detail = "Memompa air naik ke %d kanal (%.1f/detik)" % [targets.size(), water.pumped[cell]]
+			detail = "Pumping water up to %d canal(s) (%.1f/s)" % [targets.size(), water.pumped[cell]]
 		elif not targets.is_empty():
-			detail = "Siap memompa - petak kincir butuh air"
+			detail = "Ready - the wheel needs water to pump"
 		else:
-			detail = "Tidak memompa - pasang di sebelah kanal %d tingkat lebih tinggi" % 1
+			detail = "Not pumping - place next to a canal %d level higher" % 1
 		var pw: float = facilities.kincir_power(cell)
 		if pw >= 0.03:
-			detail += "\n+%.1f poin/detik dari arus" % (pw * facilities.kincir_points_per_second)
+			detail += "\n+%.1f pts/s from the current" % (pw * facilities.kincir_points_per_second)
 	elif water.get_depth(cell) > 0.005:
-		detail = "Kedalaman air %.2f" % water.get_depth(cell)
+		detail = "Water depth %.2f" % water.get_depth(cell)
 	var pv: Array = action_preview(cell)
 	if dragging:
 		pv = _drag_summary()
@@ -351,39 +356,39 @@ func tile_info(cell: Vector2i) -> Dictionary:
 		"title": "%s  |  %s (%d)" % [tname, ELEV_NAMES[get_elev(cell)], get_elev(cell)],
 		"detail": detail,
 		"ok": pv[0],
-		"action": "[%s] %s" % [TOOL_NAMES[current_tool], pv[1]],
+		"action": pv[1],
 	}
 
 ## Pratinjau aksi alat terpilih di petak ini: [1 = bisa, -1 = tidak bisa, 0 = info], teks.
 func action_preview(cell: Vector2i) -> Array:
 	if not is_playable(cell):
 		var nd := next_unlock_day()
-		return [-1, "Lahan belum terbuka" + (" (hari %d)" % nd if nd > 0 else "")]
+		return [-1, "Area not unlocked yet" + (" (day %d)" % nd if nd > 0 else "")]
 	var t: int = grid_data[cell]
 	var land: bool = t == TileState.DIRT or t == TileState.GRASS
 	var occupied: bool = buildings.has_building(cell) or facilities.has_facility(cell)
 	var no_shovel: bool = shovel <= 0
 	match current_tool:
 		Tool.GALI:
-			if occupied: return [-1, "Petak terisi bangunan/fasilitas"]
-			if roads.is_road(cell): return [-1, "Jalan - pakai Jembatan"]
-			if dig_pending.has(cell): return [0, "Sedang digali"]
-			if land: return [-1, "Jatah habis - tambah lagi besok"] if no_shovel else [1, "Klik: gali kanal"]
-			return [-1, "Sudah kanal/air"]
+			if occupied: return [-1, "Tile has a building or facility"]
+			if roads.is_road(cell): return [-1, "Road - use a Bridge"]
+			if dig_pending.has(cell): return [0, "Digging..."]
+			if land: return [-1, "No uses left - refills tomorrow"] if no_shovel else [1, "Click: dig canal"]
+			return [-1, "Already a canal or water"]
 		Tool.RATAKAN:
-			if occupied or roads.is_road(cell): return [-1, "Tidak bisa diratakan"]
-			if is_natural_water(cell): return [-1, "Sumber air tidak bisa diratakan"]
-			if no_shovel: return [-1, "Jatah habis - tambah lagi besok"]
+			if occupied or roads.is_road(cell): return [-1, "Can't be leveled"]
+			if is_natural_water(cell): return [-1, "Water sources can't be leveled"]
+			if no_shovel: return [-1, "No uses left - refills tomorrow"]
 			var h := get_elev(cell)
-			return [1, "Kiri: turun ke %d  |  Kanan: naik ke %d" % [maxi(h - 1, 0), mini(h + 1, MAX_ELEV)]]
+			return [1, "Left: lower to %d  |  Right: raise to %d" % [maxi(h - 1, 0), mini(h + 1, MAX_ELEV)]]
 		Tool.TIMBUN:
-			if facilities.has_facility(cell): return [1, "Klik: bongkar %s (stok kembali)" % facilities.KIND_NAMES[facilities.kind_at(cell)]]
-			if roads.bridges.has(cell): return [1, "Klik: lepas jembatan"]
-			if dug.has(cell): return [-1, "Jatah habis - tambah lagi besok"] if no_shovel else [1, "Klik: tutup kanal"]
-			return [0, "Tidak ada yang bisa ditimbun"]
+			if facilities.has_facility(cell): return [1, "Click: remove %s (refunded)" % facilities.KIND_NAMES[facilities.kind_at(cell)]]
+			if roads.bridges.has(cell): return [1, "Click: remove bridge"]
+			if dug.has(cell): return [-1, "No uses left - refills tomorrow"] if no_shovel else [1, "Click: fill canal"]
+			return [0, "Nothing to fill"]
 		Tool.JEMBATAN:
-			if roads.bridge_stock <= 0: return [-1, "Stok jembatan habis"]
-			if t != TileState.ROAD or roads.bridges.has(cell): return [-1, "Hanya di jalan"]
+			if roads.bridge_stock <= 0: return [-1, "Out of bridges"]
+			if t != TileState.ROAD or roads.bridges.has(cell): return [-1, "Roads only"]
 			
 			# Validasi visual kursor untuk jembatan (cek mask jalan lurus)
 			var tl = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE)
@@ -401,18 +406,18 @@ func action_preview(cell: Vector2i) -> Array:
 			if valid_conn.call(br): mask |= 8
 			
 			if mask != 9 and mask != 6:
-				return [-1, "Hanya di jalan lurus"]
+				return [-1, "Straight roads only"]
 				
-			return [1, "Klik: pasang jembatan"]
+			return [1, "Click: build bridge"]
 			
 		Tool.BOR, Tool.SPILLWAY, Tool.KINCIR:
 			var why: String = facilities.why_not(tool_kind(current_tool), cell)
 			if why == "":
 				if current_tool == Tool.KINCIR:
 					var n: int = water.lift_targets(cell).size()
-					return [1, "Klik: pasang Kincir - pompa naik ke %d kanal" % n] if n > 0 \
-						else [1, "Klik: pasang Kincir (belum ada kanal lebih tinggi di sebelahnya)"]
-				return [1, "Klik: pasang %s" % facilities.KIND_NAMES[tool_kind(current_tool)]]
+					return [1, "Click: build Water Wheel - pumps up to %d canal(s)" % n] if n > 0 \
+						else [1, "Click: build Water Wheel (no higher canal next to it yet)"]
+				return [1, "Click: build %s" % facilities.KIND_NAMES[tool_kind(current_tool)]]
 			return [-1, why]
 	return [0, ""]
 
@@ -735,7 +740,7 @@ func _expand_to(k: int) -> void:
 	unlocked_area = _diamond_bounds(unlock_r)
 	_shade.set_rect(_diamond_px(unlock_r), true)
 	balance_log.log_note("EKSPANSI", "lahan tahap %d: jari-jari %d" % [k, unlock_r])
-	hud.toast("Lahan baru terbuka! (%d/%d)" % [k, expansion_steps])
+	hud.toast("New land unlocked! (%d/%d)" % [k, expansion_steps])
 	if k > 0:
 		Audio.play("land_expand")
 	_focus_on(_diamond_px(unlock_r))
@@ -847,7 +852,7 @@ func _update_camera() -> void:
 
 const MAX_ELEV: int = 3
 const ELEV_STEP: float = 4.0  ## harus sama dengan selisih texture_origin antar alternative tile (dinding tile = 4 px)
-const ELEV_NAMES := ["Garis pantai", "Dataran rendah", "Dataran menengah", "Dataran tinggi"]
+const ELEV_NAMES := ["Shoreline", "Lowland", "Midland", "Highland"]
 
 func get_elev(cell: Vector2i) -> int:
 	return elevation.get(cell, 0)
@@ -872,7 +877,7 @@ func pick_cell(global_pos: Vector2) -> Vector2i:
 # --- Bulldoze: Gali / Ratakan / Timbun ---
 
 enum Tool { GALI, RATAKAN, TIMBUN, JEMBATAN, BOR, SPILLWAY, KINCIR }
-const TOOL_NAMES := ["Gali", "Ratakan", "Timbun", "Jembatan", "Mesin Bor", "Spillway", "Kincir Air"]
+const TOOL_NAMES := ["Dig", "Level", "Fill", "Bridge", "Drill Well", "Spillway", "Water Wheel"]
 
 ## Alat fasilitas -> FacilityManager.Kind (Bendungan sudah dihapus dari toolbar).
 func tool_kind(t: int) -> int:
@@ -1224,9 +1229,9 @@ func _drag_summary() -> Array:
 			cost += _drag_cost(drag_path[i])
 		elif drag_status[i] < 0:
 			bad += 1
-	var txt := "Lepas: %d petak, %d sekop (sisa %d)" % [n, cost, shovel - cost]
+	var txt := "Release: %d tiles, %d uses (%d left)" % [n, cost, shovel - cost]
 	if bad > 0:
-		txt += "  |  %d petak merah dilewati" % bad
+		txt += "  |  %d red tiles skipped" % bad
 	return [1 if n > 0 else -1, txt]
 
 # --- Survei layar akhir ---

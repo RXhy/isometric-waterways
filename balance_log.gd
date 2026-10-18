@@ -29,7 +29,7 @@ extends Node
 ## Nama penguji (opsional). Kosong = pakai nama user komputer.
 @export var tester_name: String = ""
 ## Tampilkan survei 2 pertanyaan (tegang/adil 1-5) di layar akhir.
-@export var end_survey: bool = true
+@export var end_survey: bool = false
 ## Detik (waktu game) antar pengambilan sampel kondisi air.
 @export var sample_interval: float = 0.5
 
@@ -364,8 +364,8 @@ func _row(kind: String, day: int, note: String = "") -> Array:
 		kind, day, "%.1f" % W.elapsed, "%02d:%02d:%02d" % [t.hour, t.minute, t.second],
 		W.weather.NAMES[W.weather.current], W.weather.drought_index(day),
 		int(S.total), int(S.today),
-		int(S.by_source.get("Bangunan teraliri", 0.0)), int(S.by_source.get("Kincir air", 0.0)),
-		int(S.by_source.get("Bonus akhir hari", 0.0)), int(S.by_source.get("Jembatan", 0.0)),
+		int(S.by_source.get("Watered buildings", 0.0)), int(S.by_source.get("Water wheels", 0.0)),
+		int(S.by_source.get("End-of-day bonus", 0.0)), int(S.by_source.get("Bridge", 0.0)),
 		W.buildings.buildings.size(), alive, threat, W.buildings.destroyed_count,
 		W.shovel_used, W.shovel, chan, (int(100.0 * wet / chan) if chan > 0 else 0),
 		F.stock[0], F.stock[1], F.stock[2], F.stock[3],

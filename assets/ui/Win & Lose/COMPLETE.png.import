@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cjim8w32kaf88"
-path="res://.godot/imported/logo_fiks_hd-export-export.png-2d0c6fe179627af5f6ad8ff4f48f42ed.ctex"
+uid="uid://cn6lb017o6o13"
+path="res://.godot/imported/COMPLETE.png-d3742b431f864af01f21077c615fd02a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/logo_fiks_hd-export-export.png"
-dest_files=["res://.godot/imported/logo_fiks_hd-export-export.png-2d0c6fe179627af5f6ad8ff4f48f42ed.ctex"]
+source_file="res://assets/ui/Win & Lose/COMPLETE.png"
+dest_files=["res://.godot/imported/COMPLETE.png-d3742b431f864af01f21077c615fd02a.ctex"]
 
 [params]
 

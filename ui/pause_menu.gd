@@ -26,7 +26,7 @@ func setup(w) -> void:
 	# tombol sembunyikan UI (dibuat di kode supaya scene menu tidak perlu diubah)
 	var hide_ui: Button = $Panel/VBox/Main/Options.duplicate(0)  # salin gaya tombol, tanpa sinyal
 	hide_ui.name = "HideUI"
-	hide_ui.text = "Sembunyikan UI (H)"
+	hide_ui.text = "Hide UI (H)"
 	main_list.add_child(hide_ui)
 	main_list.move_child(hide_ui, $Panel/VBox/Main/Options.get_index() + 1)
 	hide_ui.pressed.connect(func():
@@ -76,12 +76,12 @@ func back() -> void:
 		close()
 
 func _show_main() -> void:
-	title.text = "Jeda"
+	title.text = "Paused"
 	main_list.show()
 	settings_list.hide()
 
 func _show_settings() -> void:
-	title.text = "Pengaturan"
+	title.text = "Settings"
 	main_list.hide()
 	settings_list.show()
 

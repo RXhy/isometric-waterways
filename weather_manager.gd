@@ -5,13 +5,13 @@ extends Node
 ## - Kemarau: sumber air menyusut PELAN-PELAN sepanjang hari (bukan langsung kering).
 ##            Tiap kemarau berikutnya lebih parah dari sebelumnya (tingkat 1, 2, 3, ...).
 ##            Badan air kecil menyusut lebih cepat. Sumur bor tidak terpengaruh.
-##            Semua angkanya ada di Inspector node Weather, grup "Kemarau".
+##            Semua angkanya ada di Inspector node Weather, grup "Drought".
 ## - Hujan lebat: badan air naik melewati tepinya dan meluap ke daratan yang lebih rendah;
 ##            semua bangunan tersiram. Badan air yang punya Spillway tidak dinaikkan.
 ## Efek visual ada di node WeatherFX (world.tscn); ikon cuaca diatur di Inspector.
 
 enum Weather { CERAH, KEMARAU, HUJAN }
-const NAMES := ["Cerah", "Kemarau", "Hujan lebat"]
+const NAMES := ["Cloudy", "Drought", "Heavy Rain"]
 
 ## Jadwal cuaca dibuat otomatis untuk semua hari (lihat grup "Jadwal otomatis").
 ## Matikan kalau ingin memakai daftar `schedule` di bawah secara manual.
@@ -23,7 +23,7 @@ const NAMES := ["Cerah", "Kemarau", "Hujan lebat"]
 @export var icons: Array[Texture2D] = []    ## ikon [Cerah, Kemarau, Hujan lebat] untuk HUD
 @export var rain_surge: float = 0.35        ## kenaikan target sumber saat hujan (di atas tepi = meluap)
 
-@export_group("Kemarau")
+@export_group("Drought")
 ## Seberapa banyak sumber air menyusut di kemarau PERTAMA (0 = tidak menyusut, 1 = kering total).
 @export_range(0.0, 1.0, 0.05) var drought_severity_start: float = 0.3
 ## Tambahan keparahan tiap kemarau berikutnya (kemarau ke-2 = start + step, ke-3 = start + 2*step, ...).
@@ -109,7 +109,7 @@ func drought_severity(day: int) -> float:
 func describe(day: int) -> String:
 	var w := weather_for(day)
 	if w == Weather.KEMARAU:
-		return "%s (tingkat %d: sumber air -%d%%)" % [NAMES[w], drought_index(day), int(drought_severity(day) * 100.0)]
+		return "%s (level %d: water sources -%d%%)" % [NAMES[w], drought_index(day), int(drought_severity(day) * 100.0)]
 	return NAMES[w]
 
 ## 0..1: seberapa jauh kemarau hari ini sudah berjalan menuju puncaknya.

@@ -59,7 +59,7 @@ theme_override_constants/separation = 5
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 12
-text = "Jeda"
+text = "Paused"
 horizontal_alignment = 1
 
 [node name="Main" type="VBoxContainer" parent="Panel/VBox"]
@@ -72,7 +72,7 @@ layout_mode = 2
 focus_mode = 0
 theme_override_styles/normal = SubResource("StyleBox_btn")
 theme_override_font_sizes/font_size = 9
-text = "Lanjutkan"
+text = "Resume"
 
 [node name="Restart" type="Button" parent="Panel/VBox/Main"]
 custom_minimum_size = Vector2(0, 18)
@@ -80,7 +80,7 @@ layout_mode = 2
 focus_mode = 0
 theme_override_styles/normal = SubResource("StyleBox_btn")
 theme_override_font_sizes/font_size = 9
-text = "Main Ulang"
+text = "Restart"
 
 [node name="Options" type="Button" parent="Panel/VBox/Main"]
 custom_minimum_size = Vector2(0, 18)
@@ -88,7 +88,7 @@ layout_mode = 2
 focus_mode = 0
 theme_override_styles/normal = SubResource("StyleBox_btn")
 theme_override_font_sizes/font_size = 9
-text = "Pengaturan"
+text = "Settings"
 
 [node name="MainMenu" type="Button" parent="Panel/VBox/Main"]
 custom_minimum_size = Vector2(0, 18)
@@ -96,13 +96,13 @@ layout_mode = 2
 focus_mode = 0
 theme_override_styles/normal = SubResource("StyleBox_btn")
 theme_override_font_sizes/font_size = 9
-text = "Menu Utama"
+text = "Main Menu"
 
 [node name="Hint" type="Label" parent="Panel/VBox/Main"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
 theme_override_font_sizes/font_size = 7
-text = "Esc: tutup menu"
+text = "Esc: close menu"
 horizontal_alignment = 1
 
 [node name="Settings" type="VBoxContainer" parent="Panel/VBox"]
@@ -118,7 +118,7 @@ theme_override_constants/separation = 6
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "Volume utama"
+text = "Master volume"
 
 [node name="Slider" type="HSlider" parent="Panel/VBox/Settings/Master"]
 custom_minimum_size = Vector2(70, 0)
@@ -138,7 +138,7 @@ theme_override_constants/separation = 6
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "Musik"
+text = "Music"
 
 [node name="Slider" type="HSlider" parent="Panel/VBox/Settings/Music"]
 custom_minimum_size = Vector2(70, 0)
@@ -158,7 +158,7 @@ theme_override_constants/separation = 6
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "Efek suara"
+text = "Sound effects"
 
 [node name="Slider" type="HSlider" parent="Panel/VBox/Settings/SFX"]
 custom_minimum_size = Vector2(70, 0)
@@ -174,14 +174,14 @@ value = 0.8
 layout_mode = 2
 focus_mode = 0
 theme_override_font_sizes/font_size = 8
-text = "Layar penuh"
+text = "Fullscreen"
 
 [node name="Tooltips" type="CheckButton" parent="Panel/VBox/Settings"]
 layout_mode = 2
 focus_mode = 0
 theme_override_font_sizes/font_size = 8
 button_pressed = true
-text = "Tooltip info petak"
+text = "Tile info tooltip"
 
 [node name="Back" type="Button" parent="Panel/VBox/Settings"]
 custom_minimum_size = Vector2(0, 18)
@@ -189,5 +189,5 @@ layout_mode = 2
 focus_mode = 0
 theme_override_styles/normal = SubResource("StyleBox_btn")
 theme_override_font_sizes/font_size = 9
-text = "Kembali"
+text = "Back"
 
