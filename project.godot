@@ -15,8 +15,12 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Isometric-Water"
-run/main_scene="res://scenes/debug/menu_picker.tscn"
+run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
+
+[autoload]
+
+Audio="*res://scenes/audio_manager.tscn"
 
 [display]
 
@@ -30,6 +34,10 @@ window/stretch/mode="canvas_items"
 [dotnet]
 
 project/assembly_name="Isometric-Water"
+
+[gui]
+
+theme/custom_font="res://assets/Font/Chakra_Petch/ChakraPetch-Regular.ttf"
 
 [rendering]
 

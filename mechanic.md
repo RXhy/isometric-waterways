@@ -11,8 +11,8 @@ Dokumen ini menjelaskan **alur permainan (core loop)** dan **sistem air** WATERW
 
 WATERWAYS adalah game puzzle-strategi isometrik. Pemain berperan sebagai perencana saluran air. Kota tumbuh sendiri: bangunan baru muncul setiap hari. Tugas pemain adalah **mengalirkan air** dari sumber alam ke bangunan dengan menggali kanal, mengatur ketinggian tanah, dan memasang fasilitas, sambil menghadapi **kemarau** dan **hujan lebat**.
 
-- Permainan berlangsung **45 hari**. Di akhir hari ke-45, poin dinilai jadi **bintang**: ≥ 5000 = 1 bintang (menang), ≥ 7000 = 2 bintang, ≥ 9000 = 3 bintang.
-- **Kalah:** bangunan yang hancur **melebihi kuota** (default **8**), atau hari ke-45 selesai dengan poin < 5000.
+- Permainan berlangsung **45 hari**. Di akhir hari ke-45, poin dinilai jadi **bintang**: ≥ 3500 = 1 bintang (menang), ≥ 5000 = 2 bintang, ≥ 8500 = 3 bintang.
+- **Kalah:** bangunan yang hancur **melebihi kuota** (default **8**), atau hari ke-45 selesai dengan poin < 3500.
 
 ---
 
@@ -39,7 +39,7 @@ flowchart LR
 |---|---|---|
 | Panjang satu hari | 30 detik | Node2D → `day_length` |
 | Jumlah hari | 45 | Node2D → `target_days` |
-| Kecepatan | Jeda / 1× / 2× (kolom tombol di ujung kanan atas, Spasi = jeda) | — |
+| Kecepatan | Jeda / jalan normal (tombol di ujung kanan atas, Spasi = jeda). Tidak ada kecepatan 2×. | — |
 | Zoom | Scroll mouse (ke arah kursor), 0,75× – 2,5× | Node2D → grup **Kamera** (`zoom_out_limit`, `zoom_in_limit`, `zoom_step`, `zoom_smooth`) |
 | Geser kamera | Seret tombol tengah mouse, WASD / panah, atau trackpad | Node2D → `pan_speed` |
 
@@ -90,7 +90,7 @@ Atur di `building.gd` → `TYPE_DATA`.
 - Cadangan habis: **Hancur** (jadi reruntuhan).
 - **Banjir**: kalau petak bangunan tergenang ≥ 6 detik, bangunan juga hancur (Building → `flood_limit`).
 
-**Aturan "teraliri":** bangunan teraliri kalau salah satu dari **4 petak yang bersisian** (kiri-atas, kanan-atas, kiri-bawah, kanan-bawah; **bukan serong/sudut**) adalah kanal atau sumber air yang **sedang berair** dan **elevasinya sama atau lebih tinggi** dari bangunan (air tidak bisa naik). Saat **hujan lebat**, semua bangunan dianggap teraliri.
+**Aturan "teraliri":** bangunan teraliri kalau salah satu dari **8 petak di sekelilingnya** (4 sisi + 4 sudut/serong; `NEIGHBORS_8` di `is_cell_supplied`) adalah kanal atau sumber air yang **sedang berair** dan **elevasinya sama atau lebih tinggi** dari bangunan (air tidak bisa naik). Saat **hujan lebat**, semua bangunan dianggap teraliri.
 
 ### 3.3 Tileset air & jalan (tilesset_water_road.png)
 - `assets/Tiles/tilesset_water_road.png` (grid 32 px) dipasang otomatis saat game mulai (Node2D grup **Tileset air & jalan**, `use_tileset_v2`).
@@ -141,7 +141,7 @@ Elevasi punya 4 tingkat (0–3): Garis pantai, Dataran rendah, Dataran menengah,
 |---|---|---|---|---|
 | **Jembatan** (4) | Mengubah petak jalan jadi kanal yang bisa dialiri air (jalan tetap tersambung) | Di petak jalan | 2 | +1 tiap hari baru |
 | **Mesin Bor** (5) | Sumber air tanah permanen, **tidak terpengaruh kemarau** | Di tanah | 1 | +1 kalau besok **Kemarau** |
-| **Spillway** (6) | Saluran pembuang. Badan air yang punya spillway **tidak meluap** saat hujan | Di tanah, **bersebelahan** dengan sumber air | 0 | +1 kalau besok **Hujan** |
+| **Spillway** (6) | Bendung di kanal: menahan air setinggi 0,3 (`spillway_crest`), hanya kelebihannya yang mengalir ke hilir. Badan air yang tersambung spillway **tidak meluap** saat hujan | Di kanal/sungai **lurus** (sambungan ↖↘ atau ↗↙) | 0 | +1 kalau besok **Hujan** |
 | **Kincir Air** (7) | **Pompa**: mengangkat air dari petaknya ke kanal/sungai di sebelahnya yang **1 tingkat lebih tinggi**, supaya aliran bisa naik ke dataran atas. Bonus kecil poin dari arus (§6) | Di kanal atau sungai/danau | 2 | +1 kalau besok **Cerah** |
 
 Atur stok di Facilities → `start_stock` dan `stock_per_forecast` (urutan: Bor, Bendungan, Spillway, Kincir; Bendungan sudah dihapus dari toolbar, biarkan nilainya 0). Untuk jembatan, atur di Roads → `bridges_start`, `bridges_per_day`.
@@ -163,7 +163,9 @@ Pengaturan berisi:
 - layar penuh
 - tooltip info petak
 
-Pengaturan disimpan otomatis di `user://settings.cfg`. Bus audio `Music` dan `SFX` ada di `default_bus_layout.tres`, jadi pemutar musik dan efek suara nanti cukup diarahkan ke bus yang sesuai.
+Pengaturan disimpan otomatis di `user://settings.cfg`. Bus audio `Music` dan `SFX` ada di `default_bus_layout.tres`. Semua audio diputar oleh autoload `Audio` (`scenes/audio_manager.tscn`, daftar lengkap di `AUDIO.md`).
+
+Menu jeda juga punya tombol **Tutorial** (7 halaman, sama dengan tutorial di main menu).
 
 ---
 
@@ -201,7 +203,7 @@ flowchart TD
 2. **Aliran.** Setiap petak berair mengalirkan airnya ke 4 tetangga sisi yang permukaannya lebih rendah. Besar aliran = selisih permukaan × 0,2. Kanal tidak menumpahkan air ke daratan kecuali permukaannya sudah melewati tepi. Petak bendungan dilewati (kedap air). Semua perpindahan dihitung dulu, baru diterapkan bersamaan.
 3. **Debit & arah.** Air yang keluar dari setiap petak dirata-rata. Hasilnya dipakai untuk putaran kincir (§6) dan arah animasi arus (§5.6).
 4. **Air hilang:**
-   - Spillway membuang 1,0 per detik.
+   - (Spillway tidak membuang air; ia menahan 0,3 dan meneruskan kelebihannya, lihat langkah 2.)
    - Air di **daratan** meresap 0,08 per detik, yang membatasi luas banjir.
    - **Kanal galian** menguap 0,02 per detik. Kanal yang terputus dari sumber akan mengering pelan-pelan.
 
@@ -215,7 +217,7 @@ flowchart TD
 | Batas "banjir" | 0,1 | Water → `flood_threshold` |
 | Penguapan kanal | 0,02 /detik | Water → `canal_evaporation` |
 | Resapan daratan | 0,08 /detik | Water → `land_absorb` |
-| Laju spillway | 1,0 /detik | Water → `spillway_drain` |
+| Tinggi tahanan spillway | 0,3 | Water → `spillway_crest` |
 
 ### 5.3 Badan air
 Saat permainan mulai, petak-petak sumber air yang saling bersebelahan dikelompokkan menjadi **badan air**: satu sungai atau danau dihitung sebagai satu kesatuan. Cuaca mengatur target setiap badan air. Ukurannya (jumlah petak) menentukan apakah badan air itu termasuk "kecil" saat kemarau.
@@ -308,7 +310,6 @@ terapkan semua perpindahan
 
 // 3. Air hilang
 UNTUK tiap petak berair c:
-    JIKA spillway:            kedalaman[c] -= 1.0  * dt
     JIKA daratan:             kedalaman[c] -= 0.08 * dt   // resapan banjir
     JIKA kanal galian:        kedalaman[c] -= 0.02 * dt   // penguapan
 
@@ -351,11 +352,11 @@ Patokan: satu bangunan yang dialiri penuh sehari = 0,2 × 30 + 4 = **10 poin**.
 
 | Kondisi | Default | Atur di |
 |---|---|---|
-| **Menang** | Hari ke-45 selesai dan poin ≥ 5000 (1 bintang) | Score → `target_points` |
-| 2 / 3 bintang | ≥ 7000 / ≥ 9000 | Score → `star2_points`, `star3_points` |
+| **Menang** | Hari ke-45 selesai dan poin ≥ 3500 (1 bintang) | Score → `target_points` |
+| 2 / 3 bintang | ≥ 5000 / ≥ 8500 | Score → `star2_points`, `star3_points` |
 | Selesai saat 1 bintang tercapai | mati (main terus sampai hari 45) | Score → `end_on_target` |
 | **Kalah** (kuota) | Bangunan hancur > 8 | Node2D → `damage_quota` |
-| **Kalah** (waktu) | Hari ke-45 selesai dan poin < 5000 | Node2D → `target_days` |
+| **Kalah** (waktu) | Hari ke-45 selesai dan poin < 3500 | Node2D → `target_days` |
 
 Bar poin di panel kanan atas menunjukkan progres ke **bintang berikutnya**.
 
@@ -381,7 +382,6 @@ Setiap kali game dimainkan, otomatis dibuat:
 | `AKHIR_HARI` | Kondisi saat hari berakhir: poin per sumber, bangunan, sekop, stok, fasilitas. Ditambah agregat sepanjang hari itu: jumlah aksi (gali, ratakan turun/naik, timbun, pasang/bongkar fasilitas, jembatan, drag), detik bangunan terancam, jumlah bangunan yang pernah terancam, % waktu bangunan teraliri, banjir terluas (petak), % sumber kering terparah, rata-rata putaran kincir, detik jeda / 2× / menu, bangunan gagal muncul |
 | `PERTAMA` | Momen pertama: aksi pertama pemain, bangunan pertama terancam, bangunan pertama hancur, target poin tercapai |
 | `HANCUR` | Setiap bangunan hancur, beserta penyebabnya (kekeringan/banjir) |
-| `DEBUG` | Pemakaian tombol F1–F3 |
 | `AKHIR` / `SURVEI` | Hasil permainan, lalu jawaban survei layar akhir |
 
 **`ringkasan_<penguji>.csv`** berisi satu baris per sesi:
@@ -397,19 +397,10 @@ Sesi dengan `param_id` yang sama memakai angka balancing yang persis sama, jadi 
 
 Sesi yang **terhenti karena game ditutup** (tombol X, tombol Stop di editor, atau crash) **otomatis dihapus**, sehingga folder hanya berisi sesi yang selesai. Fitur ini bisa dimatikan di BalanceLog → `delete_unfinished`. Keluar lewat menu (Main Ulang / Menu Utama) tetap tercatat sebagai DITINGGALKAN.
 
-Nama penguji diambil dari nama user Windows, atau dari BalanceLog → `tester_name`. Saat dijalankan dari editor, folder log ada di dalam project. Untuk hasil export, folder ada di sebelah .exe. Tekan **F4** untuk membuka folder.
+Nama penguji diambil dari nama user Windows, atau dari BalanceLog → `tester_name`. Saat dijalankan dari editor, folder log ada di dalam project. Untuk hasil export, folder ada di sebelah .exe. Folder log bisa dibuka langsung lewat file explorer.
 
 ### 7.2 Tombol debug
-Hanya aktif saat dijalankan dari editor. Di export release otomatis mati.
-
-| Tombol | Fungsi |
-|---|---|
-| F1 | Lompat ke hari berikutnya |
-| F2 | Ganti cuaca hari ini (Cerah → Kemarau → Hujan) |
-| F3 | +10 sekop, +1 semua stok |
-| F4 | Buka folder log |
-
-Setiap pemakaian tombol debug ikut tercatat di log sebagai baris `DEBUG`.
+Sudah dihapus (F1–F4 tidak ada lagi) supaya build lomba bersih.
 
 ### 7.3 Proses balancing
 Catat setiap perubahan angka di spreadsheet tim:
@@ -424,7 +415,7 @@ Ubah **satu kelompok knob per putaran playtest**, dan gunakan **seed yang sama**
 
 | File | Isi |
 |---|---|
-| `world.gd` / `world.tscn` | Scene utama: siklus hari, alat pemain, tooltip, kamera, area main, debug |
+| `world.gd` / `world.tscn` | Scene utama: siklus hari, alat pemain, tooltip, kamera, area main |
 | `water_sim.gd` | Simulasi air, debit & arah aliran, tampilan tile air, kelas daratan |
 | `weather_manager.gd` | Jadwal cuaca, kemarau bertahap, hujan |
 | `facility_manager.gd` | Bor, Bendungan, Spillway, Kincir (syarat pasang, stok, poin kincir) |

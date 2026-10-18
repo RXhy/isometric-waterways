@@ -198,7 +198,7 @@ func _params_snapshot() -> String:
 		"drought_small_body": WM.drought_small_body, "drought_small_mult": WM.drought_small_mult,
 		"flow_k": WS.flow_k, "channel_depth": WS.channel_depth, "source_rate": WS.source_rate,
 		"canal_evaporation": WS.canal_evaporation, "land_absorb": WS.land_absorb,
-		"spillway_drain": WS.spillway_drain, "wet_threshold": WS.wet_threshold, "flood_threshold": WS.flood_threshold,
+		"spillway_crest": WS.spillway_crest, "wet_threshold": WS.wet_threshold, "flood_threshold": WS.flood_threshold,
 	}
 	probe.free()
 	var parts := PackedStringArray()

@@ -77,8 +77,6 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 ## Seed peta & kejadian acak. 0 = acak tiap main (seed yang terpakai dicatat di log playtest).
 ## Isi dengan seed dari log untuk mengulang peta/kondisi yang sama saat membandingkan balancing.
 @export var map_seed: int = 0
-## Tombol debug F1-F4 (hanya aktif di build debug/editor, otomatis mati di export release).
-@export var debug_tools: bool = true
 
 @export_group("Kamera")
 ## Zoom dengan scroll mouse (ke arah kursor). Nilai relatif terhadap zoom awal (1 = pas area inti).
@@ -140,9 +138,8 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 @export var locked_shade: Color = Color(0.12, 0.08, 0.05, 0.5)  ## warna gelap lahan yang belum terbuka
 @export var border_color: Color = Color(1.0, 0.95, 0.8, 0.9)    ## garis batas lahan aktif
 
-## Main menu yang dituju saat keluar dari game: varian yang dipilih di layar debug (MenuChoice).
-var MENU_SCENE: String:
-	get: return MenuChoice.scene_path()
+## Main menu yang dituju saat keluar dari game.
+const MENU_SCENE := "res://scenes/main_menu.tscn"
 
 var elapsed: float = 0.0
 var game_over: bool = false
@@ -188,6 +185,9 @@ func _ready() -> void:
 
 	Engine.time_scale = 1.0
 	GameSettings.load_settings()
+	if not demo_mode:
+		Audio.stop_music()
+		Audio.start_ambience()
 	water.setup(self)
 	facilities.setup(self)
 	weather.setup(self)
@@ -230,12 +230,16 @@ func _process(delta: float) -> void:
 			end_game(true)
 	update_hud()
 
+func _exit_tree() -> void:
+	Audio.stop_ambience()
+
 func _check_new_day() -> void:
 	var d := current_day()
 	if d != last_day:
 		if last_day > 0:
 			score.end_of_day()
 			balance_log.log_day_end(last_day)
+			Audio.play("day_new")
 		score.start_of_day()
 		shovel = shovel_per_day
 		shovel_used = 0
@@ -249,6 +253,7 @@ func _check_new_day() -> void:
 
 func _on_building_destroyed(_b) -> void:
 	balance_log.log_destroyed(_b)
+	Audio.play("bld_destroyed")
 	if buildings.destroyed_count > damage_quota:
 		end_game(false, "kuota")
 
@@ -259,6 +264,7 @@ func end_game(won: bool, reason: String = "") -> void:
 	buildings.stop()
 	balance_log.log_end("MENANG" if won else "KALAH", reason if reason != "" else "target tercapai")
 	Engine.time_scale = 1.0
+	Audio.play_jingle(won)
 	update_hud()
 	var pts := "Poin %d  |  Bintang %d/3" % [int(score.total), score.stars()]
 	var text: String
@@ -422,7 +428,7 @@ const NEIGHBORS_SIDE := [
 ## Bangunan teraliri kalau salah satu dari 4 tetangga SISI-nya (bukan sudut/serong) kanal/sumber
 ## yang berair dan sama tinggi atau lebih tinggi (air tidak bisa naik).
 func is_cell_supplied(cell: Vector2i) -> bool:
-	for n in NEIGHBORS_SIDE:
+	for n in NEIGHBORS_8:  # 8 arah: 4 sisi + 4 sudut (serong)
 		var c := world.get_neighbor_cell(cell, n)
 		if water.is_channel(c) and water.is_wet(c) and get_elev(c) >= get_elev(cell):
 			return true
@@ -719,6 +725,8 @@ func _expand_to(k: int) -> void:
 	_shade.set_rect(_diamond_px(unlock_r), true)
 	balance_log.log_note("EKSPANSI", "lahan tahap %d: jari-jari %d" % [k, unlock_r])
 	hud.toast("Lahan baru terbuka! (%d/%d)" % [k, expansion_steps])
+	if k > 0:
+		Audio.play("land_expand")
 	_focus_on(_diamond_px(unlock_r))
 
 ## Geser & zoom out kamera pelan-pelan supaya seluruh lahan terlihat di luar UI.
@@ -872,8 +880,6 @@ func set_tool(t: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if demo_mode:
 		return
-	if event is InputEventKey and event.pressed and not event.echo and _debug_key(event.physical_keycode):
-		return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
 		if game_over:
 			if _survey_typing():
@@ -930,6 +936,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		var cell := pick_cell(get_global_mouse_position())
 		if not grid_data.has(cell) or not is_playable(cell):
 			return
+		if not right and action_preview(cell)[0] < 0:
+			Audio.play("ui_error")
 		match current_tool:
 			Tool.GALI, Tool.TIMBUN:
 				if not right: _start_drag(cell, false)
@@ -937,11 +945,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				_start_drag(cell, right)
 			Tool.JEMBATAN:
 				if not right and roads.build_bridge(cell):
+					Audio.play("place_wood")
 					balance_log.count("pasang_jembatan")
 					update_hud()
 			Tool.BOR, Tool.SPILLWAY, Tool.KINCIR:
 				var kind: int = tool_kind(current_tool)
 				if not right and facilities.place(kind, cell):
+					Audio.play("place_wood" if kind == facilities.Kind.KINCIR else "place_stone")
 					balance_log.count("pasang_fasilitas")
 					update_hud()
 
@@ -971,17 +981,20 @@ func perform_leveling(cell_pos: Vector2i, delta_h: int) -> void:
 	shovel_used += 1
 	balance_log.count("ratakan_naik" if delta_h > 0 else "ratakan_turun")
 	set_elev(cell_pos, h)
+	Audio.play("tool_dirt", 1.1 if delta_h > 0 else 0.9, 0.08)
 
 ## Timbun: tutup kanal galian (kering atau berair) jadi tanah lagi.
 func perform_filling(cell_pos: Vector2i) -> void:
 	if facilities.has_facility(cell_pos):
 		facilities.remove(cell_pos)
 		balance_log.count("bongkar_fasilitas")
+		Audio.play("place_stone", 1.3)
 		update_hud()
 		return
 	if roads.bridges.has(cell_pos):
 		roads.remove_bridge(cell_pos)
 		balance_log.count("lepas_jembatan")
+		Audio.play("place_wood", 1.3)
 		water.clear_water(cell_pos)
 		return
 	if not dug.has(cell_pos) or shovel <= 0:
@@ -989,6 +1002,7 @@ func perform_filling(cell_pos: Vector2i) -> void:
 	shovel -= 1
 	shovel_used += 1
 	balance_log.count("timbun")
+	Audio.play("tool_dirt", 0.8, 0.08)
 	dug.erase(cell_pos)
 	set_base(cell_pos, TileState.DIRT)
 	water.clear_water(cell_pos)
@@ -1066,37 +1080,6 @@ func show_tile(cell_pos: Vector2i, tile: int, water_row: int = -1) -> void:
 			source = SRC_TERRAIN
 			atlas = _land_atlas(cell_pos, tile)
 	world.set_cell(cell_pos, source, atlas, get_elev(cell_pos))
-
-# --- Tombol debug untuk balancing (F1-F4) ---
-
-func debug_enabled() -> bool:
-	return debug_tools and OS.is_debug_build() and not demo_mode
-
-## F1: lompat ke hari berikutnya · F2: ganti cuaca hari ini · F3: tambah sekop & stok · F4: buka folder log.
-func _debug_key(key: int) -> bool:
-	if key == KEY_F4:
-		balance_log.open_folder()
-		return true
-	if not debug_enabled() or game_over:
-		return false
-	match key:
-		KEY_F1:
-			balance_log.log_note("DEBUG", "F1 lompat ke hari %d" % (current_day() + 1))
-			elapsed = current_day() * day_length
-		KEY_F2:
-			var w: int = (weather.current + 1) % 3
-			weather.force_weather(w)
-			balance_log.log_note("DEBUG", "F2 cuaca dipaksa %s" % weather.NAMES[w])
-		KEY_F3:
-			shovel += 10
-			for i in facilities.stock.size():
-				facilities.stock[i] += 1
-			roads.bridge_stock += 1
-			balance_log.log_note("DEBUG", "F3 +10 sekop, +1 semua stok")
-		_:
-			return false
-	update_hud()
-	return true
 
 # --- Drag Gali / Ratakan / Timbun (gaya Mini Motorways, jalur rapi mengikuti grid) ---
 # Tekan di satu petak lalu seret: jalur dibuat lurus searah sumbu isometrik, lalu belok
@@ -1614,6 +1597,7 @@ func _finish_dig(c: Vector2i) -> void:
 	var st: int = grid_data.get(c, -1)
 	if (st == TileState.DIRT or st == TileState.GRASS) and not buildings.has_building(c) \
 			and not facilities.has_facility(c) and not roads.is_road(c):
+		Audio.play("tool_dirt", 1.0, 0.08)
 		dug[c] = true
 		set_base(c, TileState.CANAL)
 	else:

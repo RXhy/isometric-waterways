@@ -13,7 +13,6 @@ const TIP_INFO := Color(0.75, 0.76, 0.73)
 
 @onready var btn_pause: Button = $Root/TopRight/Speed/VBox/Pause
 @onready var btn_play: Button = $Root/TopRight/Speed/VBox/Play
-@onready var btn_fast: Button = $Root/TopRight/Speed/VBox/Fast
 @onready var weather_panel: PanelContainer = $Root/TopLeft
 @onready var weather_icon: TextureRect = $Root/TopLeft/HBox/WIcon
 @onready var day_label: Label = $Root/TopLeft/HBox/VBox/DayRow/Day
@@ -70,14 +69,12 @@ func setup(w) -> void:
 	$Root/ActionMenu/Tools/Menu.pressed.connect(pause_menu.open)
 	btn_pause.pressed.connect(set_speed.bind(0.0))
 	btn_play.pressed.connect(set_speed.bind(1.0))
-	btn_fast.pressed.connect(set_speed.bind(2.0))
 	points_button.pressed.connect(func(): points_popup.visible = not points_popup.visible)
 	layer_button.pressed.connect(_cycle_layer)
 	points_popup.hide()
 	end_overlay.hide()
 	set_speed(1.0)
 	_update_legend()
-	$Root/DebugHint.visible = world.debug_enabled()
 	_make_toast()
 	_apply_ui_scale()
 	get_viewport().size_changed.connect(_apply_ui_scale)
@@ -100,7 +97,7 @@ func _to_root(p: Vector2) -> Vector2:
 
 func _hideable() -> Array:
 	return [$Root/TopLeft, $Root/TopRight, $Root/ActionMenu, $Root/WaterPanel,
-		$Root/Legend, $Root/DebugHint, $Root/PointsPopup, tooltip]
+		$Root/Legend, $Root/PointsPopup, tooltip]
 
 func toggle_ui() -> void:
 	set_ui_hidden(not ui_hidden)
@@ -114,7 +111,6 @@ func set_ui_hidden(on: bool) -> void:
 	else:
 		for n in [$Root/TopLeft, $Root/TopRight, $Root/ActionMenu, $Root/WaterPanel]:
 			n.show()
-		$Root/DebugHint.visible = world.debug_enabled()
 		_update_legend()
 
 # --- Pesan singkat di atas layar ---
@@ -154,7 +150,6 @@ func set_speed(s: float) -> void:
 	Engine.time_scale = s
 	btn_pause.set_pressed_no_signal(s == 0.0)
 	btn_play.set_pressed_no_signal(s == 1.0)
-	btn_fast.set_pressed_no_signal(s == 2.0)
 
 func toggle_pause() -> void:
 	set_speed(1.0 if Engine.time_scale == 0.0 else 0.0)
@@ -193,7 +188,7 @@ func show_end(text: String) -> void:
 	end_overlay.show()
 	tooltip.hide()
 	# layar akhir bersih: sembunyikan toolbar & tab supaya survei tidak tertumpuk
-	for n in [$Root/ActionMenu, $Root/WaterPanel, $Root/Legend, $Root/DebugHint, $Root/PointsPopup]:
+	for n in [$Root/ActionMenu, $Root/WaterPanel, $Root/Legend, $Root/PointsPopup]:
 		n.hide()
 
 # --- Pembaruan tiap frame ---
@@ -247,6 +242,8 @@ func refresh() -> void:
 	var flow: float = float(watered) / alive if alive > 0 else 0.0
 	water_bar.value = flow
 	water_pct.text = "%d%%" % roundi(flow * 100.0)
+	Audio.set_water_level(flow)
+	Audio.set_weather(W.weather.current)
 	if points_popup.visible:
 		var lines := ""
 		for src in S.SOURCES:

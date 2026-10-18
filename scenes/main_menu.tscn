@@ -106,55 +106,6 @@ theme_override_colors/font_color = Color(0.62, 0.6, 0.56, 1)
 theme_override_font_sizes/font_size = 7
 text = "v0.1  -  MAGE 12  -  Tim Waterways"
 
-[node name="TutorialPanel" type="PanelContainer" parent="UI" unique_id=1355039013]
-unique_name_in_owner = true
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -140.0
-offset_right = 300.0
-offset_bottom = 140.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBox_dialog")
-
-[node name="VBox" type="VBoxContainer" parent="UI/TutorialPanel" unique_id=1452599750]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="Heading" type="Label" parent="UI/TutorialPanel/VBox" unique_id=994846074]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.62, 0.82, 1, 1)
-theme_override_font_sizes/font_size = 14
-text = "CARA BERMAIN"
-
-[node name="Body" type="Label" parent="UI/TutorialPanel/VBox" unique_id=2124095736]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.92, 0.9, 0.86, 1)
-theme_override_font_sizes/font_size = 9
-text = "Alirkan air dari sumber ke setiap bangunan sebelum cadangan airnya habis.
-1 Gali  - buat kanal dari tanah.
-2 Ratakan - klik kiri turunkan, klik kanan naikkan tanah. Air tidak bisa naik!
-3 Timbun - tutup kanal, bongkar jembatan/fasilitas.
-4 Jembatan - pasang di jalan agar kanal bisa lewat.
-5 Mesin Bor - sumber air tanah saat kemarau.
-6 Spillway - cegah sumber air meluap saat hujan.
-7 Kincir Air - pompa air ke tanah 1 tingkat lebih tinggi + poin.
-Scroll = zoom, tombol tengah / WASD = geser, H = sembunyikan UI.
-Lihat prakiraan cuaca dan bersiaplah!
-(Tutorial interaktif menyusul.)"
-autowrap_mode = 3
-
-[node name="Close" parent="UI/TutorialPanel/VBox" unique_id=865039528 instance=ExtResource("3_item")]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 8
-text = "TUTUP"
-
 [node name="ExitDialog" type="PanelContainer" parent="UI" unique_id=1563109066]
 unique_name_in_owner = true
 anchors_preset = 8

@@ -1,10 +1,10 @@
 extends Control
 ## Menu utama. Tampilan ada di scene (scenes/main_menu*.tscn); script ini hanya mengatur alur.
-## Node penting dicari lewat nama unik (%NewGame, %Menu, ...), jadi tiap varian layout
-## bebas menata posisinya sendiri asalkan nama unik itu ada.
+## Node penting dicari lewat nama unik (%NewGame, %Menu, ...).
 ## Latar: scenes/menu_map.tscn (peta diorama khusus menu).
 
 const GAME_SCENE := "res://world.tscn"
+const TUTORIAL_SCENE := preload("res://scenes/ui/tutorial.tscn")
 
 ## Geser pandangan kamera (px, + = pulau bergeser ke kiri) supaya pulau tidak tertutup UI varian ini.
 ## 0 = posisi bawaan menu_map (pulau di tengah area kanan, untuk panel kiri).
@@ -14,21 +14,27 @@ const GAME_SCENE := "res://world.tscn"
 @onready var btn_load: Button = %LoadGame
 @onready var btn_tutorial: Button = %Tutorial
 @onready var btn_exit: Button = %Exit
-@onready var tutorial_panel: Control = %TutorialPanel
 @onready var exit_dialog: Control = %ExitDialog
 @onready var fade: ColorRect = %Fade
+var tutorial: Control
 
 func _ready() -> void:
 	btn_new.pressed.connect(_on_new_game)
 	btn_load.pressed.connect(_on_load_game)
-	btn_tutorial.pressed.connect(func(): _open(tutorial_panel))
+	tutorial = TUTORIAL_SCENE.instantiate()
+	$UI.add_child(tutorial)
+	$UI.move_child(tutorial, %Fade.get_index())  # di bawah layar fade
+	tutorial.closed.connect(_close_dialogs)
+	btn_tutorial.pressed.connect(func():
+		_open(tutorial)
+		tutorial.open())
 	btn_exit.pressed.connect(func(): _open(exit_dialog))
-	%TutorialPanel/VBox/Close.pressed.connect(_close_dialogs)
 	%ExitDialog/VBox/Buttons/Yes.pressed.connect(func(): get_tree().quit())
 	%ExitDialog/VBox/Buttons/No.pressed.connect(_close_dialogs)
 	# Load Game belum aktif sampai sistem simpan dibuat
 	btn_load.disabled = true
 	Engine.time_scale = 1.0
+	Audio.play_music(Audio.bgm_menu)
 	var cam := get_node_or_null("Background/Camera2D") as Camera2D
 	if cam:
 		cam.offset.x = map_shift
@@ -51,11 +57,11 @@ func _open(dialog: Control) -> void:
 	%Menu.modulate.a = 0.4
 
 func _close_dialogs() -> void:
-	tutorial_panel.hide()
+	tutorial.hide()
 	exit_dialog.hide()
 	%Menu.modulate.a = 1.0
 	btn_new.grab_focus()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and (tutorial_panel.visible or exit_dialog.visible):
+	if event.is_action_pressed("ui_cancel") and exit_dialog.visible:
 		_close_dialogs()

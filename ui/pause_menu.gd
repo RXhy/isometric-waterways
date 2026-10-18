@@ -13,6 +13,7 @@ extends Control
 
 var world
 var _prev_speed: float = 1.0
+var tutorial: Control
 
 func setup(w) -> void:
 	world = w
@@ -31,6 +32,16 @@ func setup(w) -> void:
 	hide_ui.pressed.connect(func():
 		close()
 		world.hud.set_ui_hidden(true))
+	# tombol tutorial (halaman tutorial ditaruh di layer HUD supaya ukurannya penuh)
+	var tut_btn: Button = $Panel/VBox/Main/Options.duplicate(0)
+	tut_btn.name = "Tutorial"
+	tut_btn.text = "Tutorial"
+	main_list.add_child(tut_btn)
+	main_list.move_child(tut_btn, $Panel/VBox/Main/Resume.get_index() + 1)
+	tutorial = preload("res://scenes/ui/tutorial.tscn").instantiate()
+	tutorial.hide()
+	world.hud.add_child.call_deferred(tutorial)
+	tut_btn.pressed.connect(func(): tutorial.open())
 	vol_master.value = GameSettings.get_value("vol_master")
 	vol_music.value = GameSettings.get_value("vol_music")
 	vol_sfx.value = GameSettings.get_value("vol_sfx")

@@ -9,9 +9,9 @@ extends Node
 ## Satu bangunan yang dialiri penuh sehari = 0.2 x 30 + 4 = 10 poin, jadi poin harian
 ## kira-kira 10 x jumlah bangunan yang terlayani.
 
-@export var target_points: int = 5000  ## 1 bintang: batas menang
-@export var star2_points: int = 7000   ## 2 bintang
-@export var star3_points: int = 9000   ## 3 bintang
+@export var target_points: int = 3500  ## 1 bintang: batas menang
+@export var star2_points: int = 5000   ## 2 bintang
+@export var star3_points: int = 8500   ## 3 bintang
 ## true = permainan langsung selesai (menang) begitu 1 bintang tercapai (perilaku lama).
 ## false = tetap main sampai hari terakhir untuk mengejar bintang 2-3.
 @export var end_on_target: bool = false

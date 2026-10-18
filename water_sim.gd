@@ -21,7 +21,7 @@ extends Node
 @export var flood_threshold: float = 0.1    ## kedalaman air di daratan yang dihitung banjir
 @export var canal_evaporation: float = 0.01 ## penguapan kanal galian per detik
 @export var land_absorb: float = 0.08       ## air di daratan meresap per detik (membatasi luas banjir)
-@export var spillway_drain: float = 1.0	
+@export var spillway_crest: float = 0.3     ## spillway menahan air setinggi ini; hanya kelebihannya yang mengalir keluar
 @export var near_water_radius: int = 2      ## daratan sejauh ini dari air berair tampil hijau (baris 2-3 tileset)
 @export var flux_smoothing: float = 1.5     ## seberapa cepat pembacaan debit mengikuti perubahan (per detik)
 @export_group("Tampilan arus")
@@ -237,6 +237,7 @@ func step_sim(dt: float) -> void:
 			continue
 		var s := ground(c) + d
 		var channel := is_channel(c)
+		var spill := drains.has(c)
 		var bank := float(world.get_elev(c))
 		var outs := []
 		var total := 0.0
@@ -249,20 +250,22 @@ func step_sim(dt: float) -> void:
 				continue
 			var level := surface(nb)
 			if channel and not is_channel(nb):
-				level = max(level, bank)
-			# --- LOGIKA SPILLWAY: MENAHAN AIR SEBAGAI BENDUNG ---
-			var crest_c: float = ground(c) + 0.3 if drains.has(c) else -999.0
-			var crest_nb: float = ground(nb) + 0.3 if drains.has(nb) else -999.0
-			var effective_level: float = maxf(level, maxf(crest_c, crest_nb))
-			var head: float = s - effective_level
-			# ----------------------------------------------------	
+				level = max(level, bank)  # air hanya tumpah ke daratan kalau melewati tepi kanal
+			var head := s - level
 			if head > 0.0005:
 				var f := head * flow_k
-				outs.append([nb, f, si])
-				total += f
+				# spillway = bendung: yang boleh keluar hanya air DI ATAS lapisan penahan (spillway_crest).
+				# Tekanan (head) tetap asli, jadi air di atas batas tetap mengalir deras.
+				if spill:
+					f = minf(f, maxf(0.0, d - spillway_crest))
+				if f > 0.0:
+					outs.append([nb, f, si])
+					total += f
 		if total <= 0.0:
 			continue
-		var scale: float = min(1.0, d / total)
+		# volume yang bisa keluar: seluruh air, atau hanya kelebihan di atas batas untuk spillway
+		var avail: float = maxf(0.0, d - spillway_crest) if spill else d
+		var scale: float = min(1.0, avail / total)
 		outflow[c] = total * scale
 		var v := Vector2.ZERO
 		for o in outs:

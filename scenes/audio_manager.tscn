@@ -1,0 +1,36 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://audio/audio_manager.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/bgm_menu.mp3" id="2"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/jingle_win.mp3" id="3"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/jingle_lose.wav" id="4"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/amb_water.mp3" id="5"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/amb_rain.wav" id="6"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/amb_wind.mp3" id="7"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ui_click.ogg" id="8"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ui_error.wav" id="9"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/tool_dirt.wav" id="10"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/place_wood.wav" id="11"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/place_stone.wav" id="12"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bld_warning.wav" id="13"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/bld_destroyed.mp3" id="14"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/day_new.wav" id="15"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/land_expand.mp3" id="16"]
+
+[node name="Audio" type="Node"]
+script = ExtResource("1_script")
+bgm_menu = ExtResource("2")
+jingle_win = ExtResource("3")
+jingle_lose = ExtResource("4")
+amb_water = ExtResource("5")
+amb_rain = ExtResource("6")
+amb_wind = ExtResource("7")
+ui_click = ExtResource("8")
+ui_error = ExtResource("9")
+tool_dirt = ExtResource("10")
+place_wood = ExtResource("11")
+place_stone = ExtResource("12")
+bld_warning = ExtResource("13")
+bld_destroyed = ExtResource("14")
+day_new = ExtResource("15")
+land_expand = ExtResource("16")

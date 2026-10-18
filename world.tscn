@@ -20,7 +20,7 @@
 [ext_resource type="Texture2D" uid="uid://hd1ptlohbdbx" path="res://assets/Icon/ratakan.png" id="16_ic_ratakan"]
 [ext_resource type="Texture2D" uid="uid://tylnya23pc5m" path="res://assets/Icon/timbun.png" id="17_ic_timbun"]
 [ext_resource type="Texture2D" uid="uid://cd7edl75otv1" path="res://assets/Icon/kincir.png" id="21b_ic_kincir"]
-[ext_resource type="Texture2D" uid="uid://cwp54afce1tw0" path="res://assets/Icon/cerah.png" id="22_ic_cerah"]
+[ext_resource type="Texture2D" path="res://assets/Icon/berawan.png" id="22_ic_cerah"]
 [ext_resource type="Texture2D" uid="uid://cbihcema4bpi" path="res://assets/Icon/kemarau.png" id="23_ic_kemarau"]
 [ext_resource type="Texture2D" uid="uid://bti15r4o2l87s" path="res://assets/Icon/rain.png" id="24_ic_hujan"]
 [ext_resource type="Script" uid="uid://cy4omey48iujt" path="res://ui/hud.gd" id="25_hud"]
@@ -33,7 +33,7 @@
 [ext_resource type="Texture2D" uid="uid://pkl8fxny2bid" path="res://assets/placeholder/ui/ic_play.png" id="32_play"]
 [ext_resource type="Texture2D" uid="uid://c03eenm81nckh" path="res://assets/placeholder/ui/ic_fast.png" id="33_fast"]
 [ext_resource type="Texture2D" uid="uid://c5y4qg1cvvwkg" path="res://assets/placeholder/ui/ic_layers.png" id="34_layers"]
-[ext_resource type="Texture2D" uid="uid://d0pj0koms5s5x" path="res://assets/placeholder/ui/ic_star.png" id="35_star"]
+[ext_resource type="Texture2D" path="res://assets/Icon/stars1.png" id="35_star"]
 [ext_resource type="TileSetAtlasSource" path="res://assets/water/water_flow_source.tres" id="39_flow"]
 [ext_resource type="TileSet" uid="uid://bk35s4yt7qclm" path="res://assets/water/water_edge_tileset.tres" id="40_edge"]
 [ext_resource type="Texture2D" uid="uid://bq3jvn0cimhh5" path="res://assets/Icon/bridges.png" id="42_55kwu"]
@@ -47,7 +47,7 @@
 [ext_resource type="Texture2D" uid="uid://c0xx6semeqki4" path="res://assets/Tiles/waterflow.png" id="61_waterflow"]
 [ext_resource type="Texture2D" uid="uid://c30bai0e4a1xy" path="res://assets/Icon/buildings.png" id="70_ic_bld"]
 [ext_resource type="Texture2D" uid="uid://5fabj78lbsve" path="res://assets/Icon/destroyed.png" id="71_ic_destroyed"]
-[ext_resource type="Texture2D" uid="uid://cwr17xtskiykv" path="res://assets/placeholder/ui/ic_drop.png" id="72_ic_drop"]
+[ext_resource type="Texture2D" path="res://assets/Icon/water.png" id="72_ic_drop"]
 [ext_resource type="Texture2D" uid="uid://dftvr7vfjxyso" path="res://assets/placeholder/ui/ic_gear.png" id="73_ic_gear"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fj7yv"]
@@ -900,17 +900,6 @@ icon = ExtResource("32_play")
 icon_alignment = 1
 expand_icon = true
 
-[node name="Fast" type="Button" parent="HUD/Root/TopRight/Speed/VBox" unique_id=273941006]
-custom_minimum_size = Vector2(18, 12)
-layout_mode = 2
-tooltip_text = "Kecepatan 2x"
-focus_mode = 0
-toggle_mode = true
-button_group = SubResource("ButtonGroup_speed")
-icon = ExtResource("33_fast")
-icon_alignment = 1
-expand_icon = true
-
 [node name="PointsPopup" type="PanelContainer" parent="HUD/Root" unique_id=1376523086]
 visible = false
 layout_mode = 1
@@ -1116,25 +1105,6 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "0%"
 horizontal_alignment = 2
-
-[node name="DebugHint" type="Label" parent="HUD/Root" unique_id=821579237]
-visible = false
-layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = -88.0
-offset_right = 104.0
-offset_bottom = -56.0
-grow_vertical = 0
-theme_override_colors/font_color = Color(1, 1, 1, 0.8)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
-theme_override_constants/outline_size = 2
-theme_override_font_sizes/font_size = 7
-text = "DEBUG
-F1 hari+1   F2 cuaca
-F3 stok   F4 folder log"
 
 [node name="Legend" type="PanelContainer" parent="HUD/Root" unique_id=400653381]
 visible = false
