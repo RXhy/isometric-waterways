@@ -93,19 +93,6 @@ layout_mode = 2
 text = "EXIT"
 label_texture = ExtResource("9_t_exit")
 
-[node name="Footer" type="Label" parent="UI" unique_id=1594169936]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 112.0
-offset_top = -20.0
-offset_right = 260.0
-offset_bottom = -8.0
-grow_vertical = 0
-theme_override_colors/font_color = Color(0.62, 0.6, 0.56, 1)
-theme_override_font_sizes/font_size = 7
-text = "v0.1  -  MAGE 12  -  Team Waterways"
-
 [node name="ExitDialog" type="PanelContainer" parent="UI" unique_id=1563109066]
 unique_name_in_owner = true
 anchors_preset = 8
@@ -157,4 +144,4 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.08, 0.1, 0.14, 0)
+color = Color(0, 0, 0, 0)

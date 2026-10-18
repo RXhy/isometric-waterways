@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://ui/loading.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/loading_map.tscn" id="2_map"]
+[ext_resource type="Script" path="res://ui/water_bar.gd" id="4_bar"]
 [ext_resource type="Texture2D" path="res://assets/ui/Main Menu/logo_fiks_hd-export-export.png" id="3_logo"]
 
 [sub_resource type="Gradient" id="Gradient_shade"]
@@ -12,29 +13,6 @@ colors = PackedColorArray(0.05, 0.08, 0.1, 0, 0.05, 0.08, 0.1, 0.35, 0.03, 0.05,
 gradient = SubResource("Gradient_shade")
 fill_from = Vector2(0, 0)
 fill_to = Vector2(0, 1)
-
-[sub_resource type="StyleBoxFlat" id="Style_bg"]
-bg_color = Color(0.11, 0.15, 0.17, 0.9)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.45, 0.78, 0.72, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-expand_margin_left = 1.0
-expand_margin_top = 1.0
-expand_margin_right = 1.0
-expand_margin_bottom = 1.0
-
-[sub_resource type="StyleBoxFlat" id="Style_fill"]
-bg_color = Color(0.29, 0.6, 0.82, 1)
-corner_radius_top_left = 1
-corner_radius_top_right = 1
-corner_radius_bottom_right = 1
-corner_radius_bottom_left = 1
 
 [node name="Loading" type="Control"]
 layout_mode = 3
@@ -48,6 +26,7 @@ script = ExtResource("1_script")
 [node name="Map" parent="." instance=ExtResource("2_map")]
 
 [node name="UI" type="CanvasLayer" parent="."]
+layer = 100
 
 [node name="Shade" type="TextureRect" parent="UI"]
 anchors_preset = 15
@@ -81,24 +60,15 @@ theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 11
 text = "Loading ..."
 
-[node name="Bar" type="ProgressBar" parent="UI"]
+[node name="Bar" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
 offset_left = 20.0
-offset_top = 309.0
+offset_top = 308.0
 offset_right = 620.0
-offset_bottom = 317.0
+offset_bottom = 320.0
 mouse_filter = 2
-theme_override_styles/background = SubResource("Style_bg")
-theme_override_styles/fill = SubResource("Style_fill")
-show_percentage = false
-
-[node name="Footer" type="Label" parent="UI"]
-offset_left = 6.0
-offset_top = 343.0
-offset_right = 160.0
-offset_bottom = 356.0
-theme_override_colors/font_color = Color(0.75, 0.78, 0.8, 0.8)
-theme_override_font_sizes/font_size = 6
-text = "v0.1  -  MAGE 12  -  Team Waterways"
+script = ExtResource("4_bar")
 
 [node name="Tip" type="Label" parent="UI"]
 anchors_preset = 7

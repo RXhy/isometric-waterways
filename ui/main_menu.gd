@@ -45,7 +45,7 @@ func _ready() -> void:
 func _on_new_game() -> void:
 	fade.mouse_filter = Control.MOUSE_FILTER_STOP
 	var t := create_tween()
-	t.tween_property(fade, "color:a", 1.0, 0.4)
+	t.tween_property(fade, "color:a", 1.0, 0.2)
 	t.tween_callback(func(): get_tree().change_scene_to_file(GAME_SCENE))
 
 func _on_load_game() -> void:

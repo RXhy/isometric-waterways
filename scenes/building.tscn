@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://dyd1y5wgb53x0" path="res://assets/placeholder/reruntuhan.png" id="4_ruin"]
 [ext_resource type="Texture2D" uid="uid://bytlh4d6pq2mc" path="res://assets/Icon/warning.png" id="5_warn"]
 [ext_resource type="Texture2D" uid="uid://dxstaoohlr2x3" path="res://assets/placeholder/ui/ring_under.png" id="6_ring_u"]
-[ext_resource type="Texture2D" uid="uid://chvtis4te64w0" path="res://assets/placeholder/ui/ring_progress.png" id="7_ring_p"]
+[ext_resource type="Texture2D" path="res://assets/placeholder/ui/warning_ring2.png" id="7_ring_p"]
 
 [node name="Building" type="Node2D" unique_id=967065023]
 script = ExtResource("1_script")
@@ -32,10 +32,11 @@ texture = ExtResource("4_ruin")
 offset = Vector2(0, -1)
 
 [node name="Ring" type="TextureProgressBar" parent="." unique_id=1569876365]
-offset_left = -9.0
-offset_top = -38.0
-offset_right = 9.0
-offset_bottom = -20.0
+offset_left = -12.0
+offset_top = -41.0
+offset_right = 36.0
+offset_bottom = 7.0
+scale = Vector2(0.5, 0.5)
 mouse_filter = 2
 max_value = 1.0
 step = 0.001

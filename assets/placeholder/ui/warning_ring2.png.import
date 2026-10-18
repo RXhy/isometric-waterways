@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://chvtis4te64w0"
-path="res://.godot/imported/ring_progress.png-1328433ce1a1aebbf992b40d1c4ccf0e.ctex"
+uid="uid://5ohhg4pjtn1n"
+path="res://.godot/imported/warning_ring2.png-9afed4ba0961cede7aa0b1f2737550de.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/placeholder/ui/ring_progress.png"
-dest_files=["res://.godot/imported/ring_progress.png-1328433ce1a1aebbf992b40d1c4ccf0e.ctex"]
+source_file="res://assets/placeholder/ui/warning_ring2.png"
+dest_files=["res://.godot/imported/warning_ring2.png-9afed4ba0961cede7aa0b1f2737550de.ctex"]
 
 [params]
 

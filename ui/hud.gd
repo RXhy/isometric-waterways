@@ -25,10 +25,10 @@ const TIP_INFO := Color(0.75, 0.76, 0.73)
 @onready var points_bar: ProgressBar = $Root/TopRight/Stats/HBox/Points/HBox/VBox/Bar
 @onready var points_label: Label = $Root/TopRight/Stats/HBox/Points/HBox/VBox/Value
 @onready var bld_label: Label = $Root/TopRight/Stats/HBox/Bld/VBox/Value
-@onready var bld_sub: Label = $Root/TopRight/Stats/HBox/Bld/VBox/Sub
+@onready var bld_sub: Label = get_node_or_null("Root/TopRight/Stats/HBox/Bld/VBox/Sub")  # boleh dihapus dari scene
 @onready var ruin_label: Label = $Root/TopRight/Stats/HBox/Ruin/VBox/Value
-@onready var bridge_label: Label = $Root/TopRight/Stats/HBox/Bridge/VBox/Value
-@onready var bridge_sub: Label = $Root/TopRight/Stats/HBox/Bridge/VBox/Sub
+@onready var bridge_label: Label = get_node_or_null("Root/TopRight/Stats/HBox/Bridge/VBox/Value")  # panel dihapus; null = aman
+@onready var bridge_sub: Label = get_node_or_null("Root/TopRight/Stats/HBox/Bridge/VBox/Sub")
 @onready var water_bar: ProgressBar = $Root/WaterPanel/HBox/VBox/Row/Bar
 @onready var water_pct: Label = $Root/WaterPanel/HBox/VBox/Row/Pct
 @onready var points_popup: PanelContainer = $Root/PointsPopup
@@ -73,11 +73,8 @@ func setup(w) -> void:
 	layer_button.pressed.connect(_cycle_layer)
 	points_popup.hide()
 	end_overlay.hide()
-	# panel Jembatan di kanan atas tidak dipakai lagi
-	$Root/TopRight/Stats/HBox/Bridge.hide()
 	end_panel = preload("res://scenes/ui/end_panel.tscn").instantiate()
 	end_overlay.add_child(end_panel)
-	$Root/TopRight/Stats/HBox/SepBridge.hide()
 	set_speed(1.0)
 	_update_legend()
 	_make_toast()
@@ -243,10 +240,13 @@ func refresh() -> void:
 		if b.has_water:
 			watered += 1
 	bld_label.text = "Buildings %d" % alive
-	bld_sub.text = "(at risk %d)" % threatened
-	bld_sub.add_theme_color_override("font_color", TIP_BAD if threatened > 0 else TIP_INFO)
-	bridge_label.text = "Bridges %d" % W.roads.bridge_stock
-	bridge_sub.text = "(active %d)" % S.working_bridges()
+	if bld_sub:
+		bld_sub.text = "(at risk %d)" % threatened
+		bld_sub.add_theme_color_override("font_color", TIP_BAD if threatened > 0 else TIP_INFO)
+	if bridge_label:
+		bridge_label.text = "Bridges %d" % W.roads.bridge_stock
+	if bridge_sub:
+		bridge_sub.text = "(active %d)" % S.working_bridges()
 	var flow: float = float(watered) / alive if alive > 0 else 0.0
 	water_bar.value = flow
 	water_pct.text = "%d%%" % roundi(flow * 100.0)

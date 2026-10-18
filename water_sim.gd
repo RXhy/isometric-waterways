@@ -16,6 +16,7 @@ extends Node
 @export var tick_rate: float = 20.0         ## langkah simulasi per detik
 @export var flow_k: float = 0.2             ## porsi selisih permukaan yang berpindah per langkah (maks 0.25)
 @export var channel_depth: float = 0.5      ## dalamnya kanal/dasar sungai di bawah permukaan tanah
+@export var well_push: float = 0.15  ## sumur bor diisi sedikit di atas tepi supaya air terdorong keluar ke kanal sebelah
 @export var source_rate: float = 1.5        ## kecepatan sumber mengisi ulang ke targetnya (per detik)
 @export var wet_threshold: float = 0.06     ## kedalaman minimal agar petak terlihat/terhitung berair
 @export var flood_threshold: float = 0.1    ## kedalaman air di daratan yang dihitung banjir
@@ -222,10 +223,12 @@ func step_sim(dt: float) -> void:
 	# 1) Sumber mengisi ulang (atau surut) menuju targetnya
 	var k: float = min(1.0, source_rate * dt)
 	for c in body_of:
+		if wells.has(c):
+			continue  # sumur bor tidak ikut target danau/cuaca
 		var t: float = body_target[body_of[c]]
 		depth[c] = get_depth(c) + (t - get_depth(c)) * k
 	for c in wells:
-		depth[c] = get_depth(c) + (channel_depth - get_depth(c)) * k
+		depth[c] = get_depth(c) + (channel_depth + well_push - get_depth(c)) * k
 
 	# 2) Aliran antar petak
 	var change := {}

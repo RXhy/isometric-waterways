@@ -41,4 +41,6 @@ theme/custom_font="res://assets/Font/Chakra_Petch/ChakraPetch-Regular.ttf"
 
 [rendering]
 
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)
+
 textures/canvas_textures/default_texture_filter=0

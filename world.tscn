@@ -34,7 +34,7 @@
 [ext_resource type="Texture2D" uid="uid://c5y4qg1cvvwkg" path="res://assets/placeholder/ui/ic_layers.png" id="34_layers"]
 [ext_resource type="Texture2D" uid="uid://hcrmqt8tcmsg" path="res://assets/Icon/stars1.png" id="35_star"]
 [ext_resource type="TileSetAtlasSource" path="res://assets/water/water_flow_source.tres" id="39_flow"]
-[ext_resource type="TileSet" path="res://assets/water/water_edge_tileset.tres" id="40_edge"]
+[ext_resource type="TileSet" uid="uid://b8bl3woa55tyt" path="res://assets/water/water_edge_tileset.tres" id="40_edge"]
 [ext_resource type="Texture2D" uid="uid://bq3jvn0cimhh5" path="res://assets/Icon/bridges.png" id="42_55kwu"]
 [ext_resource type="Script" uid="uid://d17eff6j22jie" path="res://balance_log.gd" id="42_log"]
 [ext_resource type="Texture2D" uid="uid://7dnipfsr3l7i" path="res://assets/Icon/drill.png" id="43_f3o6s"]
@@ -792,12 +792,6 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "Buildings 0"
 
-[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bld/VBox" unique_id=1588015]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
-theme_override_font_sizes/font_size = 7
-text = "(at risk 0)"
-
 [node name="SepRuin" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox" unique_id=424809538]
 layout_mode = 2
 
@@ -825,46 +819,6 @@ alignment = 1
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "Destroyed 0/8"
-
-[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Ruin/VBox" unique_id=572357887]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
-theme_override_font_sizes/font_size = 7
-text = "loss limit"
-
-[node name="SepBridge" type="VSeparator" parent="HUD/Root/TopRight/Stats/HBox" unique_id=380358716]
-layout_mode = 2
-
-[node name="Bridge" type="HBoxContainer" parent="HUD/Root/TopRight/Stats/HBox" unique_id=815880901]
-layout_mode = 2
-tooltip_text = "Bridges in stock (active = built bridges with water under them)"
-theme_override_constants/separation = 3
-
-[node name="Icon" type="TextureRect" parent="HUD/Root/TopRight/Stats/HBox/Bridge" unique_id=1560529095]
-custom_minimum_size = Vector2(18, 18)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-texture = ExtResource("42_55kwu")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="VBox" type="VBoxContainer" parent="HUD/Root/TopRight/Stats/HBox/Bridge" unique_id=2043628875]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 0
-alignment = 1
-
-[node name="Value" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bridge/VBox" unique_id=142056120]
-layout_mode = 2
-theme_override_font_sizes/font_size = 9
-text = "Bridges 0"
-
-[node name="Sub" type="Label" parent="HUD/Root/TopRight/Stats/HBox/Bridge/VBox" unique_id=1981956202]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.71, 0.69, 1)
-theme_override_font_sizes/font_size = 7
-text = "(active 0)"
 
 [node name="Speed" type="PanelContainer" parent="HUD/Root/TopRight" unique_id=1512758546]
 custom_minimum_size = Vector2(0, 44)
@@ -1063,7 +1017,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="DropBox" type="MarginContainer" parent="HUD/Root/WaterPanel/HBox"]
+[node name="DropBox" type="MarginContainer" parent="HUD/Root/WaterPanel/HBox" unique_id=60788175]
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -1289,9 +1243,11 @@ theme_override_font_sizes/font_size = 8
 text = "Shallow (< 0.2)"
 
 [node name="PauseMenu" parent="HUD/Root" unique_id=1079321652 instance=ExtResource("43_pause")]
+visible = false
 layout_mode = 1
 
 [node name="Overlay" type="ColorRect" parent="HUD" unique_id=1050334264]
+visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -1312,7 +1268,5 @@ theme_override_colors/font_color = Color(0.97, 0.95, 0.9, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 20
-text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
-

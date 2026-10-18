@@ -42,7 +42,7 @@ extends Node
 @export var zoom_db_per_double: float = 5.0  ## suara dunia (air, sfx alat) +dB tiap zoom in 2x, -dB tiap zoom out 2x
 @export var zoom_db_min: float = -10.0
 @export var zoom_db_max: float = 5.0
-@export var mute_on_pause: bool = false      ## semua suara mati saat game di-pause
+const MUTE_ON_PAUSE := true  # semua suara mati saat game di-pause (sengaja bukan export supaya tidak sengaja mati)
 @export var min_interval := {"tool_dirt": 0.07, "bld_warning": 1.2, "ui_click": 0.04, "ui_error": 0.25, "place_stone": 0.05}
 
 const POOL_SIZE := 8
@@ -56,6 +56,7 @@ var _amb_target := {}     # nama -> volume target (db)
 var _amb_on := false
 var _water_level := 0.0
 var _weather := 0
+var _was_paused := false
 var _zoom_db := 0.0  # penyesuaian volume dari zoom kamera (diatur world.gd lewat set_zoom)
 const UI_SOUNDS := ["ui_click", "ui_error", "jingle_win", "jingle_lose", "day_new"]
 
@@ -65,6 +66,7 @@ func set_zoom(rel: float) -> void:
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	AudioServer.set_bus_volume_db(0, master_volume_db)
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer.new()
 		p.bus = "SFX"
@@ -163,8 +165,17 @@ func set_weather(w: int) -> void:
 	_weather = w
 
 func _process(delta: float) -> void:
-	AudioServer.set_bus_volume_db(0, master_volume_db)
-	AudioServer.set_bus_mute(0, mute_on_pause and (get_tree().paused or Engine.time_scale == 0.0))
+	# pause: hentikan SEMUA pemutar (musik, ambience air/hujan/angin, sfx), lanjutkan saat main lagi
+	var paused_now: bool = MUTE_ON_PAUSE and (get_tree().paused or Engine.time_scale == 0.0)
+	for n in get_children():
+		if n is AudioStreamPlayer:
+			n.stream_paused = paused_now
+	if paused_now != _was_paused:  # hanya saat status berubah, supaya slider volume tetap berlaku
+		_was_paused = paused_now
+		for b in ["Music", "SFX"]:
+			var bi := AudioServer.get_bus_index(b)
+			if bi >= 0:
+				AudioServer.set_bus_mute(bi, paused_now)
 	if _amb_on:
 		# air: tetap terdengar pelan walau belum ada yang teraliri (ada sungai/danau)
 		_amb_target["water"] = lerpf(water_volume_db - 14.0, water_volume_db, _water_level) + _zoom_db

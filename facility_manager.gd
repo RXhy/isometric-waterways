@@ -12,7 +12,7 @@ const KIND_NAMES := ["Drill Well", "Dam", "Spillway", "Water Wheel"]
 @export var start_stock: Array[int] = [1, 0, 1, 1]  ## stok awal [Bor, Bendungan, Spillway, Kincir]
 @export var stock_every_days: Array[int] = [3, 0, 5, 3]  ## stok +1 tiap N hari [Bor, Bendungan, Spillway, Kincir]; 0 = tidak bertambah
 @export var facilities_sort_with_buildings: bool = true  ## urutan gambar fasilitas digabung dengan bangunan (yang di depan menutupi yang di belakang)
-@export var kincir_face_invert: bool = true  ## balik arah kincir kalau sprite terlihat terbalik
+@export var kincir_face_invert: bool = false  ## balik arah kincir kalau sprite terlihat terbalik
 ## (lama, tidak dipakai lagi)
 @export var stock_per_forecast: Array[int] = [1, 0, 1, 1]  ## tambahan stok [Bor, Bendungan (dihapus, biarkan 0), Spillway, Kincir]; Kincir bertambah saat besok Cerah
 @export_group("Water Wheel")
