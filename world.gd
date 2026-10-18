@@ -72,7 +72,11 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 @export var day_length: float = 30.0  ## detik per hari (bangunan baru muncul tiap awal hari)
 @export var target_days: int = 45     ## lama permainan (hari). Di akhir hari terakhir poin dinilai jadi bintang (lihat node Score)
 @export var damage_quota: int = 8     ## kalah kalau bangunan hancur MELEBIHI angka ini (~20% dari ~40 bangunan selama 45 hari)
-@export var shovel_per_day: int = 15  ## aksi sekop (Gali / Ratakan / Timbun kanal) per hari; sisa tidak terbawa ke besok
+@export var dig_per_day: int = 15      ## jatah Gali per hari; sisa tidak terbawa ke besok
+@export var level_per_day: int = 15    ## jatah Ratakan per hari
+@export var fill_per_day: int = 10     ## jatah Timbun kanal per hari
+var shovel_per_day: int:  # total (untuk log)
+	get: return dig_per_day + level_per_day + fill_per_day
 @export var demo_mode: bool = false  ## latar menu utama: HUD disembunyikan, input mati, tidak bisa kalah
 ## Seed peta & kejadian acak. 0 = acak tiap main (seed yang terpakai dicatat di log playtest).
 ## Isi dengan seed dari log untuk mengulang peta/kondisi yang sama saat membandingkan balancing.
@@ -144,7 +148,13 @@ const MENU_SCENE := "res://scenes/main_menu.tscn"
 var elapsed: float = 0.0
 var game_over: bool = false
 var last_day: int = 0
-var shovel: int = 0  ## sisa aksi sekop hari ini
+var shovel_left := {0: 0, 1: 0, 2: 0}  ## sisa jatah hari ini per alat (Tool.GALI/RATAKAN/TIMBUN)
+## Sisa jatah untuk alat yang sedang dipilih.
+var shovel: int:
+	get: return shovel_left.get(current_tool, 0)
+	set(v):
+		if shovel_left.has(current_tool):
+			shovel_left[current_tool] = v
 var shovel_used: int = 0  ## aksi sekop yang sudah dipakai hari ini (untuk log)
 
 const NEIGHBORS_8 := [
@@ -241,10 +251,11 @@ func _check_new_day() -> void:
 			balance_log.log_day_end(last_day)
 			Audio.play("day_new")
 		score.start_of_day()
-		shovel = shovel_per_day
+		shovel_left = {Tool.GALI: dig_per_day, Tool.RATAKAN: level_per_day, Tool.TIMBUN: fill_per_day}
 		shovel_used = 0
 		last_day = d
 		roads.on_new_day(d)
+		facilities.on_new_day(d)
 		var k := unlock_step_for_day(d)
 		if k != unlock_step:
 			_expand_to(k)
@@ -357,18 +368,18 @@ func action_preview(cell: Vector2i) -> Array:
 			if occupied: return [-1, "Petak terisi bangunan/fasilitas"]
 			if roads.is_road(cell): return [-1, "Jalan - pakai Jembatan"]
 			if dig_pending.has(cell): return [0, "Sedang digali"]
-			if land: return [-1, "Sekop habis - tambah lagi besok"] if no_shovel else [1, "Klik: gali kanal"]
+			if land: return [-1, "Jatah habis - tambah lagi besok"] if no_shovel else [1, "Klik: gali kanal"]
 			return [-1, "Sudah kanal/air"]
 		Tool.RATAKAN:
 			if occupied or roads.is_road(cell): return [-1, "Tidak bisa diratakan"]
 			if is_natural_water(cell): return [-1, "Sumber air tidak bisa diratakan"]
-			if no_shovel: return [-1, "Sekop habis - tambah lagi besok"]
+			if no_shovel: return [-1, "Jatah habis - tambah lagi besok"]
 			var h := get_elev(cell)
 			return [1, "Kiri: turun ke %d  |  Kanan: naik ke %d" % [maxi(h - 1, 0), mini(h + 1, MAX_ELEV)]]
 		Tool.TIMBUN:
 			if facilities.has_facility(cell): return [1, "Klik: bongkar %s (stok kembali)" % facilities.KIND_NAMES[facilities.kind_at(cell)]]
 			if roads.bridges.has(cell): return [1, "Klik: lepas jembatan"]
-			if dug.has(cell): return [-1, "Sekop habis - tambah lagi besok"] if no_shovel else [1, "Klik: tutup kanal"]
+			if dug.has(cell): return [-1, "Jatah habis - tambah lagi besok"] if no_shovel else [1, "Klik: tutup kanal"]
 			return [0, "Tidak ada yang bisa ditimbun"]
 		Tool.JEMBATAN:
 			if roads.bridge_stock <= 0: return [-1, "Stok jembatan habis"]
@@ -1601,5 +1612,5 @@ func _finish_dig(c: Vector2i) -> void:
 		dug[c] = true
 		set_base(c, TileState.CANAL)
 	else:
-		shovel += 1  # batal (petak keburu terisi): sekop dikembalikan
+		shovel_left[Tool.GALI] += 1  # batal (petak keburu terisi): sekop dikembalikan
 		water.refresh_cell(c)

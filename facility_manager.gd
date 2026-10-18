@@ -9,7 +9,10 @@ const KIND_NAMES := ["Mesin Bor", "Bendungan", "Spillway", "Kincir Air"]
 @export var bendungan_scene: PackedScene
 @export var spillway_scene: PackedScene
 @export var kincir_scene: PackedScene
-@export var start_stock: Array[int] = [1, 0, 0, 2]  ## stok awal [Bor, Bendungan, Spillway, Kincir]
+@export var start_stock: Array[int] = [1, 0, 1, 1]  ## stok awal [Bor, Bendungan, Spillway, Kincir]
+@export var stock_every_days: Array[int] = [3, 0, 5, 3]  ## stok +1 tiap N hari [Bor, Bendungan, Spillway, Kincir]; 0 = tidak bertambah
+@export var kincir_face_invert: bool = false  ## balik arah kincir kalau sprite terlihat terbalik
+## (lama, tidak dipakai lagi)
 @export var stock_per_forecast: Array[int] = [1, 0, 1, 1]  ## tambahan stok [Bor, Bendungan (dihapus, biarkan 0), Spillway, Kincir]; Kincir bertambah saat besok Cerah
 @export_group("Kincir Air")
 ## Fungsi utama kincir: POMPA. Air dari petak kincir diangkat ke kanal/sungai di sebelahnya
@@ -34,7 +37,19 @@ func kind_at(cell: Vector2i) -> int:
 	return facilities[cell]["kind"] if facilities.has(cell) else -1
 
 ## Dipanggil saat prakiraan cuaca besok diumumkan.
-func on_forecast(weather: int) -> void:
+func on_forecast(_weather: int) -> void:
+	pass
+
+## Dipanggil tiap hari baru (dari world.gd): tambah stok berkala.
+func on_new_day(day: int) -> void:
+	if day <= 1:
+		return
+	for k in stock_every_days.size():
+		var n: int = stock_every_days[k]
+		if n > 0 and (day - 1) % n == 0:
+			stock[k] += 1
+
+func _old_on_forecast(weather: int) -> void:
 	if weather == world.weather.Weather.KEMARAU:
 		stock[Kind.BOR] += stock_per_forecast[Kind.BOR]
 	elif weather == world.weather.Weather.HUJAN:
@@ -193,4 +208,20 @@ func _process(_delta: float) -> void:
 		if facilities[c]["kind"] == Kind.KINCIR:
 			# berputar saat dialiri air ATAU saat sedang memompa.
 			# Parameter kedua mengirimkan arah aliran dari water_sim.
-			facilities[c]["node"].set_power(maxf(kincir_power(c), world.water.pump_power(c)), world.water.flow_dir(c))
+			facilities[c]["node"].set_power(maxf(kincir_power(c), world.water.pump_power(c)), kincir_facing(c))
+
+## Arah hadap kincir: bagian belakang menghadap petak tetangga yang paling tinggi
+## (air dialirkan ke dataran tinggi). 0:TL 1:TR 2:BL 3:BR. Kalau tidak ada yang lebih tinggi, ikut arah aliran.
+func kincir_facing(c: Vector2i) -> int:
+	var sides := [TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE, TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE,
+		TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE]
+	var best := -1
+	var best_h: int = world.get_elev(c)
+	for i in 4:
+		var n: Vector2i = world.world.get_neighbor_cell(c, sides[i])
+		if world.grid_data.has(n) and world.get_elev(n) > best_h:
+			best_h = world.get_elev(n)
+			best = i
+	if best < 0:
+		return world.water.flow_dir(c)
+	return 3 - best if kincir_face_invert else best

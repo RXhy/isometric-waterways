@@ -4,8 +4,9 @@ extends Node2D
 ## - Jalan tidak bisa digali. Pemain memasang Jembatan di petak jalan supaya
 ##   kanal bisa lewat di bawahnya. Tampilan jembatan ada di scenes/bridge.tscn.
 
-@export var bridges_start: int = 2    ## stok jembatan di awal
-@export var bridges_per_day: int = 1  ## tambahan stok tiap hari baru
+@export var bridges_start: int = 1    ## stok jembatan di awal
+@export var bridges_per_day: int = 1  ## tambahan stok tiap periode
+@export var bridge_every_days: int = 2  ## stok bertambah tiap N hari
 @export var bridge_scene: PackedScene ## scenes/bridge.tscn
 
 @export_group("Animasi jalan")
@@ -29,7 +30,7 @@ func setup(w) -> void:
 	bridge_stock = bridges_start
 
 func on_new_day(day: int) -> void:
-	if day > 1:
+	if day > 1 and (day - 1) % bridge_every_days == 0:
 		bridge_stock += bridges_per_day
 
 func is_road(cell: Vector2i) -> bool:

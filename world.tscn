@@ -1064,10 +1064,15 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="Drop" type="TextureRect" parent="HUD/Root/WaterPanel/HBox" unique_id=111542325]
-custom_minimum_size = Vector2(20, 20)
+[node name="DropBox" type="MarginContainer" parent="HUD/Root/WaterPanel/HBox"]
 layout_mode = 2
 size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/margin_top = 5
+
+[node name="Drop" type="TextureRect" parent="HUD/Root/WaterPanel/HBox/DropBox" unique_id=111542325]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("72_ic_drop")
 expand_mode = 1

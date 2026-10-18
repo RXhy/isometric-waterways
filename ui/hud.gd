@@ -254,7 +254,7 @@ func refresh() -> void:
 		lines += "Bintang 1/2/3: %d / %d / %d" % [S.target_points, S.star2_points, S.star3_points]
 		popup_lines.text = lines
 	for i in 3:
-		cards[i].set_stock(W.shovel)
+		cards[i].set_stock(W.shovel_left.get(i, 0))
 	cards[3].set_stock(W.roads.bridge_stock)
 	cards[4].set_stock(W.facilities.stock[W.facilities.Kind.BOR])
 	cards[5].set_stock(W.facilities.stock[W.facilities.Kind.SPILLWAY])

@@ -38,6 +38,8 @@ extends Node
 @export var sfx_volume_db: float = 0.0
 @export var click_volume_db: float = -4.0
 ## Jeda minimal (detik) antar bunyi yang sama, supaya drag panjang / banyak bangunan tidak berisik.
+@export var master_volume_db: float = -5.0  ## volume keseluruhan (musik + ambience + sfx)
+@export var mute_on_pause: bool = true      ## semua suara mati saat game di-pause
 @export var min_interval := {"tool_dirt": 0.07, "bld_warning": 1.2, "ui_click": 0.04, "ui_error": 0.25, "place_stone": 0.05}
 
 const POOL_SIZE := 8
@@ -152,6 +154,8 @@ func set_weather(w: int) -> void:
 	_weather = w
 
 func _process(delta: float) -> void:
+	AudioServer.set_bus_volume_db(0, master_volume_db)
+	AudioServer.set_bus_mute(0, mute_on_pause and get_tree().paused)
 	if _amb_on:
 		# air: tetap terdengar pelan walau belum ada yang teraliri (ada sungai/danau)
 		_amb_target["water"] = lerpf(water_volume_db - 14.0, water_volume_db, _water_level)
