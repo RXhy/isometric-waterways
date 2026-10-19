@@ -164,7 +164,7 @@ Settings contains:
 - fullscreen
 - cell info tooltip
 
-Settings are saved automatically in `user://settings.cfg`. The `Music` and `SFX` audio buses are in `default_bus_layout.tres`. All audio is played by the `Audio` autoload (`scenes/audio_manager.tscn`, full list in `AUDIO.md`).
+Settings are saved automatically in `user://settings.cfg`. The `Music` and `SFX` audio buses are in `default_bus_layout.tres`. All audio is played by the `Audio` autoload (`scenes/audio_manager.tscn`, full list in [`audio.md`](audio.md)).
 
 The pause menu also has a **Tutorial** button (7 pages, the same as the tutorial in the main menu).
 
@@ -429,4 +429,4 @@ Change **one group of knobs per playtest round**, and use the **same seed** when
 | `scenes/*.tscn` | Appearance of buildings, facilities, wheel, bridge, tool cards |
 | `scenes/menu_map.tscn` | Diorama map used only as the main-menu background (edited directly in the editor) |
 | `tools/build_menu_map.gd` | Script that first generated `menu_map.tscn` (running it again overwrites hand edits) |
-| `ASSET_LIST.md` | List of assets the artists need |
+| [`ASSET_LIST.md`](ASSET_LIST.md) | List of assets the artists need |

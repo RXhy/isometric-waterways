@@ -70,9 +70,10 @@ Gameplay numbers are exposed in the Inspector (`world.tscn` root, plus the Score
 | `balance_log.gd` | Automatic playtest logging (`playtest_logs/`) |
 | `ui/` | HUD, menus, splash, loading, tutorial, settings |
 | `audio/`, `assets/audio/` | Audio manager and sound files |
-| `mechanic.md`, `water.md`, `tileset.md`, `AUDIO.md`, `ASSET_LIST.md` | Design and asset documents |
+| `docs/` | Design and asset documents: `mechanic.md`, `art-pipeline.md`, `audio.md`, `ASSET_LIST.md` |
+| `CREDITS.md` | Credits and licenses |
 
-For the full rules and formulas see [`mechanic.md`](mechanic.md).
+For the full rules and formulas see [`docs/mechanic.md`](docs/mechanic.md).
 
 ## Credits
 
@@ -80,4 +81,4 @@ Made by team **Ayam Renang** for **MAGE 12** (GameDev, Institut Teknologi Sepulu
 
 - Engine: [Godot](https://godotengine.org)
 - UI font: Chakra Petch (SIL Open Font License)
-- Third-party audio and art credits are listed in [`AUDIO.md`](AUDIO.md) and [`ASSET_LIST.md`](ASSET_LIST.md)
+- Third-party audio and art credits are listed in [`CREDITS.md`](CREDITS.md)
