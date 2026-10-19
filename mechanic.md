@@ -1,18 +1,19 @@
-# WATERWAYS — Mekanik Game
+# WATERWAYS — Game Mechanics
 
-Dokumen ini menjelaskan **alur permainan (core loop)** dan **sistem air** WATERWAYS sesuai kode yang ada sekarang, supaya seluruh tim (programmer & artist) punya pemahaman yang sama.
+This document explains the **gameplay flow (core loop)** and the **water system** of WATERWAYS as implemented in the current code, so the whole team (programmers and artists) shares the same understanding.
 
-- Semua angka di bawah adalah **nilai default**. Angka-angka ini bisa diubah di **Inspector** tanpa menyentuh kode. Kolom "Atur di" menunjukkan node dan properti yang dimaksud, dan semuanya ada di `world.tscn` kecuali disebut lain.
-- Kalau kode berubah, dokumen ini juga perlu diperbarui.
+- All numbers below are **default values**. They can be changed in the **Inspector** without touching code. The "Set in" column names the node and property, and all of them are in `world.tscn` unless stated otherwise.
+- Some Inspector group names are still Indonesian in the code (for example "Kamera", "Lahan & ekspansi", "Tileset air & jalan", "Animasi jalan", "Tampilan arus", "Jadwal otomatis"). They are quoted as-is here, with the English meaning in parentheses.
+- When the code changes, this document must be updated too.
 
 ---
 
-## 1. Ringkasan
+## 1. Summary
 
-WATERWAYS adalah game puzzle-strategi isometrik. Pemain berperan sebagai perencana saluran air. Kota tumbuh sendiri: bangunan baru muncul setiap hari. Tugas pemain adalah **mengalirkan air** dari sumber alam ke bangunan dengan menggali kanal, mengatur ketinggian tanah, dan memasang fasilitas, sambil menghadapi **kemarau** dan **hujan lebat**.
+WATERWAYS is an isometric puzzle-strategy game. The player acts as a water-channel planner. The town grows on its own: new buildings appear every day. The player's job is to **bring water** from natural sources to the buildings by digging canals, adjusting ground height and placing facilities, while coping with **drought** and **heavy rain**.
 
-- Permainan berlangsung **45 hari**. Di akhir hari ke-45, poin dinilai jadi **bintang**: ≥ 3500 = 1 bintang (menang), ≥ 5000 = 2 bintang, ≥ 8500 = 3 bintang.
-- **Kalah:** bangunan yang hancur **melebihi kuota** (default **8**), atau hari ke-45 selesai dengan poin < 3500.
+- A game lasts **45 days**. At the end of day 45 the points are graded into **stars**: ≥ 3500 = 1 star (win), ≥ 5000 = 2 stars, ≥ 8500 = 3 stars.
+- **Lose:** destroyed buildings **exceed the quota** (default **8**), or day 45 ends with fewer than 3500 points.
 
 ---
 
@@ -20,412 +21,412 @@ WATERWAYS adalah game puzzle-strategi isometrik. Pemain berperan sebagai perenca
 
 ```mermaid
 flowchart LR
-    A[Awal hari] --> B[Cuaca hari ini berlaku<br/>+ prakiraan besok memberi stok fasilitas]
-    B --> C[Bangunan baru muncul<br/>jalan tersambung otomatis]
-    C --> D[Pemain membaca peta:<br/>air, elevasi, prakiraan]
-    D --> E[Pemain bertindak:<br/>gali / ratakan / timbun /<br/>pasang fasilitas / jembatan]
-    E --> F[Simulasi air berjalan<br/>bangunan teraliri atau tidak]
-    F --> G[Poin bertambah tiap detik<br/>bangunan bisa terancam/hancur]
-    G -->|hari belum habis| D
-    G -->|hari habis| H[Bonus akhir hari]
-    H --> I{Target poin tercapai?<br/>Kuota hancur terlampaui?<br/>Hari terakhir lewat?}
-    I -->|lanjut| A
-    I -->|selesai| J[Menang / Kalah]
+    A[Start of day] --> B[Today's weather applies<br/>+ tomorrow's forecast grants facility stock]
+    B --> C[New buildings appear<br/>roads connect automatically]
+    C --> D[Player reads the map:<br/>water, elevation, forecast]
+    D --> E[Player acts:<br/>dig / level / fill /<br/>place facility / bridge]
+    E --> F[Water simulation runs<br/>buildings supplied or not]
+    F --> G[Points grow every second<br/>buildings may be at risk/destroyed]
+    G -->|day not over| D
+    G -->|day over| H[End-of-day bonus]
+    H --> I{Point target reached?<br/>Destroyed quota exceeded?<br/>Last day passed?}
+    I -->|continue| A
+    I -->|finished| J[Win / Lose]
 ```
 
-### 2.1 Siklus hari
+### 2.1 Day cycle
 
-| Aturan | Default | Atur di |
+| Rule | Default | Set in |
 |---|---|---|
-| Panjang satu hari | 30 detik | Node2D → `day_length` |
-| Jumlah hari | 45 | Node2D → `target_days` |
-| Kecepatan | Jeda / jalan normal (tombol di ujung kanan atas, Spasi = jeda). Tidak ada kecepatan 2×. | — |
-| Zoom | Scroll mouse (ke arah kursor), 0,75× – 2,5× | Node2D → grup **Kamera** (`zoom_out_limit`, `zoom_in_limit`, `zoom_step`, `zoom_smooth`) |
-| Geser kamera | Seret tombol tengah mouse, WASD / panah, atau trackpad | Node2D → `pan_speed` |
+| Length of one day | 30 seconds | Node2D → `day_length` |
+| Number of days | 45 | Node2D → `target_days` |
+| Speed | Pause / normal (button at the top right, Space = pause). There is no 2× speed. | — |
+| Zoom | Mouse wheel (toward the cursor), 0.75× – 2.5× | Node2D → group **"Kamera"** (Camera): `zoom_out_limit`, `zoom_in_limit`, `zoom_step`, `zoom_smooth` |
+| Camera pan | Drag with the middle mouse button, WASD / arrow keys, or trackpad | Node2D → `pan_speed` |
 
-Yang terjadi di **awal setiap hari**, berurutan:
-1. Bonus akhir hari sebelumnya dihitung (lihat §6).
-2. Jatah sekop direset (§4.1) dan stok jembatan bertambah.
-3. Cuaca hari ini berlaku (§5.5). **Prakiraan cuaca besok** menentukan tambahan stok fasilitas (§4.2).
-4. Bangunan baru muncul (§3).
+What happens at the **start of every day**, in order:
+1. The previous day's end-of-day bonus is calculated (see §6).
+2. The shovel allowance resets (§4.1) and the bridge stock grows.
+3. Today's weather applies (§5.5). **Tomorrow's weather forecast** decides the extra facility stock (§4.2).
+4. New buildings appear (§3).
 
-### 2.2 Area main
-- Peta besar berukuran 250×250 petak dan **dibuat di editor Godot** (TileMapLayer `World`), bukan di-generate saat runtime.
-- Setiap permainan memilih **area inti 25×25** secara acak yang pasti berisi sumber air. Kamera diatur supaya area itu pas di layar.
-- Pusat area main dipilih acak (berisi air, jauh dari tepi peta) supaya kamera selalu menaruhnya di **tengah layar**. Isi Node2D → `area_center` untuk mengunci posisi tertentu.
-- **Semua petak yang bisa terlihat saat zoom out penuh** ikut disimulasikan (air mengalir di sana). Kamera tidak bisa keluar dari bingkai itu. Makin kecil `zoom_out_limit`, makin luas area (dan makin berat simulasinya).
-- **Lahan aktif** berbentuk **belah ketupat isometrik** di tengah layar, mengikuti grid peta (garis krem; luar lahan digelapkan). Alat dan bangunan baru hanya di lahan aktif. Lahan **melebar 4 kali** (hari 10, 19, 28, 37): jari-jarinya naik dari yang muat di layar awal sampai yang muat di bingkai zoom out; kamera ikut menyesuaikan dan muncul pesan "Lahan baru terbuka!".
-- Atur di Node2D, grup **Lahan & ekspansi**: `diamond_ui_respect` (0,5 = ujung atas/bawah boleh sedikit masuk area UI; 1 = tidak menyentuh UI), `expansion_steps` (4), `expand_every_days` (9), `ui_margin_top/bottom/side`, `locked_shade`, `border_color`.
-- **Tombol H** (atau "Sembunyikan UI" di menu jeda) menyembunyikan semua UI; tekan H lagi untuk menampilkan.
-- Pengacakan memakai **seed**: Node2D → `map_seed` (0 = acak). Seed yang terpakai selalu dicatat di log playtest, jadi peta yang sama bisa diulang.
+### 2.2 Play area
+- The big map is 250×250 cells and is **made in the Godot editor** (TileMapLayer `World`), not generated at runtime.
+- Each game randomly picks a **25×25 core area** that is guaranteed to contain a water source. The camera is set so that area fits the screen.
+- The centre of the play area is chosen randomly (containing water, far from the map edge) so the camera always puts it in the **middle of the screen**. Set Node2D → `area_center` to lock a specific position.
+- **Every cell visible at full zoom-out** is also simulated (water flows there). The camera cannot leave that frame. The smaller `zoom_out_limit` is, the larger the area (and the heavier the simulation).
+- The **active land** is an **isometric diamond** in the middle of the screen, following the map grid (cream outline; outside the land is darkened). Tools and new buildings work only on the active land. The land **expands 4 times** (days 10, 19, 28, 37): its radius grows from what fits the starting screen up to what fits the zoom-out frame; the camera adjusts with it and the message "New land unlocked!" appears.
+- Set in Node2D, group **"Lahan & ekspansi"** (Land & expansion): `diamond_ui_respect` (0.5 = the top/bottom tips may slightly enter the UI area; 1 = never touch the UI), `expansion_steps` (4), `expand_every_days` (9), `ui_margin_top/bottom/side`, `locked_shade`, `border_color`.
+- The **H key** (or "Hide UI" in the pause menu) hides all UI; press H again to show it.
+- Randomness uses a **seed**: Node2D → `map_seed` (0 = random). The seed that was used is always written to the playtest log, so the same map can be replayed.
 
 ---
 
-## 3. Kota: bangunan & jalan
+## 3. The town: buildings & roads
 
-### 3.1 Kemunculan bangunan
-| Aturan | Default | Atur di |
+### 3.1 Building spawning
+| Rule | Default | Set in |
 |---|---|---|
-| Bangunan di hari 1 | 2 | Buildings → `buildings_first_day` |
-| Laju bangunan baru | 0,6/hari (awal) → 1,2/hari (hari 45), pecahan dikumpulkan; total ±40 bangunan | Buildings → `spawn_rate_start`, `spawn_rate_end` |
-| Area muncul melebar | inti 25×25 → seluruh bingkai zoom out | Buildings → `spawn_area_growth` (0 = tidak melebar) |
-| Peluang jadi Ladang (sisanya Rumah) | 35% | Buildings → `farm_chance` |
-| Jarak minimal antarbangunan | 3 petak | Buildings → `min_building_spacing` |
-| Jarak ke air terdekat | min 3, maks 6 (awal) → 12 (akhir) petak | Buildings → `min_water_distance`, `max_water_distance_start/_end` |
+| Buildings on day 1 | 2 | Buildings → `buildings_first_day` |
+| New-building rate | 0.6/day (start) → 1.2/day (day 45), fractions accumulate; ~40 buildings in total | Buildings → `spawn_rate_start`, `spawn_rate_end` |
+| Spawn area grows | 25×25 core → the whole zoom-out frame | Buildings → `spawn_area_growth` (0 = does not grow) |
+| Chance of being a Farm (the rest are Houses) | 35% | Buildings → `farm_chance` |
+| Minimum distance between buildings | 3 cells | Buildings → `min_building_spacing` |
+| Distance to the nearest water | min 3, max 6 (start) → 12 (end) cells | Buildings → `min_water_distance`, `max_water_distance_start/_end` |
 
-Artinya, bangunan sengaja muncul **agak jauh dari air**. Pemain *harus* menggali kanal, dan semakin lama permainan berjalan, kanalnya harus semakin panjang.
+This means buildings deliberately appear **somewhat far from water**. The player *must* dig canals, and the longer the game runs, the longer the canals have to be.
 
-### 3.2 Kebutuhan air bangunan
-Setiap bangunan punya **cadangan air** yang terlihat sebagai cincin di atasnya.
+### 3.2 Building water needs
+Every building has a **water reserve**, shown as a ring above it.
 
-| | Rumah | Ladang |
+| | House | Farm |
 |---|---|---|
-| Cadangan air maksimal | 40 | 28 |
+| Maximum water reserve | 40 | 28 |
 
-Atur di `building.gd` → `TYPE_DATA`.
+Set in `building.gd` → `TYPE_DATA`.
 
-- **Teraliri** (lihat aturan di bawah): cadangan terisi **4× lebih cepat** daripada berkurangnya.
-- **Tidak teraliri**: cadangan berkurang 1 per detik.
-- Cadangan di bawah 40%: status **Terancam** (cincin oranye/merah, tanda seru berkedip).
-- Cadangan habis: **Hancur** (jadi reruntuhan).
-- **Banjir**: kalau petak bangunan tergenang ≥ 6 detik, bangunan juga hancur (Building → `flood_limit`).
+- **Supplied** (see the rule below): the reserve fills **4× faster** than it drains.
+- **Not supplied**: the reserve drops by 1 per second.
+- Reserve below 40%: **At risk** status (orange/red ring, blinking exclamation mark).
+- Reserve empty: **Destroyed** (becomes ruins).
+- **Flood**: if the building's cell stays under water for ≥ 6 seconds, the building is also destroyed (Building → `flood_limit`).
 
-**Aturan "teraliri":** bangunan teraliri kalau salah satu dari **4 petak di sisinya** (depan atau samping persis, bukan serong; `NEIGHBORS_SIDE` di `is_cell_supplied`, bisa diubah ke 8 arah lewat export `supply_diagonals` di node World) adalah kanal atau sumber air yang **sedang berair** dan **elevasinya sama atau lebih tinggi** dari bangunan (air tidak bisa naik). Saat **hujan lebat**, semua bangunan dianggap teraliri.
+**The "supplied" rule:** a building is supplied when one of the **4 cells on its sides** (directly in front or beside it, not diagonal; `NEIGHBORS_SIDE` in `is_cell_supplied`, switchable to 8 directions with the `supply_diagonals` export on the World node) is a canal or water source that **currently has water** and whose **elevation is equal to or higher** than the building (water cannot climb). During **heavy rain**, all buildings count as supplied.
 
-### 3.3 Tileset air & jalan (tilesset_water_road.png)
-- `assets/Tiles/tilesset_water_road.png` (grid 32 px) dipasang otomatis saat game mulai (Node2D grup **Tileset air & jalan**, `use_tileset_v2`).
-- **Air alami** (baris 0–8): 9 bentuk tepi danau dipilih dari sisi mana yang berbatasan dengan daratan. Warna bibir mengikuti daratan di sebelahnya (kering / rumput / rumput gelap). Tiap kelompok 3 baris = kering, dangkal, penuh (dari kedalaman air; batas penuh `v2_full_depth`).
-- **Kanal galian** (baris 10–15): 11 bentuk sambungan (2 lurus, 4 belokan, 4 pertigaan, perempatan) dipilih dari tetangga kanal/air di 4 sisi; ujung buntu memakai tile lurus. Bata (10–12) atau batu (13–15) lewat `canal_style`.
-- **Jalan** (baris 17): 11 bentuk sambungan yang sama; ujung jalan menyambung ke bangunan di sebelahnya.
-- Gali kanal (klik/drag): sekop langsung dipotong, lalu kanal muncul petak demi petak mengikuti urutan drag dengan animasi jatuh (`dig_step_delay`, `dig_drop_time`, `dig_drop_height`).
-- Animasi arus & buih tepi lama tidak dipakai selama tileset ini aktif.
+### 3.3 Water & road tileset (tilesset_water_road.png)
+- `assets/Tiles/tilesset_water_road.png` (32 px grid) is installed automatically when the game starts (Node2D group **"Tileset air & jalan"**, `use_tileset_v2`).
+- **Natural water** (rows 0–8): 9 lake-edge shapes chosen by which sides border land. The lip colour follows the land next to it (dry / grass / dark grass). Each group of 3 rows = dry, shallow, full (from water depth; the "full" limit is `v2_full_depth`).
+- **Dug canal** (rows 10–15): 11 junction shapes (2 straight, 4 bends, 4 T-junctions, crossroads) chosen from the canal/water neighbours on the 4 sides; a dead end uses a straight tile. Brick (10–12) or stone (13–15) via `canal_style`.
+- **Road** (row 17): the same 11 junction shapes; a road end connects to the building next to it.
+- Digging a canal (click/drag): the shovel use is deducted immediately, then the canal appears cell by cell following the drag order with a drop animation (`dig_step_delay`, `dig_drop_time`, `dig_drop_height`).
+- The old flow animation and edge foam are not used while this tileset is active.
 
-### 3.4 Jalan
-- Setiap bangunan baru otomatis disambungkan ke bangunan lain dengan jalan (jalur terpendek, mengutamakan jalan yang sudah ada).
-- Jalan **dibangun petak demi petak** dari jaringan jalan lama menuju bangunan baru, dengan animasi petak "jatuh" ke tempatnya (gaya Terra Nil). Atur di Roads, grup **Animasi jalan**: `road_start_delay` (0,6 s), `road_step_delay` (0,08 s/petak), `road_drop_time`, `road_drop_height`. Petak yang masih menunggu sudah dianggap jalan (tidak bisa digali/dibangun).
-- **Jalan memotong kanal**: tanah di jalan tidak bisa digali. Untuk melewatkan air menyeberangi jalan, pasang **Jembatan** (§4.2).
+### 3.4 Roads
+- Every new building is automatically connected to other buildings by road (shortest route, preferring existing roads).
+- Roads are **built cell by cell** from the old road network toward the new building, with a drop animation as each cell lands (Terra Nil style). Set in Roads, group **"Animasi jalan"** (Road animation): `road_start_delay` (0.6 s), `road_step_delay` (0.08 s/cell), `road_drop_time`, `road_drop_height`. A cell still waiting already counts as road (it cannot be dug or built on).
+- **Roads cut across canals**: ground under a road cannot be dug. To let water cross a road, place a **Bridge** (§4.2).
 
 ---
 
-## 4. Aksi pemain
+## 4. Player actions
 
-Toolbar di kiri bawah layar berisi 7 alat (tombol 1–7), lalu tombol Lapisan dan tombol menu (roda gigi). Angka di pojok kartu menunjukkan stok yang tersisa.
+The toolbar at the bottom left of the screen holds 7 tools (keys 1–7), then the Layers button and the menu button (gear). The number on a card's corner shows the remaining stock.
 
-### 4.1 Alat sekop: Gali, Ratakan, Timbun
-Ketiganya berbagi **jatah sekop harian**.
+### 4.1 Shovel tools: Dig, Level, Fill
+All three share the **daily shovel allowance**.
 
-| Aturan | Default | Atur di |
+| Rule | Default | Set in |
 |---|---|---|
-| Jatah sekop per hari | 15 aksi | Node2D → `shovel_per_day` |
-| Sisa jatah | **tidak** terbawa ke besok | — |
+| Shovel allowance per day | 15 actions | Node2D → `shovel_per_day` |
+| Unused allowance | does **not** carry over to tomorrow | — |
 
-| Alat | Klik kiri | Klik kanan | Biaya |
+| Tool | Left click | Right click | Cost |
 |---|---|---|---|
-| **Gali** (1) | Tanah → **kanal** (dasar turun 0,5) | — | 1 sekop |
-| **Ratakan** (2) | Turunkan elevasi 1 tingkat | Naikkan 1 tingkat | 1 sekop |
-| **Timbun** (3) | Tutup kanal galian → tanah lagi | — | 1 sekop |
-| Timbun di fasilitas/jembatan | Bongkar, **stok dikembalikan** | — | gratis |
+| **Dig** (1) | Ground → **canal** (floor drops 0.5) | — | 1 shovel |
+| **Level** (2) | Lower the elevation by 1 level | Raise it by 1 level | 1 shovel |
+| **Fill** (3) | Close a dug canal → ground again | — | 1 shovel |
+| Fill on a facility/bridge | Remove it, **stock is returned** | — | free |
 
-**Drag (seret) seperti Mini Motorways:** tekan di satu petak, seret, lalu lepas.
-- Jalurnya selalu **rapi mengikuti grid**: lurus di satu sumbu isometrik, lalu belok sekali (bentuk L) mengikuti arah seret pertama.
-- Selama menyeret ada pratinjau: **hijau** = dikerjakan, **putih** = dilewati karena sudah sesuai, **merah** = tidak bisa atau sekop tidak cukup.
-- Tooltip menampilkan jumlah petak dan sekop yang akan terpakai.
-- Aksi baru dijalankan saat tombol mouse **dilepas**. Esc atau menekan tombol mouse lain membatalkan drag.
-- Untuk Ratakan, seret dengan klik kiri untuk menurunkan dan klik kanan untuk menaikkan. Setiap petak di jalur berubah ±1 tingkat.
-- Panjang jalur maksimal 40 petak (Node2D → `max_drag_length`).
+**Drag like Mini Motorways:** press on a cell, drag, then release.
+- The path is always **neat along the grid**: straight along one isometric axis, then a single turn (an L shape) following the direction of the first drag.
+- While dragging there is a preview: **green** = will be done, **white** = skipped because it already matches, **red** = not possible or not enough shovels.
+- The tooltip shows the number of cells and the shovels that will be used.
+- The action only runs when the mouse button is **released**. Esc or pressing another mouse button cancels the drag.
+- For Level, drag with the left click to lower and the right click to raise. Every cell on the path changes by ±1 level.
+- Maximum path length is 40 cells (Node2D → `max_drag_length`).
 
-Elevasi punya 4 tingkat (0–3): Garis pantai, Dataran rendah, Dataran menengah, Dataran tinggi. Air hanya mengalir ke permukaan yang lebih rendah, jadi Ratakan dipakai untuk "membuat lereng" agar air bisa sampai ke bangunan.
+Elevation has 4 levels (0–3): Shoreline, Low plain, Mid plain, High plain. Water only flows to lower surfaces, so Level is used to "make a slope" so water can reach a building.
 
-### 4.2 Fasilitas & jembatan
-| Alat | Fungsi | Syarat pasang | Stok awal | Tambahan stok |
+### 4.2 Facilities & bridge
+| Tool | Function | Placement requirement | Starting stock | Extra stock |
 |---|---|---|---|---|
-| **Jembatan** (4) | Mengubah petak jalan jadi kanal yang bisa dialiri air (jalan tetap tersambung) | Di petak jalan | 2 | +1 tiap hari baru |
-| **Mesin Bor** (5) | Sumber air tanah permanen, **tidak terpengaruh kemarau** | Di tanah | 1 | +1 kalau besok **Kemarau** |
-| **Spillway** (6) | Bendung di kanal: menahan air setinggi 0,3 (`spillway_crest`), hanya kelebihannya yang mengalir ke hilir. Badan air yang tersambung spillway **tidak meluap** saat hujan | Di kanal/sungai **lurus** (sambungan ↖↘ atau ↗↙) | 0 | +1 kalau besok **Hujan** |
-| **Kincir Air** (7) | **Pompa**: mengangkat air dari petaknya ke kanal/sungai di sebelahnya yang **1 tingkat lebih tinggi**, supaya aliran bisa naik ke dataran atas. Bonus kecil poin dari arus (§6) | Di kanal atau sungai/danau | 2 | +1 kalau besok **Cerah** |
+| **Bridge** (4) | Turns a road cell into a canal that water can flow through (the road stays connected) | On a road cell | 2 | +1 every new day |
+| **Drill Well** (5) | Permanent groundwater source, **unaffected by drought** | On ground | 1 | +1 if tomorrow is **Drought** |
+| **Spillway** (6) | A weir in the canal: holds water at 0.3 (`spillway_crest`), only the excess flows downstream. A water body connected to a spillway **does not overflow** during rain | On a **straight** canal/river (↖↘ or ↗↙ link) | 0 | +1 if tomorrow is **Rain** |
+| **Water Wheel** (7) | **Pump**: lifts water from its cell into the canal/river next to it that is **1 level higher**, so flow can climb to higher ground. A small point bonus from the current (§6) | On a canal or river/lake | 2 | +1 if tomorrow is **Sunny** |
 
-Atur stok di Facilities → `start_stock` dan `stock_per_forecast` (urutan: Bor, Bendungan, Spillway, Kincir; Bendungan sudah dihapus dari toolbar, biarkan nilainya 0). Untuk jembatan, atur di Roads → `bridges_start`, `bridges_per_day`.
+Set the stock in Facilities → `start_stock` and `stock_per_forecast` (order: Drill Well, Dam, Spillway, Water Wheel; the Dam was removed from the toolbar, leave its value at 0). For the bridge, set it in Roads → `bridges_start`, `bridges_per_day`.
 
-**Inti strateginya:** stok fasilitas diberikan **berdasarkan prakiraan besok**. Pemain mendapat alat yang tepat sehari sebelum cuacanya datang, dan harus memasangnya tepat waktu.
+**The heart of the strategy:** facility stock is granted **based on tomorrow's forecast**. The player gets the right tool a day before the weather arrives, and must place it in time.
 
-### 4.3 Info untuk pemain
-- **Kursor petak** berwarna hijau (bisa), merah (tidak bisa), atau putih (hanya info).
-- **Tooltip** menampilkan jenis petak, elevasi, kedalaman air, status bangunan, putaran kincir, dan **pratinjau aksi** alat yang dipilih beserta alasannya kalau tidak bisa.
-- **Tombol Lapisan** (ikon di kanan toolbar) berganti antara: Mati → **Ketinggian** (warna per elevasi) → **Kedalaman air**.
+### 4.3 Information for the player
+- The **tile cursor** is green (allowed), red (not allowed) or white (info only).
+- The **tooltip** shows the cell type, elevation, water depth, building status, wheel rotation, and a **preview of the selected tool's action** with the reason if it is not possible.
+- The **Layers button** (icon to the right of the toolbar) cycles through: Off → **Elevation** (colour per elevation) → **Water Depth**.
 
-### 4.4 Menu in-game
-Menu dibuka lewat tombol **roda gigi** di ujung toolbar (kiri bawah) atau tombol **Esc**. Selama menu terbuka, game dijeda.
+### 4.4 In-game menu
+The menu opens with the **gear** button at the end of the toolbar (bottom left) or the **Esc** key. While the menu is open, the game is paused.
 
-Isi menu: **Lanjutkan**, **Main Ulang**, **Pengaturan**, **Menu Utama**.
+The menu contains: **Resume**, **Restart**, **Settings**, **Main Menu**.
 
-Pengaturan berisi:
-- volume utama, musik, dan efek suara
-- layar penuh
-- tooltip info petak
+Settings contains:
+- master, music and sound-effect volume
+- fullscreen
+- cell info tooltip
 
-Pengaturan disimpan otomatis di `user://settings.cfg`. Bus audio `Music` dan `SFX` ada di `default_bus_layout.tres`. Semua audio diputar oleh autoload `Audio` (`scenes/audio_manager.tscn`, daftar lengkap di `AUDIO.md`).
+Settings are saved automatically in `user://settings.cfg`. The `Music` and `SFX` audio buses are in `default_bus_layout.tres`. All audio is played by the `Audio` autoload (`scenes/audio_manager.tscn`, full list in `AUDIO.md`).
 
-Menu jeda juga punya tombol **Tutorial** (7 halaman, sama dengan tutorial di main menu).
+The pause menu also has a **Tutorial** button (7 pages, the same as the tutorial in the main menu).
 
 ---
 
-## 5. Sistem air
+## 5. The water system
 
-Sistem air adalah **simulasi berbasis kedalaman** yang terinspirasi Timberborn. Kekeringan, banjir, dan arus **tidak di-script**. Semuanya muncul sendiri dari aturan aliran yang sederhana. Kodenya ada di `water_sim.gd`, cuacanya di `weather_manager.gd`.
+The water system is a **depth-based simulation** inspired by Timberborn. Drought, flood and current are **not scripted**. They all emerge from simple flow rules. The code is in `water_sim.gd`, the weather in `weather_manager.gd`.
 
-### 5.1 Konsep dasar
+### 5.1 Basic concepts
 
 ```
-Satuan tinggi: 1.0 = satu tingkat elevasi
+Height unit: 1.0 = one elevation level
 
-dasar(petak)     = elevasi            (daratan)
-                 = elevasi − 0.5      (kanal galian, dasar sungai/danau, sumur bor)
-permukaan(petak) = dasar + kedalaman air
-tepi(kanal)      = elevasi            (bibir kanal: air baru tumpah ke darat kalau melewati ini)
+floor(cell)    = elevation          (land)
+               = elevation − 0.5    (dug canal, river/lake bed, drill well)
+surface(cell)  = floor + water depth
+rim(canal)     = elevation          (canal lip: water only spills onto land once it goes above this)
 
-berair  = kedalaman ≥ 0.06
-banjir  = petak daratan dengan kedalaman ≥ 0.1
+wet    = depth ≥ 0.06
+flood  = land cell with depth ≥ 0.1
 ```
 
-Jadi kanal adalah "parit" sedalam 0,5. Air mengisi parit itu dulu, dan baru **meluap** ke daratan sekitarnya kalau permukaannya naik melewati bibir kanal.
+So a canal is a "ditch" 0.5 deep. Water fills that ditch first, and only **overflows** onto the surrounding land when its surface rises above the canal lip.
 
-### 5.2 Satu langkah simulasi (20× per detik)
+### 5.2 One simulation step (20× per second)
 
 ```mermaid
 flowchart TD
-    A[1. Sumber mengisi ulang<br/>menuju targetnya] --> B[2. Air mengalir ke tetangga<br/>yang permukaannya lebih rendah]
-    B --> C[3. Catat debit & arah aliran<br/>untuk kincir dan animasi]
-    C --> D[4. Air hilang:<br/>spillway, resapan, penguapan]
-    D --> E[Tampilan tile diperbarui<br/>10× per detik]
+    A[1. Sources refill<br/>toward their target] --> B[2. Water flows to neighbours<br/>with a lower surface]
+    B --> C[3. Record flow rate & direction<br/>for wheels and animation]
+    C --> D[4. Water is lost:<br/>spillway, seepage, evaporation]
+    D --> E[Tile display updates<br/>10× per second]
 ```
 
-1. **Sumber mengisi ulang.** Setiap petak sumber air alami bergerak menuju **target**-nya (normal 0,5, diatur cuaca). Sumur bor selalu menuju 0,5.
-2. **Aliran.** Setiap petak berair mengalirkan airnya ke 4 tetangga sisi yang permukaannya lebih rendah. Besar aliran = selisih permukaan × 0,2. Kanal tidak menumpahkan air ke daratan kecuali permukaannya sudah melewati tepi. Petak bendungan dilewati (kedap air). Semua perpindahan dihitung dulu, baru diterapkan bersamaan.
-3. **Debit & arah.** Air yang keluar dari setiap petak dirata-rata. Hasilnya dipakai untuk putaran kincir (§6) dan arah animasi arus (§5.6).
-4. **Air hilang:**
-   - (Spillway tidak membuang air; ia menahan 0,3 dan meneruskan kelebihannya, lihat langkah 2.)
-   - Air di **daratan** meresap 0,08 per detik, yang membatasi luas banjir.
-   - **Kanal galian** menguap 0,02 per detik. Kanal yang terputus dari sumber akan mengering pelan-pelan.
+1. **Sources refill.** Every natural water source cell moves toward its **target** (normally 0.5, set by the weather). Drill wells always move toward 0.5.
+2. **Flow.** Every wet cell sends its water to the 4 edge neighbours with a lower surface. Flow amount = surface difference × 0.2. A canal does not spill onto land unless its surface is already past the rim. Dam cells are skipped (watertight). All transfers are computed first, then applied together.
+3. **Flow rate & direction.** The water leaving each cell is averaged. The result is used for the wheel rotation (§6) and the current animation direction (§5.6).
+4. **Water is lost:**
+   - (A spillway does not discard water; it holds 0.3 and passes the excess on, see step 2.)
+   - Water on **land** seeps away at 0.08 per second, which limits how far a flood spreads.
+   - **Dug canals** evaporate 0.02 per second. A canal cut off from its source slowly dries out.
 
-| Angka | Default | Atur di |
+| Value | Default | Set in |
 |---|---|---|
-| Langkah per detik | 20 | Water → `tick_rate` |
-| Kecepatan aliran | 0,2 | Water → `flow_k` (maks 0,25) |
-| Dalam kanal | 0,5 | Water → `channel_depth` |
-| Kecepatan sumber mengisi | 1,5 /detik | Water → `source_rate` |
-| Batas "berair" | 0,06 | Water → `wet_threshold` |
-| Batas "banjir" | 0,1 | Water → `flood_threshold` |
-| Penguapan kanal | 0,02 /detik | Water → `canal_evaporation` |
-| Resapan daratan | 0,08 /detik | Water → `land_absorb` |
-| Tinggi tahanan spillway | 0,3 | Water → `spillway_crest` |
+| Steps per second | 20 | Water → `tick_rate` |
+| Flow speed | 0.2 | Water → `flow_k` (max 0.25) |
+| Canal depth | 0.5 | Water → `channel_depth` |
+| Source refill speed | 1.5 /second | Water → `source_rate` |
+| "Wet" threshold | 0.06 | Water → `wet_threshold` |
+| "Flood" threshold | 0.1 | Water → `flood_threshold` |
+| Canal evaporation | 0.02 /second | Water → `canal_evaporation` |
+| Land seepage | 0.08 /second | Water → `land_absorb` |
+| Spillway holding height | 0.3 | Water → `spillway_crest` |
 
-### 5.3 Badan air
-Saat permainan mulai, petak-petak sumber air yang saling bersebelahan dikelompokkan menjadi **badan air**: satu sungai atau danau dihitung sebagai satu kesatuan. Cuaca mengatur target setiap badan air. Ukurannya (jumlah petak) menentukan apakah badan air itu termasuk "kecil" saat kemarau.
+### 5.3 Water bodies
+When the game starts, adjacent natural-water source cells are grouped into a **water body**: one river or lake counts as a single unit. The weather sets the target of each water body. Its size (number of cells) decides whether that body counts as "small" during a drought.
 
-### 5.4 Dampak ke tampilan daratan
-Setiap 1 detik, daratan dikelompokkan ulang menurut jaraknya ke air yang sedang berair:
-- ≤ 2 petak dari air: **tanah hijau** (baris 1–2 `terrain_tiles.png`)
-- Bangunan dekat air dan sekelilingnya: **pelataran** (baris 3)
-- Selain itu: **tanah kering** (baris 0)
+### 5.4 Effect on how the land looks
+Every 1 second, land is regrouped by its distance to water that currently has water:
+- ≤ 2 cells from water: **green ground** (rows 1–2 of `terrain_tiles.png`)
+- A building near water and its surroundings: **yard** (row 3)
+- Anything else: **dry ground** (row 0)
 
-Artinya, kemarau secara visual membuat peta jadi cokelat, dan menggali kanal membuat sekitarnya hijau.
+This means a drought visually turns the map brown, and digging a canal turns its surroundings green.
 
-### 5.5 Cuaca
+### 5.5 Weather
 
-Cuaca **tidak mengubah petak secara langsung**. Cuaca hanya mengubah **target sumber**, lalu kekeringan dan banjir muncul sendiri dari simulasi.
+Weather **does not change cells directly**. It only changes the **source targets**, then drought and flood emerge from the simulation.
 
-**Jadwal otomatis** (Weather → `auto_schedule` = aktif): dibuat dari seed peta, jadi seed yang sama = cuaca yang sama.
-- Hari 1–3 selalu Cerah (`calm_days`).
-- Peluang Kemarau naik 15% → 35%, Hujan lebat 12% → 22% dari awal ke akhir (grup **Jadwal otomatis**).
-- Cuaca ekstrem yang sama paling banyak 2 hari berturut-turut (`max_streak`).
-- Matikan `auto_schedule` untuk memakai daftar `schedule` manual.
+**Automatic schedule** (Weather → `auto_schedule` = on): generated from the map seed, so the same seed = the same weather.
+- Days 1–3 are always Sunny (`calm_days`).
+- The chance of Drought rises 15% → 35% and of heavy Rain 12% → 22% from start to end (group **"Jadwal otomatis"**, Automatic schedule).
+- The same extreme weather can occur at most 2 days in a row (`max_streak`).
+- Turn off `auto_schedule` to use the manual `schedule` list.
 
-Bar bawah menampilkan prakiraan 3 hari. Tooltip-nya menyebut tingkat kemarau.
+The bottom bar shows a 3-day forecast. Its tooltip names the drought level.
 
-**Cerah:** target sumber normal (0,5).
+**Sunny:** normal source target (0.5).
 
-**Kemarau:**
-- Sumber menyusut **bertahap** selama 20 detik pertama hari itu, tidak langsung kering.
-- **Makin parah setiap kemarau berikutnya:**
+**Drought:**
+- Sources shrink **gradually** over the first 20 seconds of the day, not dry at once.
+- **It gets worse with every later drought:**
 
-  | Kemarau ke- | Sumber besar turun | Sumber kecil (< 15 petak) turun |
+  | Drought # | Large source drops | Small source (< 15 cells) drops |
   |---|---|---|
   | 1 | 30% | 45% |
   | 2 | 50% | 75% |
-  | 3 | 70% | 100% (kering) |
+  | 3 | 70% | 100% (dry) |
 
-- Rumusnya: `target = 0.5 × (1 − keparahan × kemajuan_hari)`, dengan `keparahan = min(maks, awal + langkah × (n − 1))`, dikali 1,5 untuk badan air kecil.
-- Sumur bor tidak terpengaruh.
-- Atur di Weather, grup **Kemarau**: `drought_severity_start` (0,3), `drought_severity_step` (0,05), `drought_severity_max` (0,8), `drought_ramp_time` (20), `drought_small_body` (15), `drought_small_mult` (1,5).
+- The formula is: `target = 0.5 × (1 − severity × progress)`, with `severity = min(max, start + step × (n − 1))`, multiplied by 1.5 for small water bodies.
+- Drill wells are unaffected.
+- Set in Weather, group **"Drought"**: `drought_severity_start` (0.3), `drought_severity_step` (0.05), `drought_severity_max` (0.8), `drought_ramp_time` (20), `drought_small_body` (15), `drought_small_mult` (1.5).
 
-**Hujan lebat:**
-- Target sumber naik **+0,35** (menjadi 0,85, di atas bibir kanal), sehingga sumber **meluap** ke daratan yang lebih rendah. Inilah banjir.
-- Badan air yang punya **Spillway** tidak dinaikkan.
-- Semua bangunan dianggap teraliri (tidak ada yang kering), tapi bangunan bisa **tenggelam** kalau tergenang ≥ 6 detik.
-- Atur di Weather → `rain_surge`.
+**Heavy rain:**
+- The source target rises by **+0.35** (to 0.85, above the canal lip), so sources **overflow** onto lower land. This is the flood.
+- Water bodies with a **Spillway** are not raised.
+- All buildings count as supplied (none go dry), but buildings can **drown** if they are under water for ≥ 6 seconds.
+- Set in Weather → `rain_surge`.
 
-### 5.6 Tampilan air (animasi arus ala Terra Nil)
-Setiap petak berair memilih tile animasi dari `assets/water/water_flow.png` berdasarkan simulasi:
+### 5.6 Water appearance (Terra Nil-style current animation)
+Every wet cell picks an animated tile from `assets/water/water_flow.png` based on the simulation:
 
-| Kondisi | Tile |
+| Condition | Tile |
 |---|---|
-| Aliran bersih < 0,012 | **Tenang** (danau/genangan) |
-| Aliran bersih 0,012 – 0,06 | **Arus pelan** searah aliran (4 arah) |
-| Aliran bersih ≥ 0,06 | **Arus deras** searah aliran (4 arah) |
-| Kedalaman < 0,18 (bukan sumber alami) | **Dangkal / ujung air** berbuih, terlihat saat kanal baru terisi |
+| Net flow < 0.012 | **Still** (lake/puddle) |
+| Net flow 0.012 – 0.06 | **Slow current** along the flow (4 directions) |
+| Net flow ≥ 0.06 | **Fast current** along the flow (4 directions) |
+| Depth < 0.18 (not a natural source) | **Shallow / water front**, foamy, visible while a new canal is filling |
 
-Sisi air yang berbatasan dengan daratan diberi **buih tepi** (layer `World/WaterEdge`, `water_edge.png`).
+Water sides that border land get **edge foam** (layer `World/WaterEdge`, `water_edge.png`).
 
-Ambang ini diatur di Water, grup "Tampilan arus": `still_flow`, `fast_flow`, `shallow_depth`.
+These thresholds are set in Water, group "Tampilan arus" (Flow display): `still_flow`, `fast_flow`, `shallow_depth`.
 
-### 5.7 Pseudocode singkat
+### 5.7 Short pseudocode
 
 ```
-// ===== Awal permainan =====
-kelompokkan petak AIR yang bersebelahan jadi "badan air" (flood fill)
-semua petak badan air: kedalaman = 0.5, target = 0.5
+// ===== Start of game =====
+group adjacent WATER cells into "water bodies" (flood fill)
+every water-body cell: depth = 0.5, target = 0.5
 
-// ===== Awal hari =====
-cuaca = jadwal[hari]
-stok fasilitas += sesuai prakiraan BESOK
-hitung_target_sumber()
+// ===== Start of day =====
+weather = schedule[day]
+facility stock += according to TOMORROW's forecast
+compute_source_targets()
 
-// ===== Tiap langkah (20x per detik) =====
-JIKA kemarau: hitung_target_sumber()          // target turun bertahap
+// ===== Every step (20x per second) =====
+IF drought: compute_source_targets()          // target drops gradually
 
-// 1. Sumber mengisi ulang menuju target
-UNTUK tiap petak badan air c: kedalaman[c] += (target[badan(c)] - kedalaman[c]) * 1.5 * dt
-UNTUK tiap sumur bor c:       kedalaman[c] += (0.5 - kedalaman[c]) * 1.5 * dt
+// 1. Sources refill toward the target
+FOR each water-body cell c: depth[c] += (target[body(c)] - depth[c]) * 1.5 * dt
+FOR each drill-well cell c: depth[c] += (0.5 - depth[c]) * 1.5 * dt
 
-// 2. Aliran: dihitung dulu, diterapkan bersamaan
-UNTUK tiap petak c yang berair dan bukan bendungan:
-    s = dasar(c) + kedalaman[c]
-    UNTUK tiap tetangga sisi n (bukan bendungan):
-        level = dasar(n) + kedalaman[n]
-        JIKA c kanal DAN n daratan: level = max(level, elevasi(c))   // bibir kanal
-        JIKA s > level: rencana_aliran(c -> n) = (s - level) * 0.2
-    skala = min(1, kedalaman[c] / total_rencana)                    // tak boleh lebih dari yang ada
-    pindahkan rencana_aliran * skala; catat debit & arah keluar dari c
-terapkan semua perpindahan
+// 2. Flow: computed first, applied together
+FOR each wet, non-dam cell c:
+    s = floor(c) + depth[c]
+    FOR each edge neighbour n (not a dam):
+        level = floor(n) + depth[n]
+        IF c is canal AND n is land: level = max(level, elevation(c))   // canal rim
+        IF s > level: planned_flow(c -> n) = (s - level) * 0.2
+    scale = min(1, depth[c] / total_planned)                      // cannot move more than it has
+    move planned_flow * scale; record flow rate & direction leaving c
+apply all transfers
 
-// 3. Air hilang
-UNTUK tiap petak berair c:
-    JIKA daratan:             kedalaman[c] -= 0.08 * dt   // resapan banjir
-    JIKA kanal galian:        kedalaman[c] -= 0.02 * dt   // penguapan
+// 3. Water is lost
+FOR each wet cell c:
+    IF land:         depth[c] -= 0.08 * dt   // flood seepage
+    IF dug canal:    depth[c] -= 0.02 * dt   // evaporation
 
-// ===== Target sumber per badan air =====
-hitung_target_sumber():
-    UNTUK tiap badan air b:
-        CERAH:   target = 0.5
-        HUJAN:   target = 0.5 jika b punya spillway, selain itu 0.5 + 0.35   // meluap
-        KEMARAU: sev = min(0.8, 0.3 + 0.2 * (kemarau_ke - 1))
-                 JIKA ukuran(b) < 15: sev = min(1, sev * 1.5)
-                 target = 0.5 * (1 - sev * min(1, detik_sejak_awal_hari / 20))
+// ===== Source target per water body =====
+compute_source_targets():
+    FOR each water body b:
+        SUNNY:   target = 0.5
+        RAIN:    target = 0.5 if b has a spillway, otherwise 0.5 + 0.35   // overflows
+        DROUGHT: sev = min(0.8, 0.3 + 0.2 * (drought_number - 1))
+                 IF size(b) < 15: sev = min(1, sev * 1.5)
+                 target = 0.5 * (1 - sev * min(1, seconds_since_day_start / 20))
 
-// ===== Dipakai sistem lain =====
-berair(c)    = kedalaman[c] >= 0.06
-banjir(c)    = c daratan DAN kedalaman[c] >= 0.1
-teraliri(b)  = ada tetangga sisi n (4 arah): n kanal/sumber, berair(n), elevasi(n) >= elevasi(b)
-               ATAU cuaca HUJAN
-putaran_kincir(c) = clamp(debit_rata2(c) / 0.1, 0, 1)
-tile_air(c)  = DANGKAL jika kedalaman < 0.18 (bukan sumber alami)
-               TENANG  jika aliran_bersih < 0.012
-               ARUS PELAN/DERAS ke arah dominan aliran (deras jika >= 0.06)
+// ===== Used by other systems =====
+wet(c)       = depth[c] >= 0.06
+flood(c)     = c is land AND depth[c] >= 0.1
+supplied(b)  = an edge neighbour n (4 directions) is canal/source, wet(n), elevation(n) >= elevation(b)
+               OR weather is RAIN
+wheel_rotation(c) = clamp(avg_flow_rate(c) / 0.1, 0, 1)
+water_tile(c) = SHALLOW if depth < 0.18 (not a natural source)
+                STILL   if net_flow < 0.012
+                SLOW/FAST CURRENT toward the dominant flow direction (fast if >= 0.06)
 ```
 
 ---
 
-## 6. Poin, menang & kalah
+## 6. Points, winning & losing
 
-| Sumber poin | Besar | Atur di |
+| Source of points | Amount | Set in |
 |---|---|---|
-| Bangunan teraliri | 0,2 poin/detik per bangunan | Score → `supplied_per_second` |
-| Kincir air | hingga 0,25 poin/detik per kincir (× putaran 0–100%) | Facilities → `kincir_points_per_second` |
-| Bonus akhir hari | 4 × bangunan yang **dialiri pemain minimal setengah hari itu** (hujan tidak dihitung) | Score → `day_bonus_per_building`, `day_bonus_min_supplied` (0,5) |
-| Jembatan | 1 × jembatan yang **dilewati air**, tiap akhir hari | Score → `bridge_bonus_per_day` |
+| Supplied building | 0.2 points/second per building | Score → `supplied_per_second` |
+| Water Wheel | up to 0.25 points/second per wheel (× rotation 0–100%) | Facilities → `kincir_points_per_second` |
+| End-of-day bonus | 4 × buildings **supplied by the player for at least half of that day** (rain does not count) | Score → `day_bonus_per_building`, `day_bonus_min_supplied` (0.5) |
+| Bridge | 1 × each bridge **that water passes through**, at the end of every day | Score → `bridge_bonus_per_day` |
 
-Patokan: satu bangunan yang dialiri penuh sehari = 0,2 × 30 + 4 = **10 poin**.
+Rule of thumb: one building supplied for a full day = 0.2 × 30 + 4 = **10 points**.
 
-**Kincir air sebagai pompa:** tiap detik kincir memindahkan air dari petaknya ke tetangga sisi (↖ ↗ ↙ ↘) yang berupa kanal/sungai, lebih tinggi 1 tingkat (Facilities → `kincir_max_lift`), dan belum penuh. Lajunya 0,8 kedalaman/detik dibagi rata ke semua petak tujuan (Facilities → `kincir_lift_rate`). Pompa satu arah: air yang sudah naik tidak mengalir balik ke petak kincir. Petak kincir butuh air (tersambung ke sungai/kanal berair). Cara pakai: gali kanal di dataran atas sampai menempel ke sisi petak air di bawahnya, lalu pasang kincir di petak air itu.
+**Water Wheel as a pump:** every second the wheel moves water from its cell to the edge neighbours (↖ ↗ ↙ ↘) that are a canal/river, 1 level higher (Facilities → `kincir_max_lift`), and not yet full. The rate is 0.8 depth/second, shared equally among all target cells (Facilities → `kincir_lift_rate`). The pump is one-way: water that has been lifted does not flow back to the wheel cell. The wheel cell needs water (connected to a river/canal with water). How to use it: dig a canal on the higher ground until it touches the side of the water cell below, then place the wheel on that water cell.
 
-**Poin kincir:** putaran = debit air yang keluar dari petak kincir ÷ 0,1 (Facilities → `kincir_full_flux`), dibatasi 0–100%. Air hanya mengalir kalau ada yang "menyedot" di hilirnya: penguapan kanal panjang, spillway, resapan banjir, atau air baru yang sedang mengisi kanal. Jadi kincir di **hulu kanal yang panjang** berputar lebih kencang. Kincir di danau yang tenang diam saja.
+**Wheel points:** rotation = water flow leaving the wheel cell ÷ 0.1 (Facilities → `kincir_full_flux`), clamped to 0–100%. Water only flows when something "pulls" it downstream: evaporation along a long canal, a spillway, flood seepage, or new water filling a canal. So a wheel at the **head of a long canal** spins faster. A wheel in a calm lake stays still.
 
-| Kondisi | Default | Atur di |
+| Condition | Default | Set in |
 |---|---|---|
-| **Menang** | Hari ke-45 selesai dan poin ≥ 3500 (1 bintang) | Score → `target_points` |
-| 2 / 3 bintang | ≥ 5000 / ≥ 8500 | Score → `star2_points`, `star3_points` |
-| Selesai saat 1 bintang tercapai | mati (main terus sampai hari 45) | Score → `end_on_target` |
-| **Kalah** (kuota) | Bangunan hancur > 8 | Node2D → `damage_quota` |
-| **Kalah** (waktu) | Hari ke-45 selesai dan poin < 3500 | Node2D → `target_days` |
+| **Win** | Day 45 finishes with ≥ 3500 points (1 star) | Score → `target_points` |
+| 2 / 3 stars | ≥ 5000 / ≥ 8500 | Score → `star2_points`, `star3_points` |
+| End when 1 star is reached | off (keep playing until day 45) | Score → `end_on_target` |
+| **Lose** (quota) | Destroyed buildings > 8 | Node2D → `damage_quota` |
+| **Lose** (time) | Day 45 finishes with < 3500 points | Node2D → `target_days` |
 
-Bar poin di panel kanan atas menunjukkan progres ke **bintang berikutnya**.
+The points bar in the top-right panel shows progress toward the **next star**.
 
-Klik bar poin di panel kanan atas untuk melihat rincian poin per sumber.
+Click the points bar in the top-right panel to see the points breakdown per source.
 
 ---
 
-## 7. Alat balancing
+## 7. Balancing tools
 
-### 7.1 Log playtest otomatis
-Setiap kali game dimainkan, otomatis dibuat:
-- `playtest_logs/sesi_<tanggal_jam>_<penguji>.csv`, berisi:
-  - satu baris per akhir hari (poin per sumber, bangunan hidup/terancam/hancur, sekop, stok, fasilitas, persentase kanal berair)
-  - satu baris setiap bangunan hancur, beserta penyebabnya
-  - satu baris hasil akhir
-- `playtest_logs/ringkasan_<penguji>.csv`, berisi satu baris per sesi.
+### 7.1 Automatic playtest log
+Every time the game is played, these are created automatically:
+- `playtest_logs/sesi_<date_time>_<tester>.csv`, containing:
+  - one row per end of day (points per source, buildings alive/at risk/destroyed, shovels, stock, facilities, percentage of canals with water)
+  - one row for every destroyed building, with its cause
+  - one row with the final result
+- `playtest_logs/ringkasan_<tester>.csv`, containing one row per session.
 
-**Isi log sesi:**
+**Contents of the session log:**
 
-| Bagian | Isi |
+| Part | Content |
 |---|---|
-| Header (`#`) | Sesi, penguji, **versi build** (`branch@commit`), seed, **param_id**, lalu baris `PARAM` berisi **semua angka balancing** yang berlaku |
-| `AKHIR_HARI` | Kondisi saat hari berakhir: poin per sumber, bangunan, sekop, stok, fasilitas. Ditambah agregat sepanjang hari itu: jumlah aksi (gali, ratakan turun/naik, timbun, pasang/bongkar fasilitas, jembatan, drag), detik bangunan terancam, jumlah bangunan yang pernah terancam, % waktu bangunan teraliri, banjir terluas (petak), % sumber kering terparah, rata-rata putaran kincir, detik jeda / 2× / menu, bangunan gagal muncul |
-| `PERTAMA` | Momen pertama: aksi pertama pemain, bangunan pertama terancam, bangunan pertama hancur, target poin tercapai |
-| `HANCUR` | Setiap bangunan hancur, beserta penyebabnya (kekeringan/banjir) |
-| `AKHIR` / `SURVEI` | Hasil permainan, lalu jawaban survei layar akhir |
+| Header (`#`) | Session, tester, **build version** (`branch@commit`), seed, **param_id**, then `PARAM` rows listing **every balancing number** in effect |
+| `AKHIR_HARI` (end of day) | Situation when the day ends: points per source, buildings, shovels, stock, facilities. Plus aggregates over that day: number of actions (dig, level down/up, fill, place/remove facility, bridge, drag), seconds buildings were at risk, number of buildings that were ever at risk, % of time buildings were supplied, widest flood (cells), worst % of dry sources, average wheel rotation, seconds paused / 2× / in menu, buildings that failed to spawn |
+| `PERTAMA` (first) | First moments: the player's first action, first building at risk, first building destroyed, point target reached |
+| `HANCUR` (destroyed) | Each destroyed building, with its cause (drought/flood) |
+| `AKHIR` / `SURVEI` (end / survey) | Game result, then the answers to the end-screen survey |
 
-**`ringkasan_<penguji>.csv`** berisi satu baris per sesi:
-- versi, param_id, seed, hasil
-- waktu momen-momen pertama
-- total aksi
-- total waktu jeda / 2× / menu
-- jawaban survei (tegang & adil, 1–5)
+**`ringkasan_<tester>.csv`** (summary) holds one row per session:
+- version, param_id, seed, result
+- time of the first moments
+- total actions
+- total time paused / 2× / in menu
+- survey answers (tense & fair, 1–5)
 
-Sesi dengan `param_id` yang sama memakai angka balancing yang persis sama, jadi bisa langsung dibandingkan. Kalau format ringkasan berubah, file lama otomatis disimpan dengan akhiran `_format_lama_…`.
+Sessions with the same `param_id` used exactly the same balancing numbers, so they can be compared directly. If the summary format changes, the old file is automatically kept with a `_format_lama_…` suffix.
 
-**Survei layar akhir:** setelah menang/kalah, muncul 2 pertanyaan bertombol 1–5 ("seberapa tegang" dan "seberapa adil"). Survei bisa dimatikan di BalanceLog → `end_survey`.
+**End-screen survey:** after a win/loss, 2 questions appear with 1–5 buttons ("how tense" and "how fair"). The survey can be turned off in BalanceLog → `end_survey`.
 
-Sesi yang **terhenti karena game ditutup** (tombol X, tombol Stop di editor, atau crash) **otomatis dihapus**, sehingga folder hanya berisi sesi yang selesai. Fitur ini bisa dimatikan di BalanceLog → `delete_unfinished`. Keluar lewat menu (Main Ulang / Menu Utama) tetap tercatat sebagai DITINGGALKAN.
+Sessions that are **cut short because the game was closed** (X button, Stop button in the editor, or a crash) are **deleted automatically**, so the folder only holds finished sessions. This can be turned off in BalanceLog → `delete_unfinished`. Leaving through the menu (Restart / Main Menu) is still recorded as DITINGGALKAN (abandoned).
 
-Nama penguji diambil dari nama user Windows, atau dari BalanceLog → `tester_name`. Saat dijalankan dari editor, folder log ada di dalam project. Untuk hasil export, folder ada di sebelah .exe. Folder log bisa dibuka langsung lewat file explorer.
+The tester name is taken from the Windows user name, or from BalanceLog → `tester_name`. When run from the editor, the log folder is inside the project. For an exported build, the folder is next to the .exe. The log folder can be opened directly in the file explorer.
 
-### 7.2 Tombol debug
-Sudah dihapus (F1–F4 tidak ada lagi) supaya build lomba bersih.
+### 7.2 Debug keys
+Removed (F1–F4 no longer exist) to keep the competition build clean.
 
-### 7.3 Proses balancing
-Catat setiap perubahan angka di spreadsheet tim:
-- tab **Log Balancing**: apa yang diubah, alasannya, dan hasilnya
-- tab **Target Balancing**: target pengalaman yang ingin dicapai
+### 7.3 Balancing process
+Record every number change in the team spreadsheet:
+- tab **Log Balancing**: what was changed, why, and the result
+- tab **Target Balancing**: the experience targets we want to reach
 
-Ubah **satu kelompok knob per putaran playtest**, dan gunakan **seed yang sama** saat membandingkan dua versi.
+Change **one group of knobs per playtest round**, and use the **same seed** when comparing two versions.
 
 ---
 
-## 8. Peta file
+## 8. File map
 
-| File | Isi |
+| File | Content |
 |---|---|
-| `world.gd` / `world.tscn` | Scene utama: siklus hari, alat pemain, tooltip, kamera, area main |
-| `water_sim.gd` | Simulasi air, debit & arah aliran, tampilan tile air, kelas daratan |
-| `weather_manager.gd` | Jadwal cuaca, kemarau bertahap, hujan |
-| `facility_manager.gd` | Bor, Bendungan, Spillway, Kincir (syarat pasang, stok, poin kincir) |
-| `building_manager.gd` / `building.gd` | Kemunculan bangunan, cadangan air, hancur |
-| `road_manager.gd` | Jalan otomatis & jembatan |
-| `score_manager.gd` | Poin & target |
-| `overlay.gd` | Lapisan info (ketinggian / kedalaman air) |
-| `balance_log.gd` | Log playtest otomatis |
-| `ui/hud.gd` | HUD: kiri atas cuaca & hari, kanan atas poin/bangunan/hancur/jembatan + kecepatan, kiri bawah toolbar, kanan bawah Aliran Air, tooltip |
-| `scenes/*.tscn` | Tampilan bangunan, fasilitas, kincir, jembatan, kartu alat |
-| `scenes/menu_map.tscn` | Peta diorama khusus latar main menu (diedit langsung di editor) |
-| `tools/build_menu_map.gd` | Script pembuat awal `menu_map.tscn` (menjalankannya lagi akan menimpa hasil editan) |
-| `DAFTAR_ASET.md` | Daftar aset yang dibutuhkan artist |
+| `world.gd` / `world.tscn` | Main scene: day cycle, player tools, tooltip, camera, play area |
+| `water_sim.gd` | Water simulation, flow rate & direction, water tile display, land classes |
+| `weather_manager.gd` | Weather schedule, gradual drought, rain |
+| `facility_manager.gd` | Drill Well, Dam, Spillway, Water Wheel (placement rules, stock, wheel points) |
+| `building_manager.gd` / `building.gd` | Building spawning, water reserve, destruction |
+| `road_manager.gd` | Automatic roads & bridges |
+| `score_manager.gd` | Points & target |
+| `overlay.gd` | Info layer (elevation / water depth) |
+| `balance_log.gd` | Automatic playtest log |
+| `ui/hud.gd` | HUD: top left weather & day, top right points/buildings/destroyed/bridges + speed, bottom left toolbar, bottom right Water Flow, tooltip |
+| `scenes/*.tscn` | Appearance of buildings, facilities, wheel, bridge, tool cards |
+| `scenes/menu_map.tscn` | Diorama map used only as the main-menu background (edited directly in the editor) |
+| `tools/build_menu_map.gd` | Script that first generated `menu_map.tscn` (running it again overwrites hand edits) |
+| `ASSET_LIST.md` | List of assets the artists need |

@@ -1,70 +1,56 @@
-# WATERWAYS — Daftar Audio
+# WATERWAYS — Audio List
 
-Semua audio diputar oleh autoload **`Audio`** (`scenes/audio_manager.tscn` + `audio/audio_manager.gd`). File dan volume diatur di Inspector scene itu. Bus: musik → `Music`, sisanya → `SFX` (slider di menu Pengaturan).
+All audio is played by the **`Audio`** autoload (`scenes/audio_manager.tscn` + `audio/audio_manager.gd`). Files and volumes are set in that scene's Inspector. Buses: music goes to `Music`, everything else to `SFX` (sliders in the Settings menu).
 
-## Audio yang terpasang
+## Installed audio
 
-| File | Diputar saat | Catatan |
+| File | Plays when | Notes |
 |---|---|---|
-| `music/bgm_menu.mp3` | Main menu (loop) | Berhenti pelan (fade) saat masuk game |
-| `music/jingle_win.mp3` | Game selesai **menang** (≥ 1 bintang) | Sekali |
-| `music/jingle_lose.wav` | Game selesai **kalah** | Sekali |
-| `ambience/amb_water.mp3` | Selama main (loop) | Volume mengikuti % **Aliran Air** (tetap terdengar pelan di 0%) |
-| `ambience/amb_rain.wav` | Cuaca **hujan** (loop) | Fade in/out saat cuaca berganti |
-| `ambience/amb_wind.mp3` | Cerah (pelan) dan **kemarau** (lebih keras, pitch 0,85) | Loop |
-| `sfx/ui_click.ogg` | **Setiap tombol** ditekan (menu, kartu alat 1–7, jeda, tutorial) | Otomatis untuk semua Button |
-| `sfx/ui_error.wav` | Klik aksi yang tidak bisa (tooltip merah: stok/sekop habis, tile tidak valid) | |
-| `sfx/tool_dirt.wav` | Gali (per petak saat animasi), Ratakan (naik pitch tinggi, turun pitch rendah), Timbun (pitch rendah) | Pitch acak ±8%, maks ~14×/detik |
-| `sfx/place_wood.wav` | Pasang jembatan & kincir. Bongkar jembatan = pitch tinggi | |
-| `sfx/place_stone.wav` | Pasang mesin bor & spillway. Bongkar fasilitas = pitch tinggi | |
-| `sfx/bld_warning.wav` | Bangunan baru saja jadi **terancam** | Maks sekali per 1,2 detik |
-| `sfx/bld_destroyed.mp3` | Bangunan hancur | |
-| `sfx/day_new.wav` | Hari baru dimulai (hari 2 dst.) | |
-| `sfx/land_expand.mp3` | Lahan baru terbuka (hari 10, 19, 28, 37) | |
+| `music/bgm_menu.mp3` | Main menu (looped) | Fades out when entering the game |
+| `music/jingle_win.mp3` | Game ends in a **win** (≥ 1 star) | Once |
+| `music/jingle_lose.wav` | Game ends in a **loss** | Once |
+| `ambience/amb_water.mp3` | During play (looped) | Volume follows the **Water Flow** % (still faintly audible at 0%) |
+| `ambience/amb_rain.wav` | **Rain** weather (looped) | Fades in/out when the weather changes |
+| `ambience/amb_wind.mp3` | Sunny (quiet) and **drought** (louder, pitch 0.85) | Looped |
+| `sfx/ui_click.ogg` | **Every button** press (menus, tool cards 1–7, pause, tutorial) | Automatic for all Buttons |
+| `sfx/ui_error.wav` | Clicking an action that is not allowed (red tooltip: no stock or shovel uses, invalid tile) | |
+| `sfx/tool_dirt.wav` | Dig (per tile during the animation), Level (higher pitch when raising, lower when lowering), Fill (low pitch) | Random pitch ±8%, max ~14 per second |
+| `sfx/place_wood.wav` | Placing a bridge or water wheel. Removing a bridge = higher pitch | |
+| `sfx/place_stone.wav` | Placing a drill well or spillway. Removing a facility = higher pitch | |
+| `sfx/bld_warning.wav` | A building has just become **at risk** | At most once per 1.2 seconds |
+| `sfx/bld_destroyed.mp3` | A building is destroyed | |
+| `sfx/day_new.wav` | A new day starts (day 2 onward) | |
+| `sfx/land_expand.mp3` | New land unlocked (days 10, 19, 28, 37) | |
 
-Belum ada (sengaja tidak dipakai): `bgm_game`, `ui_notify`, `road_tile`, `water_splash`, `water_reach`, `weather_change`.
+Intentionally unused: `bgm_game`, `ui_notify`, `road_tile`, `water_splash`, `water_reach`, `weather_change`.
 
-## Cara menambah / mengganti audio
-1. Taruh file di `assets/audio/music|ambience|sfx`.
-2. Buka `scenes/audio_manager.tscn`, isi slot yang sesuai di Inspector.
-3. Untuk bunyi baru: tambah `@export var nama: AudioStream` di `audio/audio_manager.gd`, lalu panggil `Audio.play("nama")` dari kode.
+## Adding or replacing audio
+1. Put the file in `assets/audio/music|ambience|sfx`.
+2. Open `scenes/audio_manager.tscn` and fill the matching slot in the Inspector.
+3. For a new sound: add `@export var name: AudioStream` in `audio/audio_manager.gd`, then call `Audio.play("name")` from code.
 
 ---
 
-## Sumber audio
+## Audio sources
 
-**Lisensi paling aman: CC0** (bebas dipakai tanpa kredit). **CC-BY** juga boleh asal kredit dicantumkan. **Hindari CC-BY-NC** (non-komersial) dan file tanpa lisensi jelas.
+**Safest license: CC0** (free to use, no credit needed). **CC-BY** is also fine as long as credit is given. **Avoid CC-BY-NC** (non-commercial) and files with unclear licenses.
 
-| Sumber | Lisensi | Cocok untuk | Catatan |
+| Source | License | Good for | Notes |
 |---|---|---|---|
-| [Kenney – Audio](https://kenney.nl/assets/category:Audio) | CC0 | UI, klik, impact, jingle | Paket yang relevan: *Interface Sounds*, *UI Audio*, *Impact Sounds*, *RPG Audio*, *Music Jingles*. Satu paket langsung isi banyak file. |
-| [Freesound](https://freesound.org) | Campuran (CC0 / CC-BY / CC-BY-NC) | Ambience air, hujan, angin, gali tanah | Filter **License: Creative Commons 0** di hasil pencarian. Butuh akun gratis untuk download. |
-| [OpenGameArt](https://opengameart.org/art-search-advanced) | Campuran (CC0 / CC-BY / GPL) | Musik loop game, SFX | Di pencarian, pilih *Art Type* = Music / Sound Effect. Cek lisensi di tiap halaman; contoh paket: [Interface Sounds](https://opengameart.org/content/interface-sounds). |
-| [Pixabay Music](https://pixabay.com/music/) & [Sound Effects](https://pixabay.com/sound-effects/) | Pixabay Content License (gratis, tanpa kredit) | Musik menu/gameplay, ambience | Cari "relaxing", "lofi", "nature ambient", "stream". |
-| [Incompetech (Kevin MacLeod)](https://incompetech.com/music/royalty-free/music.html) | CC-BY 4.0 | Musik latar | Wajib kredit nama artis + judul lagu. |
-| [Sonniss GDC Game Audio Bundle](https://sonniss.com/gameaudiogdc) | Royalty-free, bebas kredit | SFX kualitas tinggi (air, alam, impact) | Ukuran unduhan sangat besar (puluhan GB); ambil seperlunya. |
-| [Godot Asset Library](https://godotengine.org/asset-library/asset) | Tergantung aset | Paket SFX siap pakai | Cari "sound" / "sfx". Contoh: *Kenney Interface Sounds*. |
+| [Kenney – Audio](https://kenney.nl/assets/category:Audio) | CC0 | UI, clicks, impacts, jingles | Relevant packs: *Interface Sounds*, *UI Audio*, *Impact Sounds*, *RPG Audio*, *Music Jingles*. One pack gives many files. |
+| [Freesound](https://freesound.org) | Mixed (CC0 / CC-BY / CC-BY-NC) | Water, rain and wind ambience, digging | Filter by **License: Creative Commons 0** in the search results. A free account is needed to download. |
+| [OpenGameArt](https://opengameart.org/art-search-advanced) | Mixed (CC0 / CC-BY / GPL) | Looping game music, SFX | Set *Art Type* = Music / Sound Effect. Check the license on each page; example pack: [Interface Sounds](https://opengameart.org/content/interface-sounds). |
+| [Pixabay Music](https://pixabay.com/music/) & [Sound Effects](https://pixabay.com/sound-effects/) | Pixabay Content License (free, no credit) | Menu/gameplay music, ambience | Search "relaxing", "lofi", "nature ambient", "stream". |
 
 ---
 
-## Spesifikasi teknis
+## Technical specifications
 
-- **Format**: `.ogg` untuk musik dan ambience (centang **Loop** di tab Import Godot), `.wav` untuk SFX pendek (< 1 detik).
-- **Volume**: musik sekitar -16 LUFS, SFX dengan puncak -1 dB. Musik harus lebih pelan dari SFX supaya umpan balik aksi tetap terdengar.
-- **Potong hening** di awal file SFX supaya bunyi langsung terdengar saat diklik.
-- **Loop harus mulus**: tidak ada "klik" di titik sambungan (cek di Audacity: Effect → Fade In/Out sangat pendek, atau pilih titik potong di zero crossing).
-- Bunyi berulang (gali, jalan, air masuk kanal) nanti diberi pitch acak dan dibatasi maksimal ±3 kali per detik di kode.
-- Bus audio `Music` dan `SFX` sudah ada di `default_bus_layout.tres` dan tersambung ke slider volume di menu Pengaturan.
+- **Format**: `.ogg` for music and ambience (tick **Loop** in Godot's Import tab), `.wav` for short SFX (< 1 second).
+- **Loudness**: music around -16 LUFS, SFX peaking at -1 dB. Music must be quieter than SFX so action feedback stays audible.
+- **Trim leading silence** from SFX files so the sound plays right on click.
+- **Loops must be seamless**: no click at the join (check in Audacity: a very short Fade In/Out, or cut at a zero crossing).
+- Repeated sounds (digging, roads, water entering a canal) get a random pitch and are limited in code (about ±3 per second).
+- The `Music` and `SFX` buses exist in `default_bus_layout.tres` and are tied to the volume sliders in the Settings menu.
 
 ---
-
-## Kredit (wajib diisi untuk submission)
-
-Isi satu baris untuk setiap file yang dipakai:
-
-| File | Judul asli | Pembuat | Sumber (link) | Lisensi |
-|---|---|---|---|---|
-| `bgm_game.ogg` | | | | |
-| `amb_water.ogg` | | | | |
-| `ui_click.wav` | | | | |
-| … | | | | |

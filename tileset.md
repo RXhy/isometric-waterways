@@ -1,187 +1,189 @@
-# WATERWAYS — Tileset Air, Kanal, Jalan & Tanah
+# WATERWAYS — Water, Canal, Road & Ground Tileset
 
-Dokumen ini menjelaskan cara game memilih tile air, kanal, dan jalan (versi terbaru di branch `feature/core-gameplay`), serta rencana pergantian tekstur tanah ke **v3**.
+This document explains how the game picks water, canal and road tiles (latest version on branch `feature/core-gameplay`), and the plan to switch the ground texture to **v3**.
 
----
-
-## 1. Sumber tile
-
-| Source ID | File | Isi |
-|---|---|---|
-| 0 | `assets/Tiles/terrain_tiles_v3.png` | Daratan 5 kolom × 4 baris: baris 0 kering, 1–2 rumput, 3 pelataran |
-| 1 | `assets/Tiles/tileset_iso_waterways.png` | Tile lama (dipakai hanya kalau `use_tileset_v2` dimatikan) |
-| 2 | `assets/water/water_flow_source.tres` | Air beranimasi lama (dipakai hanya kalau `use_tileset_v2` dimatikan) |
-| **3** | **`assets/Tiles/tilesset_water_road.png`** | Air alami, kanal galian, jalan (grid 32 px) |
-| **4** | **`assets/Tiles/waterflow.png`** | Animasi arus air (4 frame × 128 baris), digambar di atas tile air/kanal |
-
-Source 3 **tidak disimpan di `world.tscn`**. Saat game mulai, `world.gd` → `_build_v2_source()` mendaftarkannya ke TileSet, lengkap dengan 4 varian elevasi (alternative tile 0–3). Offset dan warna tiap elevasi meniru tile tanah. Artist cukup menimpa PNG-nya dengan ukuran dan susunan yang sama.
-
-### Susunan `tilesset_water_road.png`
-
-| Baris | Isi | Kolom |
-|---|---|---|
-| 0–2 | Air alami, bibir **coklat** (sebelah tanah kering) | 9 bentuk tepi danau |
-| 3–5 | Air alami, bibir **hijau** (sebelah rumput) | 9 bentuk |
-| 6–8 | Air alami, bibir **hijau gelap** (sebelah rumput gelap) | 9 bentuk |
-| 10–12 | Kanal galian **bata** | 11 bentuk sambungan |
-| 13–15 | Kanal galian **batu** | 11 bentuk sambungan |
-| 17 | Jalan | 11 bentuk sambungan |
-
-Tiap kelompok 3 baris berurutan: **kering → dangkal → penuh**.
+Inspector group names such as "Tileset air & jalan" and "Animasi jalan" are Indonesian in the code; they are kept as-is here, with the English meaning in parentheses.
 
 ---
 
-## 2. Cara memilih tile (`world.gd` → `v2_atlas(petak)`)
+## 1. Tile sources
 
-Dipanggil oleh `water_sim.gd` setiap kali tampilan petak diperbarui.
+| Source ID | File | Content |
+|---|---|---|
+| 0 | `assets/Tiles/terrain_tiles_v3.png` | Land, 5 columns × 4 rows: row 0 dry, rows 1–2 grass, row 3 yard |
+| 1 | `assets/Tiles/tileset_iso_waterways.png` | Old tiles (used only when `use_tileset_v2` is turned off) |
+| 2 | `assets/water/water_flow_source.tres` | Old animated water (used only when `use_tileset_v2` is turned off) |
+| **3** | **`assets/Tiles/tilesset_water_road.png`** | Natural water, dug canal, road (32 px grid) |
+| **4** | **`assets/Tiles/waterflow.png`** | Water flow animation (4 frames × 128 rows), drawn on top of water/canal tiles |
 
-### 2.1 Bitmask 4 sisi
+Source 3 is **not stored in `world.tscn`**. When the game starts, `world.gd` → `_build_v2_source()` registers it in the TileSet, complete with 4 elevation variants (alternative tiles 0–3). The offset and colour of each elevation copy the ground tiles. An artist only needs to overwrite the PNG with the same size and layout.
 
-Game melihat **4 tetangga sisi** petak (bukan sudut/serong), lalu membuat bitmask:
+### Layout of `tilesset_water_road.png`
 
-| Sisi | ↖ kiri-atas | ↗ kanan-atas | ↙ kiri-bawah | ↘ kanan-bawah |
+| Rows | Content | Columns |
+|---|---|---|
+| 0–2 | Natural water, **brown** lip (next to dry ground) | 9 lake-edge shapes |
+| 3–5 | Natural water, **green** lip (next to grass) | 9 shapes |
+| 6–8 | Natural water, **dark green** lip (next to dark grass) | 9 shapes |
+| 10–12 | **Brick** dug canal | 11 junction shapes |
+| 13–15 | **Stone** dug canal | 11 junction shapes |
+| 17 | Road | 11 junction shapes |
+
+Each group of 3 rows is in order: **dry → shallow → full**.
+
+---
+
+## 2. How a tile is chosen (`world.gd` → `v2_atlas(cell)`)
+
+Called by `water_sim.gd` every time a cell's appearance is refreshed.
+
+### 2.1 4-side bitmask
+
+The game looks at the **4 edge neighbours** of the cell (not the corners/diagonals) and builds a bitmask:
+
+| Side | ↖ upper-left | ↗ upper-right | ↙ lower-left | ↘ lower-right |
 |---|---|---|---|---|
 | Bit | 1 | 2 | 4 | 8 |
 
-Mask itu menentukan **kolom** tile. Kondisi air menentukan **baris**.
+The mask decides the tile **column**. The water condition decides the **row**.
 
-### 2.2 Air alami (petak WATER dari peta)
+### 2.2 Natural water (WATER cells from the map)
 
-- **Mask** = sisi yang berbatasan dengan **daratan** (bukan air/kanal).
-- **Kolom** (tabel `LAKE_COL`):
+- **Mask** = the sides that border **land** (not water/canal).
+- **Column** (table `LAKE_COL`):
 
-| Daratan di sisi | Kolom | Bentuk |
+| Land on side | Column | Shape |
 |---|---|---|
-| tidak ada | 8 | tengah danau |
-| ↖ | 1 | tepi kiri-atas |
-| ↗ | 3 | tepi kanan-atas |
-| ↙ | 4 | tepi kiri-bawah |
-| ↘ | 6 | tepi kanan-bawah |
-| ↖ + ↗ | 2 | sudut atas |
-| ↙ + ↘ | 5 | sudut bawah |
-| ↖ + ↙ | 0 | sudut kiri |
-| ↗ + ↘ | 7 | sudut kanan |
-| berseberangan / 3 / 4 sisi | tile terdekat | *tidak ada di sheet* |
+| none | 8 | middle of the lake |
+| ↖ | 1 | upper-left edge |
+| ↗ | 3 | upper-right edge |
+| ↙ | 4 | lower-left edge |
+| ↘ | 6 | lower-right edge |
+| ↖ + ↗ | 2 | top corner |
+| ↙ + ↘ | 5 | bottom corner |
+| ↖ + ↙ | 0 | left corner |
+| ↗ + ↘ | 7 | right corner |
+| opposite sides / 3 / 4 sides | nearest tile | *not in the sheet* |
 
-- **Kelompok warna bibir**: dari kelas daratan di sebelahnya. Tanah kering → baris 0–2, rumput dekat air → 3–5, rumput gelap → 6–8.
-- **Tingkat air**: kedalaman < `wet_threshold` (0,06) → **kering**; < `v2_full_depth` (0,3) → **dangkal**; selebihnya **penuh**. Saat kemarau danau tampak surut.
-- Air di luar area simulasi selalu tampil penuh.
+- **Lip colour group**: from the class of the land next to it. Dry ground → rows 0–2, grass near water → 3–5, dark grass → 6–8.
+- **Water level**: depth < `wet_threshold` (0.06) → **dry**; < `v2_full_depth` (0.3) → **shallow**; otherwise **full**. During a drought the lake visibly shrinks.
+- Water outside the simulation area is always shown full.
 
-### 2.3 Kanal galian (petak CANAL)
+### 2.3 Dug canal (CANAL cells)
 
-- **Mask** = sisi yang bertetangga dengan **kanal atau air**, ditambah **satu sambungan ke bangunan**.
-  - Tiap bangunan hanya punya satu kanal "masuk" (`canal_link()`): kanal di sisi bangunan yang paling sedikit sambungannya (utamakan ujung kanal).
-- **Kolom** (tabel `LINK_COL`):
+- **Mask** = the sides adjacent to **a canal or water**, plus **one link to a building**.
+  - Each building has only one "entry" canal (`canal_link()`): the canal on the side of the building with the fewest links (preferring canal ends).
+- **Column** (table `LINK_COL`):
 
-| Tersambung ke | Kolom | Bentuk |
+| Connected to | Column | Shape |
 |---|---|---|
-| ↗ + ↘ | 0 | belokan |
-| ↙ + ↘ | 1 | belokan |
-| ↖ + ↘ | 2 | lurus ↘ |
-| ↗ + ↙ | 3 | lurus ↗ |
-| ↖ + ↗ | 4 | belokan |
-| ↖ + ↙ | 5 | belokan |
-| semua kecuali ↖ | 6 | pertigaan |
-| semua kecuali ↙ | 7 | pertigaan |
-| semua kecuali ↗ | 8 | pertigaan |
-| semua kecuali ↘ | 9 | pertigaan |
-| semua | 10 | perempatan |
-| 1 sisi / terisolasi | 2 atau 3 | lurus (*tile buntu tidak ada di sheet*) |
+| ↗ + ↘ | 0 | bend |
+| ↙ + ↘ | 1 | bend |
+| ↖ + ↘ | 2 | straight ↘ |
+| ↗ + ↙ | 3 | straight ↗ |
+| ↖ + ↗ | 4 | bend |
+| ↖ + ↙ | 5 | bend |
+| all except ↖ | 6 | T-junction |
+| all except ↙ | 7 | T-junction |
+| all except ↗ | 8 | T-junction |
+| all except ↘ | 9 | T-junction |
+| all | 10 | crossroads |
+| 1 side / isolated | 2 or 3 | straight (*dead-end tile is not in the sheet*) |
 
-- **Baris**: `10 + canal_style × 3 + tingkat air` (bata = 0, batu = 1).
+- **Row**: `10 + canal_style × 3 + water level` (brick = 0, stone = 1).
 
-### 2.4 Jalan (petak ROAD)
+### 2.4 Road (ROAD cells)
 
-- **Mask** = sisi yang bertetangga dengan jalan / jembatan / jalan yang masih antre dibangun.
-- Kalau ujung buntu (≤ 1 sambungan), ditambah sisi yang bertetangga dengan **bangunan**.
-- **Kolom**: tabel `LINK_COL` yang sama dengan kanal. **Baris**: 17.
+- **Mask** = the sides adjacent to a road / bridge / road still queued for construction.
+- If it is a dead end (≤ 1 link), the sides adjacent to a **building** are added.
+- **Column**: the same `LINK_COL` table as canals. **Row**: 17.
 
-### 2.5 Daratan banjir
+### 2.5 Flooded land
 
-Tile tengah danau (kolom 8), tingkat dangkal.
+Lake-middle tile (column 8), shallow level.
 
-### 2.6 Kapan dihitung ulang
+### 2.6 When it is recomputed
 
-- Setiap petak berubah (`set_base` → `water.refresh_cell`): petak itu + 4 tetangganya + petak di sekeliling bangunan tetangga.
-- Saat bangunan baru muncul (`building_manager._spawn`).
-- Tiap 0,1 detik (`refresh_all`) untuk perubahan tingkat air.
+- Whenever a cell changes (`set_base` → `water.refresh_cell`): that cell + its 4 neighbours + the cells around neighbouring buildings.
+- When a new building appears (`building_manager._spawn`).
+- Every 0.1 seconds (`refresh_all`) for water-level changes.
 
-### 2.7 Animasi
+### 2.7 Animation
 
-- **Jalan baru**: petak muncul satu per satu dari jalan lama menuju bangunan (Roads → grup *Animasi jalan*).
-- **Gali**: setelah klik/drag, sekop langsung dipotong, lalu kanal "jatuh" ke tempatnya petak demi petak mengikuti urutan drag (Node2D → `dig_step_delay`, `dig_drop_time`, `dig_drop_height`).
-- Sprite animasi ikut y-sort layer `World`, jadi tertutup tanah di depannya persis seperti tile aslinya.
+- **New road**: cells appear one by one from the old road toward the building (Roads → group *Animasi jalan*, "Road animation").
+- **Dig**: after a click/drag the shovel use is deducted immediately, then the canal "drops" into place cell by cell following the drag order (Node2D → `dig_step_delay`, `dig_drop_time`, `dig_drop_height`).
+- The animation sprites follow the y-sort of the `World` layer, so they are covered by ground in front of them exactly like real tiles.
 
-### 2.8 Pengaturan di Inspector (Node2D → grup *Tileset air & jalan*)
+### 2.8 Inspector settings (Node2D → group *Tileset air & jalan*, "Water & road tileset")
 
-| Properti | Default | Fungsi |
+| Property | Default | Purpose |
 |---|---|---|
-| `use_tileset_v2` | aktif | Matikan untuk kembali ke tile lama + air beranimasi |
-| `water_road_texture` | `tilesset_water_road.png` | Tekstur sheet |
-| `canal_style` | 0 | 0 bata, 1 batu |
-| `v2_full_depth` | 0,3 | Batas kedalaman tile "penuh" |
-| `v2_top_shift` | 0 | Geser vertikal tile air/jalan terhadap tile tanah (0 = sejajar, lihat §3) |
-| `v2_canal_sort_boost` | 0 | 0 = kanal rata dengan tanah |
+| `use_tileset_v2` | on | Turn off to go back to the old tiles + animated water |
+| `water_road_texture` | `tilesset_water_road.png` | Sheet texture |
+| `canal_style` | 0 | 0 brick, 1 stone |
+| `v2_full_depth` | 0.3 | Depth limit for the "full" tile |
+| `v2_top_shift` | 0 | Vertical shift of water/road tiles relative to ground tiles (0 = aligned, see §3) |
+| `v2_canal_sort_boost` | 0 | 0 = canal level with the ground |
 
 ---
 
-## 2.9 Animasi arus air (`waterflow.png`)
+## 2.9 Water flow animation (`waterflow.png`)
 
-Sheet 128 × 4096 px: **4 kolom = 4 frame animasi**, **128 baris = bentuk**. Dibuat saat runtime oleh `world.gd` → `_build_flow_source()` sebagai source 4, lalu digambar di layer `WaterFlow` (anak `World`, ikut y-sort) tepat di atas tile air/kanal. Alternative 0–3 (elevasi) menyalin `texture_origin` dan modulate tile tanah, sama seperti source 3.
+Sheet of 128 × 4096 px: **4 columns = 4 animation frames**, **128 rows = shapes**. Built at runtime by `world.gd` → `_build_flow_source()` as source 4, then drawn on the `WaterFlow` layer (child of `World`, follows y-sort) right above the water/canal tile. Alternatives 0–3 (elevation) copy the `texture_origin` and modulate of the ground tile, the same as source 3.
 
-| Baris (1–128) | Isi | Dipakai saat |
+| Rows (1–128) | Content | Used when |
 |---|---|---|
-| 1–9 / 10–18 | Air alami tenang 3/4 / penuh, 9 bentuk (urutan kolom `LAKE_COL`) | Air diam |
-| 19–29 / 30–40 | Kanal tenang 3/4 / penuh, 11 bentuk (urutan kolom `LINK_COL`) | Air diam |
-| 41 | Kosong | — |
-| 42–61 / 62–81 | Air alami arus lurus 3/4 / penuh: 5 bentuk (kolom 1, 3, 4, 6, 8) × 4 arah | Air mengalir di tepi lurus / tengah danau |
-| 82–85 / 86–89 | Kanal lurus 3/4 / penuh: kiri-atas, kanan-bawah (kolom 2), kanan-atas, kiri-bawah (kolom 3) | Air mengalir di kanal lurus |
-| 90–97 | Pusaran sudut air alami (kolom 0, 2, 5, 7), selang-seling 3/4 lalu penuh | Air mengalir di sudut |
-| 98–105 | Pusaran belokan kanal (kolom 0, 1, 4, 5) | Air mengalir di belokan |
-| 106–113 | Pusaran pertigaan kanal (kolom 6–9) | Air mengalir di pertigaan |
-| 114–115 | Pusaran perempatan kanal (kolom 10) | Air mengalir di perempatan |
-| 116–128 | Cadangan (kosong) | — |
+| 1–9 / 10–18 | Natural water, still, 3/4 / full, 9 shapes (column order `LAKE_COL`) | Standing water |
+| 19–29 / 30–40 | Canal, still, 3/4 / full, 11 shapes (column order `LINK_COL`) | Standing water |
+| 41 | Empty | — |
+| 42–61 / 62–81 | Natural water, straight flow, 3/4 / full: 5 shapes (columns 1, 3, 4, 6, 8) × 4 directions | Water flowing along a straight edge / lake middle |
+| 82–85 / 86–89 | Straight canal 3/4 / full: upper-left, lower-right (column 2), upper-right, lower-left (column 3) | Water flowing in a straight canal |
+| 90–97 | Natural water corner swirl (columns 0, 2, 5, 7), alternating 3/4 then full | Water flowing at a corner |
+| 98–105 | Canal bend swirl (columns 0, 1, 4, 5) | Water flowing at a bend |
+| 106–113 | Canal T-junction swirl (columns 6–9) | Water flowing at a T-junction |
+| 114–115 | Canal crossroads swirl (column 10) | Water flowing at a crossroads |
+| 116–128 | Reserved (empty) | — |
 
-Urutan 4 arah di tiap bentuk: **kiri-atas, kanan-bawah, kanan-atas, kiri-bawah**.
+The order of the 4 directions in each shape: **upper-left, lower-right, upper-right, lower-left**.
 
-Aturan pemilihan (`world.gd` → `flow_row()`):
-- Tingkat air **kering** → tanpa animasi. **Dangkal** → baris 3/4. **Penuh** → baris penuh.
-- Arah dan "mengalir atau tidak" dari `water_sim.flow_dir()` (aliran bersih di atas `still_flow`). Air di luar area main selalu tenang.
-- Kanal lurus memilih arah sepanjang sumbunya (kanal ↖↘ hanya pakai kiri-atas/kanan-bawah).
+Selection rules (`world.gd` → `flow_row()`):
+- Water level **dry** → no animation. **Shallow** → 3/4 rows. **Full** → full rows.
+- The direction and "flowing or not" come from `water_sim.flow_dir()` (net flow above `still_flow`). Water outside the play area is always still.
+- A straight canal picks a direction along its axis (an ↖↘ canal only uses upper-left/lower-right).
 
-Pengaturan (Node2D → grup *Tileset air & jalan*): `show_water_flow` (aktif/mati), `waterflow_texture`, `waterflow_fps` (4), `waterflow_random_start` (false = semua petak serempak, supaya garis arus menyambung antar petak).
+Settings (Node2D → group *Tileset air & jalan*): `show_water_flow` (on/off), `waterflow_texture`, `waterflow_fps` (4), `waterflow_random_start` (false = all cells in sync, so the flow lines connect between cells).
 
-## 3. Tekstur tanah v3 (sudah dipakai)
+## 3. Ground texture v3 (already in use)
 
-| File | Permukaan atas mulai di baris | Tebal sisi blok |
+| File | Top surface starts at row | Block side thickness |
 |---|---|---|
-| `terrain_tiles.png` (lama) | 13 | 3 px |
+| `terrain_tiles.png` (old) | 13 | 3 px |
 | `terrain_tiles_v2.png` | 13 | 3 px |
-| **`terrain_tiles_v3.png`** (dipakai) | **6** | **10 px** |
+| **`terrain_tiles_v3.png`** (in use) | **6** | **10 px** |
 | `tilesset_water_road.png` | 6 | 10 px |
 
-Tanah v3 dan tileset air/jalan punya geometri yang sama, jadi keduanya sejajar tanpa geseran.
+Ground v3 and the water/road tileset have the same geometry, so they line up with no shift.
 
-Yang diubah saat pindah ke v3:
-1. `world.tscn`: source 0 memakai `terrain_tiles_v3.png`. Nilai tiap alternative tile (= tingkat elevasi):
+What changed when moving to v3:
+1. `world.tscn`: source 0 uses `terrain_tiles_v3.png`. The value of each alternative tile (= elevation level):
 
-| Alternative | Elevasi | `texture_origin` Y | Modulate (slider **I** dari #ffffff; Godot menghitung di ruang linear: warna = srgb(linear × 2^I)) |
+| Alternative | Elevation | `texture_origin` Y | Modulate (slider **I** from #ffffff; Godot computes in linear space: colour = srgb(linear × 2^I)) |
 |---|---|---|---|
-| 0 | Garis pantai | -2 | I = -1,5 → #a0a0a0 (0,629) |
-| 1 | Dataran rendah | 2 | I = -1 → #bcbcbc (0,735) |
-| 2 | Dataran menengah | 6 | I = -0,5 → #dbdbdb (0,858) |
-| 3 | Dataran tinggi | 10 | I = 0 → #ffffff |
+| 0 | Shoreline | -2 | I = -1.5 → #a0a0a0 (0.629) |
+| 1 | Low plain | 2 | I = -1 → #bcbcbc (0.735) |
+| 2 | Mid plain | 6 | I = -0.5 → #dbdbdb (0.858) |
+| 3 | High plain | 10 | I = 0 → #ffffff |
 
-   Tile air, kanal, dan jalan (source 3) **menyalin otomatis** nilai ini dari tile tanah saat game mulai (`_build_v2_source`), jadi selalu sama dan teksturnya menyambung. Kalau nilai di atas diubah di editor, tile air/jalan ikut berubah.
+   Water, canal and road tiles (source 3) **copy these values automatically** from the ground tiles when the game starts (`_build_v2_source`), so they always match and the textures join up. If the values above are changed in the editor, the water/road tiles follow.
 2. `world.gd`: `v2_top_shift` = **0**.
-3. `tools/build_menu_map.gd` → `V2_TOP_SHIFT = 0`, lalu `scenes/menu_map.tscn` dibuat ulang (otomatis ikut v3 dari TileSet `world.tscn`).
+3. `tools/build_menu_map.gd` → `V2_TOP_SHIFT = 0`, then `scenes/menu_map.tscn` is regenerated (it picks up v3 automatically from the TileSet of `world.tscn`).
 
-Kalau artist mengganti gambar tanah, timpa `terrain_tiles_v3.png` dengan ukuran dan susunan yang sama (5 × 4 tile, 32 × 32, permukaan atas di baris 6).
+If an artist replaces the ground image, overwrite `terrain_tiles_v3.png` with the same size and layout (5 × 4 tiles, 32 × 32, top surface at row 6).
 
-## 4. Tile yang belum ada (permintaan ke artist)
+## 4. Tiles that don't exist yet (requests to the artist)
 
-- Kanal & jalan **buntu** (1 sambungan) dan **terisolasi** (0 sambungan).
-- Tepi danau **dua sisi berseberangan** (sungai selebar 1 petak), **tiga sisi**, dan **sudut dalam**.
-- Fungsi kanal **batu** (baris 13–15) belum ditentukan, misalnya untuk kanal di dataran tinggi atau yang tersambung ke Spillway.
+- **Dead-end** canals & roads (1 link) and **isolated** ones (0 links).
+- Lake edges with **two opposite sides** (a 1-cell-wide river), **three sides**, and **inner corners**.
+- The purpose of the **stone** canal (rows 13–15) is not decided yet, for example for canals on high plains or ones connected to a Spillway.
 
-Kalau tile baru ditambahkan, cukup beri tahu posisinya di sheet, lalu tabel `LAKE_COL` / `LINK_COL` di `world.gd` diperbarui.
+When new tiles are added, just tell us their position in the sheet, then the `LAKE_COL` / `LINK_COL` tables in `world.gd` get updated.

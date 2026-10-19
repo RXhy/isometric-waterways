@@ -57,7 +57,7 @@ var land_dist: Dictionary = {}     # petak dekat air -> jarak ke air (1..radius)
 const SRC_TERRAIN := 0
 const SRC_WATER_ROAD := 1
 const SRC_WATER_FLOW := 2  ## assets/water/water_flow_source.tres: air beranimasi (tenang, arus 4 arah pelan/deras, dangkal)
-const SRC_V2 := 3          ## assets/Tiles/tilesset_water_road.png (dibuat saat runtime, lihat _build_v2_source)
+const SRC_V2 := 3          ## assets/Tiles/tilesset_water_road.png (atlas source tersimpan di assets/Tiles/water_road_source.tres)
 const SRC_FLOW := 4        ## assets/Tiles/waterflow.png (dibuat saat runtime, lihat _build_flow_source)
 const ATLAS_CANAL_DRY := Vector2i(1, 0)   ## (sumber 1) parit kanal / dasar sungai kering
 const ATLAS_WATER := Vector2i(3, 0)       ## (sumber 1) air: sumber alami, kanal berair, banjir
@@ -997,6 +997,10 @@ func set_base(cell_pos: Vector2i, new_state: int) -> void:
 func atlas_to_state(source: int, a: Vector2i) -> int:
 	if source == SRC_WATER_ROAD:
 		return a.x  # urutan tile lama sama dengan TileState: tanah, kanal, rumput, air, jalan
+	if source == SRC_V2:  # tilesset_water_road.png: baris 0-8 air alami, 10-15 kanal, 17 jalan
+		if a.y == V2_ROAD_ROW:
+			return TileState.ROAD
+		return TileState.CANAL if a.y >= V2_CANAL_ROW else TileState.WATER
 	return TileState.DIRT if a.y == 0 else TileState.GRASS  # terrain_tiles: semuanya daratan
 
 ## Dipanggil WaterSim saat kelas daratan sebuah petak berubah.
