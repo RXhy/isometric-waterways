@@ -255,10 +255,6 @@ func _safe(s: String) -> String:
 		out += ch if (ch.is_valid_identifier() or ch.is_valid_int() or ch == "-") else "_"
 	return out
 
-func open_folder() -> void:
-	if folder != "":
-		OS.shell_open(folder)
-
 # --- Pencatatan dari sistem lain ---
 
 ## Hitung satu aksi/kejadian (dipanggil world.gd, building_manager.gd).

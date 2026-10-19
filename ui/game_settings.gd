@@ -2,8 +2,7 @@ class_name GameSettings
 extends RefCounted
 ## Pengaturan pemain (volume, layar penuh, tooltip). Disimpan di user://settings.cfg
 ## dan dipakai menu opsi in-game (scenes/ui/pause_menu.tscn).
-## Bus audio "Music" dan "SFX" ada di default_bus_layout.tres: nanti AudioStreamPlayer
-## musik pakai bus Music, efek suara pakai bus SFX, supaya slider volumenya berlaku.
+## Bus audio "Music" dan "SFX" didefinisikan di default_bus_layout.tres.
 
 const PATH := "user://settings.cfg"
 

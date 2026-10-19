@@ -64,7 +64,7 @@ func _get_water_mask(cell: Vector2i) -> int:
 	var tr = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE)
 	var bl = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE)
 	var br = world.world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE)
-	
+
 	var mask = 0
 	if world.water.is_channel(tl): mask |= 1
 	if world.water.is_channel(tr): mask |= 2
@@ -131,23 +131,17 @@ func place(kind: int, cell: Vector2i) -> bool:
 	stock[kind] -= 1
 	var scene: PackedScene = [bor_scene, bendungan_scene, spillway_scene, kincir_scene][kind]
 	var node: Node2D = scene.instantiate()
-	
-	# --- PENYESUAIAN WARNA KINCIR BERDASARKAN ELEVASI TILE ---
 	if kind == Kind.KINCIR:
-		var elev = world.get_elev(cell)
-		if elev == 0:
-			node.modulate = Color(0.8, 0.8, 0.8) # Paling gelap untuk elevasi bawah
-		elif elev == 1:
-			node.modulate = Color(0.9, 0.9, 0.9)
-		else:
-			node.modulate = Color(1.0, 1.0, 1.0) # Warna asli untuk dataran tinggi
+		# kincir makin gelap di elevasi rendah
+		var elev: int = world.get_elev(cell)
+		var shade: float = 0.8 if elev == 0 else (0.9 if elev == 1 else 1.0)
+		node.modulate = Color(shade, shade, shade)
 	elif kind == Kind.SPILLWAY:
 		var mask = _get_water_mask(cell)
 		var spr = node.get_node("Sprite")
 		spr.hframes = 2
 		spr.frame = 0 if mask == 9 else 1
-	# ---------------------------------------------------------
-	
+
 	# fasilitas ditaruh di node Buildings supaya urutan gambarnya (y-sort) menyatu dengan bangunan
 	var host: Node2D = world.buildings if facilities_sort_with_buildings else self
 	node.position = host.to_local(world.cell_to_global(cell))
@@ -186,9 +180,6 @@ func remove(cell: Vector2i) -> void:
 			world.weather.apply_targets()
 		Kind.KINCIR:
 			world.water.watch_flux(cell, false)
-
-func is_well(cell: Vector2i) -> bool:
-	return kind_at(cell) == Kind.BOR
 
 # --- Kincir Air ---
 

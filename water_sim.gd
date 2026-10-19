@@ -110,10 +110,6 @@ func is_wet(c: Vector2i) -> bool:
 func is_flooded(c: Vector2i) -> bool:
 	return not is_channel(c) and get_depth(c) >= flood_threshold
 
-## Badan air alami yang sedang kering (misal saat kemarau).
-func is_dry_source(c: Vector2i) -> bool:
-	return (is_natural(c) or wells.has(c)) and not is_wet(c)
-
 func _open(c: Vector2i) -> bool:
 	return world.is_in_active_area(c) and world.grid_data.has(c) and not walls.has(c)
 
@@ -248,7 +244,7 @@ func step_sim(dt: float) -> void:
 			var nb: Vector2i = world.world.get_neighbor_cell(c, SIDES[si])
 			if not _open(nb):
 				continue
-			
+
 			if watched.has(nb) and world.get_elev(c) > world.get_elev(nb):
 				continue
 			var level := surface(nb)
@@ -302,7 +298,7 @@ func step_sim(dt: float) -> void:
 			d -= land_absorb * dt
 		elif not body_of.has(c) and not wells.has(c):
 			d -= canal_evaporation * dt # Spillway dan kanal biasa mengalami penguapan alami
-			
+
 		if d <= 0.0001:
 			depth.erase(c)
 		else:

@@ -3,7 +3,7 @@ extends Control
 ## Node penting dicari lewat nama unik (%NewGame, %Menu, ...).
 ## Latar: scenes/menu_map.tscn (peta diorama khusus menu).
 
-const GAME_SCENE := "res://scenes/loading.tscn"  
+const GAME_SCENE := "res://scenes/loading.tscn"
 const TUTORIAL_SCENE := preload("res://scenes/ui/tutorial.tscn")
 
 ## Geser pandangan kamera (px, + = pulau bergeser ke kiri) supaya pulau tidak tertutup UI varian ini.
@@ -49,7 +49,7 @@ func _on_new_game() -> void:
 	t.tween_callback(func(): get_tree().change_scene_to_file(GAME_SCENE))
 
 func _on_load_game() -> void:
-	pass  # TODO: sistem simpan/muat
+	pass  # belum ada sistem simpan/muat
 
 func _open(dialog: Control) -> void:
 	_close_dialogs()

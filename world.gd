@@ -72,6 +72,7 @@ const COURTYARD_WEIGHTS := [40, 30, 30]
 @export var day_length: float = 30.0  ## detik per hari (bangunan baru muncul tiap awal hari)
 @export var target_days: int = 45     ## lama permainan (hari). Di akhir hari terakhir poin dinilai jadi bintang (lihat node Score)
 @export var damage_quota: int = 8     ## kalah kalau bangunan hancur MELEBIHI angka ini (~20% dari ~40 bangunan selama 45 hari)
+@export var supply_diagonals: bool = false  ## false = air harus tepat di DEPAN/SAMPING bangunan (4 sisi). true = sudut/serong juga dihitung (8 arah)
 @export var dig_per_day: int = 15      ## jatah Gali per hari; sisa tidak terbawa ke besok
 @export var level_per_day: int = 15    ## jatah Ratakan per hari
 @export var fill_per_day: int = 10     ## jatah Timbun kanal per hari
@@ -389,27 +390,27 @@ func action_preview(cell: Vector2i) -> Array:
 		Tool.JEMBATAN:
 			if roads.bridge_stock <= 0: return [-1, "Out of bridges"]
 			if t != TileState.ROAD or roads.bridges.has(cell): return [-1, "Roads only"]
-			
+
 			# Validasi visual kursor untuk jembatan (cek mask jalan lurus)
 			var tl = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_LEFT_SIDE)
 			var tr = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_TOP_RIGHT_SIDE)
 			var bl = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE)
 			var br = world.get_neighbor_cell(cell, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE)
-			
+
 			var valid_conn = func(c: Vector2i):
 				return roads.is_road(c) or buildings.has_building(c)
-			
+
 			var mask = 0
 			if valid_conn.call(tl): mask |= 1
 			if valid_conn.call(tr): mask |= 2
 			if valid_conn.call(bl): mask |= 4
 			if valid_conn.call(br): mask |= 8
-			
+
 			if mask != 9 and mask != 6:
 				return [-1, "Straight roads only"]
-				
+
 			return [1, "Click: build bridge"]
-			
+
 		Tool.BOR, Tool.SPILLWAY, Tool.KINCIR:
 			var why: String = facilities.why_not(tool_kind(current_tool), cell)
 			if why == "":
@@ -444,7 +445,7 @@ const NEIGHBORS_SIDE := [
 ## Bangunan teraliri kalau salah satu dari 4 tetangga SISI-nya (bukan sudut/serong) kanal/sumber
 ## yang berair dan sama tinggi atau lebih tinggi (air tidak bisa naik).
 func is_cell_supplied(cell: Vector2i) -> bool:
-	for n in NEIGHBORS_8:  # 8 arah: 4 sisi + 4 sudut (serong)
+	for n in (NEIGHBORS_8 if supply_diagonals else NEIGHBORS_SIDE):
 		var c := world.get_neighbor_cell(cell, n)
 		if water.is_channel(c) and water.is_wet(c) and get_elev(c) >= get_elev(cell):
 			return true
@@ -480,7 +481,6 @@ func choose_active_area() -> void:
 	elif c.x < 0 or c.y < 0:
 		c = _random_area_center()
 	active_area = Rect2i(c - Vector2i(AREA_SIZE / 2, AREA_SIZE / 2), Vector2i(AREA_SIZE, AREA_SIZE))
-	return
 
 ## Pusat acak yang punya air (tapi tidak didominasi air) dan cukup jauh dari tepi peta
 ## supaya bingkai zoom out penuh (~34 kolom x ~76 baris) tetap di dalam peta.
@@ -506,32 +506,6 @@ func _water_count(rect: Rect2i) -> int:
 			if grid_data.get(Vector2i(x, y), -1) == TileState.WATER:
 				n += 1
 	return n
-
-	# var max_origin := MAP_SIZE - AREA_SIZE
-	# for i in MAX_ORIGIN_TRIES:
-	# 	var origin := Vector2i(randi_range(0, max_origin), randi_range(0, max_origin))
-	# 	var rect := Rect2i(origin, Vector2i(AREA_SIZE, AREA_SIZE))
-	# 	if area_has_water(rect):
-	# 		active_area = rect
-	# 		return
-
-	# Cadangan kalau percobaan acak gagal: ambil area pertama yang ada airnya.
-	# for y in range(max_origin + 1):
-	# 	for x in range(max_origin + 1):
-	# 		var rect := Rect2i(Vector2i(x, y), Vector2i(AREA_SIZE, AREA_SIZE))
-	# 		if area_has_water(rect):
-	# 			active_area = rect
-	# 			return
-
-	push_warning("Tidak ada area %dx%d yang berisi WATER." % [AREA_SIZE, AREA_SIZE])
-	active_area = Rect2i(Vector2i.ZERO, Vector2i(AREA_SIZE, AREA_SIZE))
-
-func area_has_water(rect: Rect2i) -> bool:
-	for y in range(rect.position.y, rect.end.y):
-		for x in range(rect.position.x, rect.end.x):
-			if grid_data.get(Vector2i(x, y), -1) == TileState.WATER:
-				return true
-	return false
 
 ## Persegi petak (koordinat peta) yang terlihat oleh kamera, termasuk yang tertutup sebagian
 ## oleh tepi layar/UI. Layout stacked: kotak layar = kotak di koordinat peta.
@@ -877,7 +851,6 @@ func pick_cell(global_pos: Vector2) -> Vector2i:
 # --- Bulldoze: Gali / Ratakan / Timbun ---
 
 enum Tool { GALI, RATAKAN, TIMBUN, JEMBATAN, BOR, SPILLWAY, KINCIR }
-const TOOL_NAMES := ["Dig", "Level", "Fill", "Bridge", "Drill Well", "Spillway", "Water Wheel"]
 
 ## Alat fasilitas -> FacilityManager.Kind (Bendungan sudah dihapus dari toolbar).
 func tool_kind(t: int) -> int:
@@ -970,18 +943,6 @@ func _unhandled_input(event: InputEvent) -> void:
 					Audio.play("place_wood" if kind == facilities.Kind.KINCIR else "place_stone")
 					balance_log.count("pasang_fasilitas")
 					update_hud()
-
-## Gali: tanah (DIRT/GRASS) -> kanal.
-func perform_digging(cell_pos: Vector2i) -> void:
-	if buildings.has_building(cell_pos) or facilities.has_facility(cell_pos):
-		return
-	var current_state = grid_data[cell_pos]
-	if (current_state == TileState.DIRT or current_state == TileState.GRASS) and shovel > 0:
-		shovel -= 1
-		shovel_used += 1
-		balance_log.count("gali")
-		dug[cell_pos] = true
-		set_base(cell_pos, TileState.CANAL)
 
 ## Ratakan: turunkan (klik kiri) / naikkan (klik kanan) satu tingkat.
 ## Berlaku untuk tanah dan kanal galian, tidak untuk sumber air alami atau bangunan.

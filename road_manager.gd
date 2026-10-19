@@ -115,7 +115,7 @@ func _drop_tile(cell: Vector2i) -> void:
 	var src_id: int = world.SRC_WATER_ROAD
 	var atlas: Vector2i = world.ATLAS_ROAD
 	if world.use_tileset_v2:
-		# bentuk sementara: anggap petak ini sudah jalan (sambungan ke petak jalan/antrian di sebelahnya)
+		# hitung bentuk tile seolah petak ini sudah jalan
 		src_id = world.SRC_V2
 		var keep: int = world.grid_data.get(cell, -1)
 		world.grid_data[cell] = world.TileState.ROAD

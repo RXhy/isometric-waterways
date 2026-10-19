@@ -118,10 +118,3 @@ func _spawn(cell: Vector2i, type: int) -> void:
 	# ujung kanal/jalan di sebelahnya ikut berbelok ke bangunan baru
 	world.water.refresh_cell(cell)
 	building_spawned.emit(b)
-
-func count_state(state: int) -> int:
-	var n := 0
-	for cell in buildings:
-		if buildings[cell].state == state:
-			n += 1
-	return n

@@ -90,7 +90,7 @@ Atur di `building.gd` → `TYPE_DATA`.
 - Cadangan habis: **Hancur** (jadi reruntuhan).
 - **Banjir**: kalau petak bangunan tergenang ≥ 6 detik, bangunan juga hancur (Building → `flood_limit`).
 
-**Aturan "teraliri":** bangunan teraliri kalau salah satu dari **8 petak di sekelilingnya** (4 sisi + 4 sudut/serong; `NEIGHBORS_8` di `is_cell_supplied`) adalah kanal atau sumber air yang **sedang berair** dan **elevasinya sama atau lebih tinggi** dari bangunan (air tidak bisa naik). Saat **hujan lebat**, semua bangunan dianggap teraliri.
+**Aturan "teraliri":** bangunan teraliri kalau salah satu dari **4 petak di sisinya** (depan atau samping persis, bukan serong; `NEIGHBORS_SIDE` di `is_cell_supplied`, bisa diubah ke 8 arah lewat export `supply_diagonals` di node World) adalah kanal atau sumber air yang **sedang berair** dan **elevasinya sama atau lebih tinggi** dari bangunan (air tidak bisa naik). Saat **hujan lebat**, semua bangunan dianggap teraliri.
 
 ### 3.3 Tileset air & jalan (tilesset_water_road.png)
 - `assets/Tiles/tilesset_water_road.png` (grid 32 px) dipasang otomatis saat game mulai (Node2D grup **Tileset air & jalan**, `use_tileset_v2`).
@@ -325,7 +325,7 @@ hitung_target_sumber():
 // ===== Dipakai sistem lain =====
 berair(c)    = kedalaman[c] >= 0.06
 banjir(c)    = c daratan DAN kedalaman[c] >= 0.1
-teraliri(b)  = ada tetangga 8 arah n: n kanal/sumber, berair(n), elevasi(n) >= elevasi(b)
+teraliri(b)  = ada tetangga sisi n (4 arah): n kanal/sumber, berair(n), elevasi(n) >= elevasi(b)
                ATAU cuaca HUJAN
 putaran_kincir(c) = clamp(debit_rata2(c) / 0.1, 0, 1)
 tile_air(c)  = DANGKAL jika kedalaman < 0.18 (bukan sumber alami)

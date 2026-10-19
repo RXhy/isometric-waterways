@@ -134,14 +134,6 @@ func start_day(day: int) -> void:
 	world.fx_kemarau.visible = current == Weather.KEMARAU
 	world.fx_hujan.visible = current == Weather.HUJAN
 
-## Tombol debug: paksa cuaca hari ini (dihitung mulai detik ini).
-func force_weather(w: int) -> void:
-	current = w
-	_day_start = world.elapsed
-	apply_targets()
-	world.fx_kemarau.visible = current == Weather.KEMARAU
-	world.fx_hujan.visible = current == Weather.HUJAN
-
 ## Hitung ulang target semua sumber alami. Dipanggil juga saat Spillway dipasang/dibongkar.
 func apply_targets() -> void:
 	var sim = world.water

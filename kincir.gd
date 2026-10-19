@@ -29,11 +29,11 @@ func _process(delta: float) -> void:
 	var base_row = DIR_MAP.get(flow_dir, 0) * 2
 	var is_active = power >= 0.03
 	var row = base_row + (1 if is_active else 0)
-	
+
 	if is_active:
 		_anim_timer += delta * (power * max_speed * base_fps)
 		if _anim_timer >= 1.0:
 			_anim_timer = 0.0
 			_frame_index = (_frame_index + 1) % 4
-			
+
 	wheel.frame = (row * 4) + _frame_index
