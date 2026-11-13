@@ -27,6 +27,7 @@ const PAGES := [
 @export var panel_size: Vector2 = Vector2(380, 250)
 
 var page := 0
+var _opened := false  # untuk Mode Survei: hanya halaman yang benar-benar dibuka yang dihitung
 var _title: Label
 var _body: Label
 var _icons: HBoxContainer
@@ -123,11 +124,15 @@ func _ready() -> void:
 	show_page(0)
 
 func open() -> void:
+	Survey.note_tutorial_open()
+	_opened = true
 	show_page(0)
 	show()
 
 func show_page(i: int) -> void:
 	page = clampi(i, 0, PAGES.size() - 1)
+	if _opened:
+		Survey.note_tutorial_page(page, PAGES.size())
 	var p: Dictionary = PAGES[page]
 	_title.text = p["title"]
 	_body.text = p["body"]
@@ -149,6 +154,7 @@ func show_page(i: int) -> void:
 	_next.text = "Let's Play!" if page == PAGES.size() - 1 else "Next >"
 
 func _close() -> void:
+	_opened = false
 	hide()
 	closed.emit()
 

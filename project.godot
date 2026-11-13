@@ -21,6 +21,7 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 [autoload]
 
 Audio="*res://scenes/audio_manager.tscn"
+Survey="*res://survey/survey_mode.gd"
 
 [display]
 

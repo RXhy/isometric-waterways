@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://showcase/choice_director.gd" id="1_pilihan"]
+[ext_resource type="PackedScene" uid="uid://bgtop1vouikwm" path="res://world.tscn" id="2_world"]
+
+[node name="PilihanB" type="Node"]
+script = ExtResource("1_pilihan")
+map_seed = 42
+building_count = 16
+warmup_seconds = 0.8
+warmup_speed = 12.0
+observe_hold = 1.2
+branch = 1
+metadata/movie_file = "C:/COMPE/MAGE 12/FINAL/PITCHING/Cuplikan/Pilihan Juri/raw/cabang_B.avi"
+
+[node name="Game" parent="." instance=ExtResource("2_world")]

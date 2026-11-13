@@ -213,6 +213,7 @@ func _ready() -> void:
 	buildings.setup(self)
 	_check_new_day()
 	update_hud()
+	Survey.on_world_ready(self)  # Mode Survei: mulai mencatat & screenshot permainan ini
 	if demo_mode:
 		hud.hide()
 		cursor.hide()
@@ -277,6 +278,7 @@ func end_game(won: bool, reason: String = "") -> void:
 	game_over = true
 	buildings.stop()
 	balance_log.log_end("MENANG" if won else "KALAH", reason if reason != "" else "target tercapai")
+	Survey.on_game_end(self, won, reason if reason != "" else "target tercapai")
 	Engine.time_scale = 1.0
 	Audio.play_jingle(won)
 	update_hud()

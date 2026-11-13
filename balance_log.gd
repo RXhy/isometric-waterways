@@ -106,6 +106,8 @@ func setup(w) -> void:
 		enabled = false
 		return
 	tester = tester_name.strip_edges()
+	if Survey.active:
+		tester = "%s_%s" % [Survey.player.get("id", ""), Survey.player.get("nama", "")]
 	if tester == "":
 		tester = OS.get_environment("USERNAME")
 	if tester == "":

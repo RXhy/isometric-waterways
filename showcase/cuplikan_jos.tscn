@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://showcase/showcase_director.gd" id="1_dir"]
+[ext_resource type="PackedScene" uid="uid://bgtop1vouikwm" path="res://world.tscn" id="2_world"]
+
+[node name="CuplikanJos" type="Node"]
+script = ExtResource("1_dir")
+metadata/movie_file = "C:/COMPE/MAGE 12/FINAL/PITCHING/Cuplikan Jos/raw/waterways_raw.avi"
+
+[node name="Game" parent="." instance=ExtResource("2_world")]

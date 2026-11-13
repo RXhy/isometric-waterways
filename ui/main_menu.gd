@@ -39,6 +39,7 @@ func _ready() -> void:
 	if cam:
 		cam.offset.x = map_shift
 	_close_dialogs()
+	_build_survey_panel()
 	fade.color.a = 1.0
 	create_tween().tween_property(fade, "color:a", 0.0, 0.6)
 
@@ -65,3 +66,61 @@ func _close_dialogs() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and exit_dialog.visible:
 		_close_dialogs()
+
+# --- Mode Survei (lihat survey/survey_mode.gd) ---
+
+## Pojok kanan bawah: tombol MODE SURVEI, atau panel status pemain kalau sesi survei sedang berjalan.
+func _build_survey_panel() -> void:
+	var panel := PanelContainer.new()
+	panel.name = "SurveyPanel"
+	panel.theme = Survey.make_theme()
+	panel.add_theme_stylebox_override("panel", Survey._box(Color(Survey.C_BG, 0.92), Survey.C_YELLOW if Survey.active else Color(1, 1, 1, 0.3), 1, 6))
+	panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	panel.offset_right = -8
+	panel.offset_bottom = -8
+	$UI.add_child(panel)
+	$UI.move_child(panel, %Fade.get_index())
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 4)
+	panel.add_child(v)
+	if not Survey.active:
+		var b := Button.new()
+		b.text = "MODE SURVEI  (playtest)"
+		b.pressed.connect(Survey.open_profile)
+		v.add_child(b)
+		return
+	var title := Label.new()
+	title.text = "MODE SURVEI · %s · %s" % [Survey.player.get("id", ""), Survey.player.get("nama", "")]
+	title.add_theme_color_override("font_color", Survey.C_YELLOW)
+	v.add_child(title)
+	var info := Label.new()
+	var n := Survey.finished_count()
+	info.text = ("Permainan selesai: %d" % n) if n > 0 else "Buka TUTORIAL dulu (opsional), lalu Mulai Main."
+	info.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	v.add_child(info)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 4)
+	v.add_child(h)
+	var play := Button.new()
+	play.text = "Mulai Main" if n == 0 else "Main Lagi"
+	play.pressed.connect(_on_new_game)
+	h.add_child(play)
+	var form := Button.new()
+	form.text = "Isi Survei"
+	form.disabled = not Survey.can_fill_survey()
+	form.tooltip_text = "Bisa diisi setelah minimal 1 permainan selesai (menang/kalah)."
+	form.pressed.connect(Survey.open_form)
+	h.add_child(form)
+	var cancel := Button.new()
+	cancel.text = "Batalkan"
+	cancel.tooltip_text = "Batalkan sesi pemain ini tanpa mengisi survei."
+	cancel.pressed.connect(func():
+		if cancel.get_meta("armed", false):
+			Survey.cancel()
+			get_tree().reload_current_scene()
+		else:
+			cancel.set_meta("armed", true)
+			cancel.text = "Yakin batal?")
+	h.add_child(cancel)

@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://showcase/loop_director.gd" id="1_loop"]
+[ext_resource type="PackedScene" uid="uid://bgtop1vouikwm" path="res://world.tscn" id="2_world"]
+
+[node name="CuplikanLoop" type="Node"]
+script = ExtResource("1_loop")
+map_seed = 2025
+building_count = 16
+drought_victims = 0
+flood_victims = 0
+warmup_seconds = 0.8
+warmup_speed = 12.0
+metadata/movie_file = "C:/COMPE/MAGE 12/FINAL/PITCHING/Cuplikan/raw/loop_raw.avi"
+
+[node name="Game" parent="." instance=ExtResource("2_world")]
