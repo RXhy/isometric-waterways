@@ -142,10 +142,12 @@ func place(kind: int, cell: Vector2i) -> bool:
 		spr.hframes = 2
 		spr.frame = 0 if mask == 9 else 1
 
-	# fasilitas ditaruh di node Buildings supaya urutan gambarnya (y-sort) menyatu dengan bangunan
-	var host: Node2D = world.buildings if facilities_sort_with_buildings else self
-	node.position = host.to_local(world.cell_to_global(cell))
-	host.add_child(node)
+	# fasilitas ditaruh di layer World supaya urutan gambarnya (y-sort) menyatu dengan tile & bangunan
+	if facilities_sort_with_buildings:
+		world.place_on_tile(node, cell)
+	else:
+		node.position = to_local(world.cell_to_global(cell))
+		add_child(node)
 	facilities[cell] = {"kind": kind, "node": node, "prev": world.grid_data[cell]}
 	match kind:
 		Kind.BOR:

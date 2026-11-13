@@ -32,6 +32,7 @@ texture = ExtResource("4_ruin")
 offset = Vector2(0, -1)
 
 [node name="Ring" type="TextureProgressBar" parent="." unique_id=1569876365]
+z_index = 2
 offset_left = -12.0
 offset_top = -41.0
 offset_right = 36.0
@@ -47,6 +48,7 @@ texture_progress = ExtResource("7_ring_p")
 tint_progress = Color(0.3, 0.65, 1, 1)
 
 [node name="Peringatan" type="Sprite2D" parent="." unique_id=1164534420]
+z_index = 2
 position = Vector2(2, -27)
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("5_warn")

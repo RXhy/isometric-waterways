@@ -30,6 +30,7 @@ const REFILL_RATE := 4.0    # isi ulang 4x lebih cepat daripada berkurangnya
 @export var ring_danger: Color = Color(0.9, 0.2, 0.2)
 
 var cell: Vector2i
+var game  ## world.gd (diisi BuildingManager sebelum ditambahkan ke scene)
 var _face_check := 0.0
 var type: int = Type.RUMAH
 var max_water: float = 40.0
@@ -94,7 +95,7 @@ func _refresh() -> void:
 func _update_facing() -> void:
 	rumah.frame = house_frame
 	ladang.frame = farm_frame
-	var w = get_parent().world if get_parent() and "world" in get_parent() else null
+	var w = game
 	if w == null:
 		return
 	var sides := [TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_SIDE, TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_SIDE,

@@ -112,8 +112,8 @@ func _too_close_to_building(cell: Vector2i) -> bool:
 func _spawn(cell: Vector2i, type: int) -> void:
 	var b = building_scene.instantiate()
 	b.setup(cell, type)
-	b.position = to_local(world.cell_to_global(cell))
-	add_child(b)
+	b.game = world
+	world.place_on_tile(b, cell)  # anak layer World supaya tertutup tanah yang lebih tinggi di depannya
 	buildings[cell] = b
 	# ujung kanal/jalan di sebelahnya ikut berbelok ke bangunan baru
 	world.water.refresh_cell(cell)

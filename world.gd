@@ -429,6 +429,18 @@ func action_preview(cell: Vector2i) -> Array:
 func cell_to_global(cell: Vector2i) -> Vector2:
 	return world.to_global(world.map_to_local(cell) - Vector2(0, ELEV_STEP * get_elev(cell)))
 
+## Taruh bangunan/fasilitas sebagai anak layer World supaya ikut y-sort bersama tile:
+## tanah yang lebih tinggi di depannya akan menutupinya (sama seperti drop_fx).
+## Titik sort = tengah petak + 0.5 (tergambar setelah tile petaknya sendiri, sebelum petak di depannya);
+## gambarnya diangkat sesuai elevasi lewat posisi node anak.
+func place_on_tile(node: Node2D, cell: Vector2i) -> void:
+	node.position = world.map_to_local(cell) + Vector2(0, 0.5)
+	var lift := Vector2(0, ELEV_STEP * get_elev(cell) + 0.5)
+	for ch in node.get_children():
+		if ch is Node2D or ch is Control:
+			ch.position -= lift
+	world.add_child(node)
+
 ## Bisa dibangun: di dalam area aktif dan tanahnya DIRT/GRASS.
 func is_buildable(cell: Vector2i) -> bool:
 	var t: int = grid_data.get(cell, -1)
