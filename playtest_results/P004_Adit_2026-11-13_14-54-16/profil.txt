@@ -1,0 +1,11 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P004
+Nama          : Adit
+Mulai         : 2026-11-13 14:54:16
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Seminggu sekali
+Game serupa   : Cukup sering
+Platform      : PC / Laptop
+Paham air (sebelum main, 1-5): 4
+Persetujuan data: ya

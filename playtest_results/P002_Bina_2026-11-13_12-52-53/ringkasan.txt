@@ -1,0 +1,41 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P002
+Nama          : Bina
+Mulai         : 2026-11-13 12:52:53
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Beberapa kali seminggu
+Game serupa   : Cukup sering
+Platform      : PC / Laptop
+Paham air (sebelum main, 1-5): 3
+Persetujuan data: ya
+
+Permainan selesai: 1
+  #1  MENANG (waktu)  hari 45/45  poin 7408/3500  bintang 2  hancur 6  30.5 menit  aksi pertama detik ke-12  teraliri pertama detik ke-23
+
+Kuesioner:
+  durasi_sesi_menit: 35.3
+  r_seru: 4
+  r_tujuan_jelas: 5
+  r_kontrol_mudah: 5
+  r_arus_terbaca: 4
+  r_cuaca_adil: 4
+  r_strategi_beragam: 4
+  r_visual_audio: 5
+  r_ingin_main_lagi: 3
+  paham_air_sesudah: 5
+  selisih_paham_air: 2
+  kesulitan: Pas
+  nps: 6
+  kategori_nps: detractor
+  q_spillway_jawaban: Menahan air, hanya kelebihannya yang mengalir (cegah luapan)
+  q_spillway_benar: 1
+  q_kemarau_jawaban: Sumber air alami menyusut pelan-pelan, makin parah tiap kemarau
+  q_kemarau_benar: 1
+  q_dataran_tinggi_jawaban: Pakai Kincir Air untuk memompa air naik, atau Ratakan tanah
+  q_dataran_tinggi_benar: 1
+  skor_pemahaman_0_3: 3
+  kesan: awalnya harus menyesuaikan dulu, jadi mungkin lumayan banyak bangunan yang hancur di awal game. selanjutnya mulai paham
+  pesan_saran: mungkin menurut saya game nya terlalu lambat pace
+  bagian_paling_seru: setiap building yang ngespawn terasa seru karena harus memilih darimana air yang harus dialirkan
+  bagian_paling_membingungkan: arah kincir nya membingungkan

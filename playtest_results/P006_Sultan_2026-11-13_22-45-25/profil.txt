@@ -1,0 +1,11 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P006
+Nama          : Sultan
+Mulai         : 2026-11-13 22:45:25
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Setiap hari
+Game serupa   : Cukup sering
+Platform      : Campuran
+Paham air (sebelum main, 1-5): 4
+Persetujuan data: ya

@@ -1,0 +1,11 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P001
+Nama          : fasel
+Mulai         : 2026-11-13 10:17:39
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Setiap hari
+Game serupa   : Pernah 1–2 kali
+Platform      : PC / Laptop
+Paham air (sebelum main, 1-5): 3
+Persetujuan data: ya

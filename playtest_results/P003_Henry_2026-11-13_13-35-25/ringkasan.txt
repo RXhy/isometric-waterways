@@ -1,0 +1,41 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P003
+Nama          : Henry
+Mulai         : 2026-11-13 13:35:25
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Sebulan sekali
+Game serupa   : Pernah 1–2 kali
+Platform      : PC / Laptop
+Paham air (sebelum main, 1-5): 4
+Persetujuan data: ya
+
+Permainan selesai: 1
+  #1  MENANG (waktu)  hari 45/45  poin 8565/3500  bintang 3  hancur 1  23.5 menit  aksi pertama detik ke-5  teraliri pertama detik ke-7
+
+Kuesioner:
+  durasi_sesi_menit: 78.3
+  r_seru: 5
+  r_tujuan_jelas: 5
+  r_kontrol_mudah: 4
+  r_arus_terbaca: 5
+  r_cuaca_adil: 4
+  r_strategi_beragam: 4
+  r_visual_audio: 5
+  r_ingin_main_lagi: 4
+  paham_air_sesudah: 5
+  selisih_paham_air: 1
+  kesulitan: Pas
+  nps: 8
+  kategori_nps: passive
+  q_spillway_jawaban: Menahan air, hanya kelebihannya yang mengalir (cegah luapan)
+  q_spillway_benar: 1
+  q_kemarau_jawaban: Sumber air alami menyusut pelan-pelan, makin parah tiap kemarau
+  q_kemarau_benar: 1
+  q_dataran_tinggi_jawaban: Pakai Kincir Air untuk memompa air naik, atau Ratakan tanah
+  q_dataran_tinggi_benar: 1
+  skor_pemahaman_0_3: 3
+  kesan: jadi paham pendistribusian air yang baik dan benar
+  pesan_saran: buat tutorial nya lebih interaktif jadi player bisa sekalian mencoba nya langsung
+  bagian_paling_seru: saat cuaca ekstrim muncul  tantangan nya jadi seru untuk diatasi
+  bagian_paling_membingungkan: adaptasi awalnya butuh pemahaman mekanik nya terlebih dahulu

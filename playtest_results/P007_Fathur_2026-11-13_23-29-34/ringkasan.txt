@@ -1,0 +1,41 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P007
+Nama          : Fathur
+Mulai         : 2026-11-13 23:29:34
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Setiap hari
+Game serupa   : Cukup sering
+Platform      : Campuran
+Paham air (sebelum main, 1-5): 3
+Persetujuan data: ya
+
+Permainan selesai: 1
+  #1  MENANG (waktu)  hari 45/45  poin 7861/3500  bintang 2  hancur 3  20.7 menit  aksi pertama detik ke-6  teraliri pertama detik ke-6
+
+Kuesioner:
+  durasi_sesi_menit: 28.8
+  r_seru: 4
+  r_tujuan_jelas: 5
+  r_kontrol_mudah: 5
+  r_arus_terbaca: 5
+  r_cuaca_adil: 5
+  r_strategi_beragam: 4
+  r_visual_audio: 5
+  r_ingin_main_lagi: 4
+  paham_air_sesudah: 5
+  selisih_paham_air: 2
+  kesulitan: Agak mudah
+  nps: 8
+  kategori_nps: passive
+  q_spillway_jawaban: Menahan air, hanya kelebihannya yang mengalir (cegah luapan)
+  q_spillway_benar: 1
+  q_kemarau_jawaban: Sumber air alami menyusut pelan-pelan, makin parah tiap kemarau
+  q_kemarau_benar: 1
+  q_dataran_tinggi_jawaban: Pakai Kincir Air untuk memompa air naik, atau Ratakan tanah
+  q_dataran_tinggi_benar: 1
+  skor_pemahaman_0_3: 3
+  kesan: jarang main game strategi atau simulasi, tapi ini menarik untuk dicoba
+  pesan_saran: tadi ada bug aliran air mungkin bisa di perbaiki
+  bagian_paling_seru: saat area makin luas dan bangunan makin banyak jadi lebih terpakai tools nya dan bisa eksplor lebih banyak
+  bagian_paling_membingungkan: pengaruh cuaca kayak random gitu jadi kurang paham efeknya kecuali beruntun cuaca yang sama baru berasa efek nya

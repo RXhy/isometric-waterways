@@ -1,0 +1,41 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P001
+Nama          : fasel
+Mulai         : 2026-11-13 10:17:39
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Setiap hari
+Game serupa   : Pernah 1–2 kali
+Platform      : PC / Laptop
+Paham air (sebelum main, 1-5): 3
+Persetujuan data: ya
+
+Permainan selesai: 1
+  #1  MENANG (waktu)  hari 45/45  poin 7807/3500  bintang 2  hancur 4  22.7 menit  aksi pertama detik ke-12  teraliri pertama detik ke-13
+
+Kuesioner:
+  durasi_sesi_menit: 54.6
+  r_seru: 5
+  r_tujuan_jelas: 5
+  r_kontrol_mudah: 4
+  r_arus_terbaca: 4
+  r_cuaca_adil: 4
+  r_strategi_beragam: 5
+  r_visual_audio: 5
+  r_ingin_main_lagi: 5
+  paham_air_sesudah: 5
+  selisih_paham_air: 2
+  kesulitan: Pas
+  nps: 9
+  kategori_nps: promoter
+  q_spillway_jawaban: Menahan air, hanya kelebihannya yang mengalir (cegah luapan)
+  q_spillway_benar: 1
+  q_kemarau_jawaban: Sumber air alami menyusut pelan-pelan, makin parah tiap kemarau
+  q_kemarau_benar: 1
+  q_dataran_tinggi_jawaban: Pakai Kincir Air untuk memompa air naik, atau Ratakan tanah
+  q_dataran_tinggi_benar: 1
+  skor_pemahaman_0_3: 3
+  kesan: asik banget gamenya jujur pertama kali main game ini ternyata bisa chill tapi juga menantang
+  pesan_saran: mungkin uinya dibuat lebih friendly utk new user, dan lebih umum lah layoutnya
+  bagian_paling_seru: bagian paling seru itu nentuin solusi dan hasrus berpikir cepat supaya supply air tidak habis
+  bagian_paling_membingungkan: paling bingung itu kalo ga baca tutorial
