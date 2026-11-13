@@ -1,0 +1,41 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P006
+Nama          : Sultan
+Mulai         : 2026-11-13 22:45:25
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Setiap hari
+Game serupa   : Cukup sering
+Platform      : Campuran
+Paham air (sebelum main, 1-5): 4
+Persetujuan data: ya
+
+Permainan selesai: 1
+  #1  MENANG (waktu)  hari 45/45  poin 8151/3500  bintang 2  hancur 2  23.1 menit  aksi pertama detik ke-18  teraliri pertama detik ke-18
+
+Kuesioner:
+  durasi_sesi_menit: 27.7
+  r_seru: 4
+  r_tujuan_jelas: 5
+  r_kontrol_mudah: 4
+  r_arus_terbaca: 4
+  r_cuaca_adil: 4
+  r_strategi_beragam: 3
+  r_visual_audio: 5
+  r_ingin_main_lagi: 4
+  paham_air_sesudah: 5
+  selisih_paham_air: 1
+  kesulitan: Agak mudah
+  nps: 7
+  kategori_nps: passive
+  q_spillway_jawaban: Menahan air, hanya kelebihannya yang mengalir (cegah luapan)
+  q_spillway_benar: 1
+  q_kemarau_jawaban: Sumber air alami menyusut pelan-pelan, makin parah tiap kemarau
+  q_kemarau_benar: 1
+  q_dataran_tinggi_jawaban: Pakai Kincir Air untuk memompa air naik, atau Ratakan tanah
+  q_dataran_tinggi_benar: 1
+  skor_pemahaman_0_3: 3
+  kesan: untuk pengalaman bermain nya seru tapi kelamaan jadi monoton dan terlalu gampang
+  pesan_saran: stok fasilitas nya bisa dipersulit, untuk tantangan nya juga bisa ditambah, mungkin bisa divariasikan map dan level nya
+  bagian_paling_seru: saat cuaca muncul dan kota mulai terancam disitu jadi adrenalin bermainnya
+  bagian_paling_membingungkan: fungsi semua fasilitas nya di awal tapi setelah 3 hari udah langsung paham, bisa tambahin tutorial interaktif jadi bukan tutorial statis di main menu

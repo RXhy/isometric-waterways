@@ -1,0 +1,41 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P004
+Nama          : Adit
+Mulai         : 2026-11-13 14:54:16
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Seminggu sekali
+Game serupa   : Cukup sering
+Platform      : PC / Laptop
+Paham air (sebelum main, 1-5): 4
+Persetujuan data: ya
+
+Permainan selesai: 1
+  #1  MENANG (waktu)  hari 45/45  poin 8252/3500  bintang 2  hancur 1  49.8 menit  aksi pertama detik ke-8  teraliri pertama detik ke-9
+
+Kuesioner:
+  durasi_sesi_menit: 102.3
+  r_seru: 4
+  r_tujuan_jelas: 5
+  r_kontrol_mudah: 5
+  r_arus_terbaca: 4
+  r_cuaca_adil: 5
+  r_strategi_beragam: 4
+  r_visual_audio: 5
+  r_ingin_main_lagi: 5
+  paham_air_sesudah: 5
+  selisih_paham_air: 1
+  kesulitan: Agak mudah
+  nps: 7
+  kategori_nps: passive
+  q_spillway_jawaban: Menahan air, hanya kelebihannya yang mengalir (cegah luapan)
+  q_spillway_benar: 1
+  q_kemarau_jawaban: Sumber air alami menyusut pelan-pelan, makin parah tiap kemarau
+  q_kemarau_benar: 1
+  q_dataran_tinggi_jawaban: Pakai Kincir Air untuk memompa air naik, atau Ratakan tanah
+  q_dataran_tinggi_benar: 1
+  skor_pemahaman_0_3: 3
+  kesan: menarik karena jarang main game strategi
+  pesan_saran: bisa dikembangkan untuk mekanik nya kayak ditambahin tantangan baru gitu
+  bagian_paling_seru: memecahkan solusi terbaik dari tiap kondisi baru
+  bagian_paling_membingungkan: adaptasi game mekanik nya

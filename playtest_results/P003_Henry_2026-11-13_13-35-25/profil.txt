@@ -1,0 +1,11 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P003
+Nama          : Henry
+Mulai         : 2026-11-13 13:35:25
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Sebulan sekali
+Game serupa   : Pernah 1–2 kali
+Platform      : PC / Laptop
+Paham air (sebelum main, 1-5): 4
+Persetujuan data: ya

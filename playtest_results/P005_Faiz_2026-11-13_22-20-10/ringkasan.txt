@@ -1,0 +1,41 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P005
+Nama          : Faiz
+Mulai         : 2026-11-13 22:20:10
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Beberapa kali seminggu
+Game serupa   : Cukup sering
+Platform      : HP
+Paham air (sebelum main, 1-5): 4
+Persetujuan data: ya
+
+Permainan selesai: 1
+  #1  MENANG (waktu)  hari 45/45  poin 8080/3500  bintang 2  hancur 5  11.8 menit  aksi pertama detik ke-8  teraliri pertama detik ke-11
+
+Kuesioner:
+  durasi_sesi_menit: 17.7
+  r_seru: 5
+  r_tujuan_jelas: 5
+  r_kontrol_mudah: 4
+  r_arus_terbaca: 5
+  r_cuaca_adil: 4
+  r_strategi_beragam: 3
+  r_visual_audio: 4
+  r_ingin_main_lagi: 4
+  paham_air_sesudah: 5
+  selisih_paham_air: 1
+  kesulitan: Agak mudah
+  nps: 8
+  kategori_nps: passive
+  q_spillway_jawaban: Menahan air, hanya kelebihannya yang mengalir (cegah luapan)
+  q_spillway_benar: 1
+  q_kemarau_jawaban: Sumber air alami menyusut pelan-pelan, makin parah tiap kemarau
+  q_kemarau_benar: 1
+  q_dataran_tinggi_jawaban: Pakai Kincir Air untuk memompa air naik, atau Ratakan tanah
+  q_dataran_tinggi_benar: 1
+  skor_pemahaman_0_3: 3
+  kesan: sebagai orang yang lumayan suka dan lumayan sering main game strategi, waterways ini menarik dan seru untuk dimainkan
+  pesan_saran: tingkat kesulitan atau tantangannya bisa di variasikan lagi, mungkin bisa tambah map juga
+  bagian_paling_seru: saat kota sudah mulai banyak bangunan dan efek cuaca nya beruntun itu jadi tantangan yang seru untuk dipecahkan
+  bagian_paling_membingungkan: perhitungan stok fasilitas nya kurang ngerti

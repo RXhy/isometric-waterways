@@ -1,0 +1,11 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P005
+Nama          : Faiz
+Mulai         : 2026-11-13 22:20:10
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Beberapa kali seminggu
+Game serupa   : Cukup sering
+Platform      : HP
+Paham air (sebelum main, 1-5): 4
+Persetujuan data: ya

@@ -1,0 +1,11 @@
+WATERWAYS — Profil pemain (Mode Survei)
+ID            : P002
+Nama          : Bina
+Mulai         : 2026-11-13 12:52:53
+Umur          : 18–21 tahun
+Status        : Mahasiswa
+Main game     : Beberapa kali seminggu
+Game serupa   : Cukup sering
+Platform      : PC / Laptop
+Paham air (sebelum main, 1-5): 3
+Persetujuan data: ya
