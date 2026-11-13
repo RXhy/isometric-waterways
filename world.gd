@@ -911,6 +911,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_6: set_tool(Tool.SPILLWAY)
 			KEY_7: set_tool(Tool.KINCIR)
 			KEY_H: hud.toggle_ui()
+			KEY_F: hud.toggle_fast()  # 1x -> 2x -> 5x, hanya aktif di Mode Survei
 		return
 
 	if event is InputEventMouseButton and (event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT):

@@ -69,6 +69,13 @@ func setup(w) -> void:
 	$Root/ActionMenu/Tools/Menu.pressed.connect(pause_menu.open)
 	btn_pause.pressed.connect(set_speed.bind(0.0))
 	btn_play.pressed.connect(set_speed.bind(1.0))
+	if Survey.active:  # 2x & 5x hanya untuk Mode Survei (playtest lebih cepat)
+		btn_fast = _add_speed_button("Fast", 2.0, "2x speed (F)")
+		btn_fast.icon = preload("res://assets/placeholder/ui/ic_fast.png")
+		btn_fast5 = _add_speed_button("Fast5", 5.0, "5x speed (F)")
+		btn_fast5.icon = null
+		btn_fast5.text = "5x"
+		btn_fast5.add_theme_font_size_override("font_size", 10)
 	points_button.pressed.connect(func(): points_popup.visible = not points_popup.visible)
 	layer_button.pressed.connect(_cycle_layer)
 	points_popup.hide()
@@ -148,13 +155,38 @@ func toast(text: String, seconds: float = 2.5) -> void:
 
 # --- Kecepatan ---
 
+var btn_fast: Button  ## 2x; null di luar Mode Survei
+var btn_fast5: Button  ## 5x; null di luar Mode Survei
+var _resume_speed := 1.0  ## kecepatan yang dipakai lagi setelah jeda (Space)
+
+## Salinan tombol Play (ikut ButtonGroup kecepatan), ditaruh di bawahnya.
+func _add_speed_button(n: String, s: float, tip: String) -> Button:
+	var b: Button = btn_play.duplicate()
+	b.name = n
+	b.tooltip_text = tip
+	btn_play.get_parent().add_child(b)
+	b.pressed.connect(set_speed.bind(s))
+	return b
+
 func set_speed(s: float) -> void:
 	Engine.time_scale = s
+	if s > 0.0:
+		_resume_speed = s
 	btn_pause.set_pressed_no_signal(s == 0.0)
 	btn_play.set_pressed_no_signal(s == 1.0)
+	if btn_fast:
+		btn_fast.set_pressed_no_signal(s == 2.0)
+		btn_fast5.set_pressed_no_signal(s == 5.0)
 
 func toggle_pause() -> void:
-	set_speed(1.0 if Engine.time_scale == 0.0 else 0.0)
+	set_speed(_resume_speed if Engine.time_scale == 0.0 else 0.0)
+
+## Tombol F: 1x -> 2x -> 5x -> 1x (hanya Mode Survei). Dari jeda, lanjut ke kecepatan berikutnya.
+func toggle_fast() -> void:
+	if btn_fast == null:
+		return
+	var cur: float = _resume_speed if Engine.time_scale == 0.0 else Engine.time_scale
+	set_speed(2.0 if cur < 2.0 else (5.0 if cur < 5.0 else 1.0))
 
 # --- Alat ---
 
